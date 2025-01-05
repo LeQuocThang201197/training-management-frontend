@@ -2,19 +2,12 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Search, Plus, ArrowUpDown, Pencil, Trash2 } from "lucide-react";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 
 interface Tag {
   id: string;
   name: string;
-  description: string;
   color: string;
   usageCount: number;
 }
@@ -24,21 +17,18 @@ export function TagsPage() {
     {
       id: "1",
       name: "Huấn luyện",
-      description: "Các hoạt động huấn luyện chính thức",
       color: "bg-orange-100",
       usageCount: 24,
     },
     {
       id: "2",
       name: "Thi đấu",
-      description: "Các giải đấu và cuộc thi",
       color: "bg-blue-100",
       usageCount: 15,
     },
     {
       id: "3",
       name: "Chính trị",
-      description: "Hoạt động chính trị và đoàn thể",
       color: "bg-green-100",
       usageCount: 18,
     },
@@ -81,32 +71,46 @@ export function TagsPage() {
         {sortedTags.map((tag) => (
           <Card
             key={tag.id}
-            className={`hover:shadow-lg transition-shadow ${tag.color}`}
+            className={`${tag.color} hover:shadow-lg transition-all duration-300 group relative overflow-hidden`}
           >
-            <CardHeader className="pb-2">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-2">
-                  <div
-                    className={`w-4 h-4 rounded-full bg-${
-                      tag.color.split("-")[1]
-                    }-500`}
-                  />
-                  <CardTitle>{tag.name}</CardTitle>
-                </div>
+            <div className="p-4 flex items-center justify-between relative">
+              <div className="flex items-center space-x-3">
+                <div
+                  className={`w-3 h-3 rounded-full bg-${
+                    tag.color.split("-")[1]
+                  }-500`}
+                />
+                <span className="font-medium text-lg">{tag.name}</span>
+              </div>
+
+              <div className="absolute right-4 top-1/2 -translate-y-1/2 transition-transform duration-300 group-hover:translate-x-[-120%]">
+                <Badge
+                  variant="secondary"
+                  className="bg-white/80 backdrop-blur-sm"
+                >
+                  {tag.usageCount} lượt
+                </Badge>
+              </div>
+
+              <div className="absolute right-0 top-0 h-full flex items-center opacity-0 transform translate-x-full transition-all duration-300 group-hover:opacity-100 group-hover:translate-x-0 bg-gradient-to-l from-white/80 via-white/60 to-transparent pr-2">
                 <div className="flex items-center space-x-1">
-                  <Badge variant="secondary">{tag.usageCount} lượt</Badge>
-                  <Button variant="ghost" size="icon" className="h-8 w-8">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 hover:bg-white/60"
+                  >
                     <Pencil className="h-4 w-4" />
                   </Button>
-                  <Button variant="ghost" size="icon" className="h-8 w-8">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 hover:bg-white/60"
+                  >
                     <Trash2 className="h-4 w-4" />
                   </Button>
                 </div>
               </div>
-            </CardHeader>
-            <CardContent>
-              <CardDescription>{tag.description}</CardDescription>
-            </CardContent>
+            </div>
           </Card>
         ))}
       </div>

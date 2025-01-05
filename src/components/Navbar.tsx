@@ -1,44 +1,53 @@
-import { Bell, User, Moon, Sun } from "lucide-react";
+import { Bell, User, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useAuth } from "@/contexts/AuthContext";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
-interface NavbarProps {
-  theme: string;
-  toggleTheme: () => void;
-}
+export function Navbar() {
+  const { user, logout } = useAuth();
 
-export function Navbar({ theme, toggleTheme }: NavbarProps) {
   return (
-    <nav className="fixed top-0 left-0 right-0 h-16 bg-background shadow-md p-4 z-50 border-b border-border">
+    <nav className="fixed top-0 left-0 right-0 h-16 bg-background shadow-md p-2 sm:p-4 z-50 border-b border-border">
       <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold text-foreground dark:text-white">
+        <h1 className="text-lg sm:text-xl md:text-2xl font-bold">
           Quản lý Huấn luyện và Công tác Chính trị
         </h1>
-        <div className="flex items-center space-x-4">
-          <Button
-            variant="ghost"
-            onClick={toggleTheme}
-            className="text-foreground dark:text-white hover:bg-gray-100 dark:hover:bg-gray-800"
-          >
-            {theme === "dark" ? (
-              <Sun className="h-[1.2rem] w-[1.2rem]" />
-            ) : (
-              <Moon className="h-[1.2rem] w-[1.2rem]" />
-            )}
+        <div className="flex items-center space-x-2 sm:space-x-4">
+          <Button variant="ghost" size="sm" className="hover:bg-gray-100">
+            <Bell className="h-5 w-5" />
+            <span className="hidden sm:inline ml-2">Thông báo</span>
           </Button>
-          <Button
-            variant="ghost"
-            className="text-foreground dark:text-white hover:bg-gray-100 dark:hover:bg-gray-800"
-          >
-            <Bell className="mr-2" size={20} />
-            <span>Thông báo</span>
-          </Button>
-          <Button
-            variant="ghost"
-            className="text-foreground dark:text-white hover:bg-gray-100 dark:hover:bg-gray-800"
-          >
-            <User className="mr-2" size={20} />
-            <span>Tài khoản</span>
-          </Button>
+
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="sm" className="hover:bg-gray-100">
+                <User className="h-5 w-5" />
+                <span className="hidden sm:inline ml-2">{user?.fullName}</span>
+                <ChevronDown className="h-4 w-4 ml-1" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuLabel>
+                <div className="font-normal text-sm text-muted-foreground">
+                  Đăng nhập với
+                </div>
+                <div className="font-medium">{user?.email}</div>
+              </DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem disabled>
+                Vai trò:{" "}
+                {user?.role === "admin" ? "Quản trị viên" : "Người dùng"}
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={logout}>Đăng xuất</DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
     </nav>

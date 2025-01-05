@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   ChartPie,
   ClipboardList,
@@ -17,8 +17,14 @@ import {
   Volleyball,
   FileText,
   SquareUserRound,
+  ChartNoAxesCombined,
+  NotebookPen,
+  ChartColumnIncreasing,
   LucideIcon,
+  PanelLeftClose,
+  PanelLeftOpen,
 } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 interface MenuItem {
@@ -54,23 +60,57 @@ const menuItems: MenuItem[] = [
     ],
   },
   { name: "Thành tích", icon: Medal },
+  {
+    name: "Tổ chuyên môn",
+    icon: ChartNoAxesCombined,
+    children: [
+      { name: "Thói quen ghi chép", icon: NotebookPen },
+      { name: "Chỉ số", icon: ChartColumnIncreasing },
+    ],
+  },
 ];
 
 interface SidebarProps {
   currentPage: string;
   onPageChange: (page: string) => void;
+  collapsed: boolean;
+  onCollapsedChange: (collapsed: boolean) => void;
 }
 
-export function Sidebar({ currentPage, onPageChange }: SidebarProps) {
+export function Sidebar({
+  currentPage,
+  onPageChange,
+  collapsed,
+  onCollapsedChange,
+}: SidebarProps) {
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
 
+  useEffect(() => {
+    const checkMobile = () => {
+      onCollapsedChange(window.innerWidth < 1024);
+    };
+
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, [onCollapsedChange]);
+
   const toggleDropdown = (menuName: string) => {
-    setOpenDropdown(openDropdown === menuName ? null : menuName);
+    if (!collapsed) {
+      setOpenDropdown(openDropdown === menuName ? null : menuName);
+    }
   };
 
   const handleClick = (item: MenuItem) => {
     if (item.children) {
-      toggleDropdown(item.name);
+      if (collapsed) {
+        onCollapsedChange(false);
+        setTimeout(() => {
+          setOpenDropdown(item.name);
+        }, 300);
+      } else {
+        toggleDropdown(item.name);
+      }
     } else {
       onPageChange(item.name);
     }
@@ -91,102 +131,111 @@ export function Sidebar({ currentPage, onPageChange }: SidebarProps) {
   return (
     <aside
       className={cn(
-        "w-64 h-[calc(100vh-4rem)]",
-        "mt-16",
-        "fixed left-0",
-        "bg-background border-r border-border",
-        "transition-colors duration-300",
-        "z-40"
+        "fixed left-0 top-16 z-30 h-[calc(100vh-4rem)] border-r bg-background transition-all duration-300 overflow-y-auto",
+        collapsed ? "w-16" : "w-64"
       )}
     >
-      <ul className="py-2">
-        {menuItems.map((item) => (
-          <li key={item.name}>
-            <a
-              href="#"
-              onClick={() => handleClick(item)}
-              className={cn(
-                "flex items-center justify-between",
-                "px-6 py-3 mx-2",
-                "rounded-lg",
-                "text-foreground dark:text-white",
-                "hover:bg-orange-100 dark:hover:bg-orange-900/20",
-                "transition-colors duration-200",
-                "cursor-pointer",
-                isItemActive(item) &&
-                  "bg-orange-100 dark:bg-orange-500/20 text-orange-600 dark:text-orange-400"
-              )}
-            >
-              <div className="flex items-center">
-                <item.icon
-                  className={cn(
-                    "mr-3",
-                    isItemActive(item) && "text-orange-600 dark:text-orange-400"
-                  )}
-                  size={20}
-                />
-                {item.name}
-              </div>
-              {item.children && (
-                <ChevronDown
-                  size={18}
-                  className={cn(
-                    "transform transition-transform duration-200",
-                    openDropdown === item.name ? "rotate-0" : "-rotate-90"
-                  )}
-                />
-              )}
-            </a>
-            {item.children && (
-              <div
+      <div className="flex h-full flex-col">
+        <ul className="flex-1 py-2">
+          {menuItems.map((item) => (
+            <li key={item.name}>
+              <a
+                href="#"
+                onClick={() => handleClick(item)}
                 className={cn(
-                  "overflow-hidden transition-all duration-300 ease-in-out",
-                  openDropdown === item.name ? "max-h-96" : "max-h-0"
+                  "flex items-center",
+                  collapsed ? "justify-center" : "justify-between",
+                  "px-6 py-3 mx-2",
+                  "rounded-lg",
+                  "text-foreground",
+                  "hover:bg-orange-100",
+                  "transition-colors duration-200",
+                  "cursor-pointer",
+                  isItemActive(item) && "bg-orange-100 text-orange-600"
                 )}
               >
-                <ul className="bg-gray-50 dark:bg-gray-900">
-                  {item.children.map((child) => (
-                    <li
-                      key={child.name}
-                      className={cn(
-                        "transform transition-all duration-300",
-                        openDropdown === item.name
-                          ? "translate-x-0 opacity-100"
-                          : "-translate-x-3 opacity-0"
-                      )}
-                    >
-                      <a
-                        href="#"
-                        onClick={(e) => handleChildClick(child.name, e)}
+                <div className={cn("flex items-center", collapsed && "m-0")}>
+                  <item.icon
+                    className={cn(
+                      collapsed ? "mr-0" : "mr-3",
+                      isItemActive(item) && "text-orange-600"
+                    )}
+                    size={20}
+                  />
+                  {!collapsed && item.name}
+                </div>
+                {!collapsed && item.children && (
+                  <ChevronDown
+                    size={18}
+                    className={cn(
+                      "transform transition-transform duration-200",
+                      openDropdown === item.name ? "rotate-0" : "-rotate-90"
+                    )}
+                  />
+                )}
+              </a>
+              {!collapsed && item.children && (
+                <div
+                  className={cn(
+                    "overflow-hidden transition-all duration-300 ease-in-out",
+                    openDropdown === item.name ? "max-h-96" : "max-h-0"
+                  )}
+                >
+                  <ul className="bg-gray-50">
+                    {item.children.map((child) => (
+                      <li
+                        key={child.name}
                         className={cn(
-                          "flex items-center",
-                          "px-6 py-2 pl-12",
-                          "text-foreground dark:text-white",
-                          "hover:text-orange-600 dark:hover:text-orange-400",
-                          "transition-colors duration-200",
-                          "text-sm",
-                          currentPage === child.name &&
-                            "text-orange-600 dark:text-orange-400"
+                          "transform transition-all duration-300",
+                          openDropdown === item.name
+                            ? "translate-x-0 opacity-100"
+                            : "-translate-x-3 opacity-0"
                         )}
                       >
-                        <child.icon
+                        <a
+                          href="#"
+                          onClick={(e) => handleChildClick(child.name, e)}
                           className={cn(
-                            "mr-3",
-                            currentPage === child.name &&
-                              "text-orange-600 dark:text-orange-400"
+                            "flex items-center",
+                            "px-6 py-2 pl-12",
+                            "text-foreground",
+                            "hover:text-orange-600",
+                            "transition-colors duration-200",
+                            "text-sm",
+                            currentPage === child.name && "text-orange-600"
                           )}
-                          size={16}
-                        />
-                        {child.name}
-                      </a>
-                    </li>
-                  ))}
-                </ul>
-              </div>
+                        >
+                          <child.icon
+                            className={cn(
+                              "mr-3",
+                              currentPage === child.name && "text-orange-600"
+                            )}
+                            size={16}
+                          />
+                          {child.name}
+                        </a>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </li>
+          ))}
+        </ul>
+        <div className="sticky bottom-0 p-2 border-t bg-background">
+          <Button
+            variant="ghost"
+            className="w-full justify-center"
+            onClick={() => onCollapsedChange(!collapsed)}
+          >
+            {collapsed ? (
+              <PanelLeftOpen className="h-4 w-4" />
+            ) : (
+              <PanelLeftClose className="h-4 w-4" />
             )}
-          </li>
-        ))}
-      </ul>
+          </Button>
+        </div>
+      </div>
     </aside>
   );
 }

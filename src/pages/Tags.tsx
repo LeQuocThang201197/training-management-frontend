@@ -1,7 +1,15 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Search, Plus, ArrowUpDown, Pencil, Trash2 } from "lucide-react";
+import {
+  Search,
+  Plus,
+  ArrowUpDown,
+  Pencil,
+  Trash2,
+  ChevronLeft,
+  ChevronRight,
+} from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 
@@ -11,6 +19,8 @@ interface Tag {
   color: string;
   usageCount: number;
 }
+
+const ITEMS_PER_PAGE = 9; // Số thẻ trên mỗi trang
 
 export function TagsPage() {
   const [tags] = useState<Tag[]>([
@@ -32,16 +42,82 @@ export function TagsPage() {
       color: "bg-green-100",
       usageCount: 18,
     },
+    {
+      id: "4",
+      name: "Thể thao",
+      color: "bg-purple-100",
+      usageCount: 30,
+    },
+    {
+      id: "5",
+      name: "Văn hóa",
+      color: "bg-pink-100",
+      usageCount: 12,
+    },
+    {
+      id: "6",
+      name: "Đào tạo",
+      color: "bg-yellow-100",
+      usageCount: 22,
+    },
+    {
+      id: "7",
+      name: "Giáo dục",
+      color: "bg-indigo-100",
+      usageCount: 28,
+    },
+    {
+      id: "8",
+      name: "Kỹ thuật",
+      color: "bg-red-100",
+      usageCount: 16,
+    },
+    {
+      id: "9",
+      name: "Quân sự",
+      color: "bg-teal-100",
+      usageCount: 35,
+    },
+    {
+      id: "10",
+      name: "Chiến thuật",
+      color: "bg-cyan-100",
+      usageCount: 20,
+    },
+    {
+      id: "11",
+      name: "Chiến lược",
+      color: "bg-emerald-100",
+      usageCount: 25,
+    },
+    {
+      id: "12",
+      name: "Nghiên cứu",
+      color: "bg-violet-100",
+      usageCount: 14,
+    },
   ]);
 
+  const [currentPage, setCurrentPage] = useState(1);
   const [sortBy, setSortBy] = useState<"name" | "usage">("name");
 
-  const sortedTags = [...tags].sort((a, b) => {
-    if (sortBy === "name") {
-      return a.name.localeCompare(b.name);
-    }
-    return b.usageCount - a.usageCount;
-  });
+  // Tính toán tổng số trang
+  const totalPages = Math.ceil(tags.length / ITEMS_PER_PAGE);
+
+  // Sắp xếp và phân trang
+  const sortedAndPaginatedTags = [...tags]
+    .sort((a, b) => {
+      if (sortBy === "name") {
+        return a.name.localeCompare(b.name);
+      }
+      return b.usageCount - a.usageCount;
+    })
+    .slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
+
+  // Xử lý chuyển trang
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
 
   return (
     <div className="container mx-auto p-6 bg-white rounded-lg shadow">
@@ -68,7 +144,7 @@ export function TagsPage() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {sortedTags.map((tag) => (
+        {sortedAndPaginatedTags.map((tag) => (
           <Card
             key={tag.id}
             className={`${tag.color} hover:shadow-lg transition-all duration-300 group relative overflow-hidden`}
@@ -114,6 +190,42 @@ export function TagsPage() {
           </Card>
         ))}
       </div>
+
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div className="mt-6 flex items-center justify-center gap-2">
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={() => handlePageChange(currentPage - 1)}
+            disabled={currentPage === 1}
+          >
+            <ChevronLeft className="h-4 w-4" />
+          </Button>
+
+          {/* Hiển thị các nút số trang */}
+          {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+            <Button
+              key={page}
+              variant={currentPage === page ? "default" : "outline"}
+              size="icon"
+              onClick={() => handlePageChange(page)}
+              className="w-8 h-8"
+            >
+              {page}
+            </Button>
+          ))}
+
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={() => handlePageChange(currentPage + 1)}
+            disabled={currentPage === totalPages}
+          >
+            <ChevronRight className="h-4 w-4" />
+          </Button>
+        </div>
+      )}
     </div>
   );
 }

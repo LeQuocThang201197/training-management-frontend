@@ -13,8 +13,8 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Eye, EyeOff } from "lucide-react";
-import { useAuth } from "@/contexts/AuthContext";
-import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/hooks/useAuth";
+import { useNavigate, useLocation } from "react-router-dom";
 import {
   AlertDialog,
   AlertDialogContent,
@@ -32,6 +32,7 @@ const formSchema = z.object({
 export function LoginPage() {
   const { login } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -46,8 +47,9 @@ export function LoginPage() {
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     try {
       await login(values.email, values.password);
-      navigate("/");
-    } catch (error) {
+      const from = location.state?.from?.pathname || "/";
+      navigate(from);
+    } catch {
       setError("Đăng nhập không thành công. Vui lòng kiểm tra lại thông tin.");
     }
   };

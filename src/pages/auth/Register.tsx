@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Eye, EyeOff } from "lucide-react";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
 import {
   AlertDialog,
@@ -60,12 +60,25 @@ export function RegisterPage() {
         email: values.email,
         password: values.password,
       };
-      console.log("Dữ liệu gửi đi:", userData);
 
-      await register(userData);
-      navigate("/login");
+      console.log("Sending registration data:", userData);
+
+      const response = await register(userData);
+      console.log("Registration response:", response);
+
+      if (response && response.success) {
+        navigate("/login");
+      } else {
+        setError("Đăng ký không thành công. Vui lòng thử lại.");
+      }
     } catch (error) {
-      setError("Đăng ký không thành công. Vui lòng thử lại.");
+      console.error("Registration error:", error);
+
+      if (error instanceof Error) {
+        setError(error.message);
+      } else {
+        setError("Đăng ký không thành công. Vui lòng thử lại.");
+      }
     }
   };
 

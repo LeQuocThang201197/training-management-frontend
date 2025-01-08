@@ -2,7 +2,12 @@ export interface User {
   id: string;
   email: string;
   fullName: string;
-  role: "admin" | "manager" | "user";
+  role: {
+    id: number;
+    key: string;
+    value: string;
+    type: string;
+  };
   permissions: string[];
 }
 

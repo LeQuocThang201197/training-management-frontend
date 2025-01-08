@@ -26,46 +26,72 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { Link, useLocation } from "react-router-dom";
 
 interface MenuItem {
   name: string;
   icon: LucideIcon;
-  children?: { name: string; icon: LucideIcon }[];
+  path?: string;
+  children?: {
+    name: string;
+    icon: LucideIcon;
+    path?: string;
+  }[];
 }
 
 const menuItems: MenuItem[] = [
-  { name: "Tổng quan", icon: ChartPie },
+  { name: "Tổng quan", icon: ChartPie, path: "/" },
   {
     name: "Quản lý",
     icon: ClipboardList,
     children: [
-      { name: "Văn bản, giấy tờ", icon: FileText },
-      { name: "Tập trung", icon: Container },
-      { name: "Tập huấn Bổ sung", icon: UserPlus },
-      { name: "Thôi tập huấn", icon: UserMinus },
-      { name: "Tập huấn", icon: Dumbbell },
-      { name: "Thi đấu", icon: Trophy },
-      { name: "Nhân sự", icon: User },
+      {
+        name: "Văn bản, giấy tờ",
+        icon: FileText,
+        path: "/management/documents",
+      },
+      { name: "Tập trung", icon: Container, path: "/management/training" },
+      {
+        name: "Tập huấn Bổ sung",
+        icon: UserPlus,
+        path: "/management/additional-training",
+      },
+      {
+        name: "Thôi tập huấn",
+        icon: UserMinus,
+        path: "/management/minus-training",
+      },
+      { name: "Tập huấn", icon: Dumbbell, path: "/management/training-camp" },
+      { name: "Thi đấu", icon: Trophy, path: "/management/competition" },
+      { name: "Nhân sự", icon: User, path: "/management/personnel" },
     ],
   },
   {
     name: "Thiết lập",
     icon: Settings,
     children: [
-      { name: "Nhân sự", icon: SquareUserRound },
-      { name: "Thẻ", icon: Tag },
-      { name: "Vai trò", icon: UserCog },
-      { name: "Môn thể thao", icon: Volleyball },
-      { name: "Đội", icon: Users },
+      { name: "Nhân sự", icon: SquareUserRound, path: "/settings/personnel" },
+      { name: "Thẻ", icon: Tag, path: "/settings/tags" },
+      { name: "Vai trò", icon: UserCog, path: "/settings/roles" },
+      { name: "Môn thể thao", icon: Volleyball, path: "/settings/sports" },
+      { name: "Đội", icon: Users, path: "/settings/teams" },
     ],
   },
-  { name: "Thành tích", icon: Medal },
+  { name: "Thành tích", icon: Medal, path: "/achievement" },
   {
     name: "Tổ chuyên môn",
     icon: ChartNoAxesCombined,
     children: [
-      { name: "Thói quen ghi chép", icon: NotebookPen },
-      { name: "Chỉ số", icon: ChartColumnIncreasing },
+      {
+        name: "Thói quen ghi chép",
+        icon: NotebookPen,
+        path: "/specialized-team/habit",
+      },
+      {
+        name: "Chỉ số",
+        icon: ChartColumnIncreasing,
+        path: "/specialized-team/statistics",
+      },
     ],
   },
 ];
@@ -77,13 +103,9 @@ interface SidebarProps {
   onCollapsedChange: (collapsed: boolean) => void;
 }
 
-export function Sidebar({
-  currentPage,
-  onPageChange,
-  collapsed,
-  onCollapsedChange,
-}: SidebarProps) {
+export function Sidebar({ collapsed, onCollapsedChange }: SidebarProps) {
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
+  const location = useLocation();
 
   useEffect(() => {
     const checkMobile = () => {
@@ -111,21 +133,23 @@ export function Sidebar({
       } else {
         toggleDropdown(item.name);
       }
-    } else {
-      onPageChange(item.name);
+    } else if (item.path) {
+      setOpenDropdown(null);
     }
   };
 
-  const handleChildClick = (childName: string, e: React.MouseEvent) => {
-    e.stopPropagation();
-    onPageChange(childName);
-  };
-
   const isItemActive = (item: MenuItem) => {
-    return (
-      currentPage === item.name ||
-      item.children?.some((child) => child.name === currentPage)
-    );
+    if (item.path && location.pathname === item.path) {
+      return true;
+    }
+
+    // Kiểm tra xem path hiện tại có bắt đầu bằng path của menu cha không
+    if (item.children) {
+      const basePath = item.children[0].path?.split("/")[1]; // Lấy phần đầu của path (management, settings, etc)
+      return location.pathname.startsWith(`/${basePath}`);
+    }
+
+    return false;
   };
 
   return (
@@ -139,41 +163,70 @@ export function Sidebar({
         <ul className="flex-1 py-2">
           {menuItems.map((item) => (
             <li key={item.name}>
-              <a
-                href="#"
-                onClick={() => handleClick(item)}
-                className={cn(
-                  "flex items-center",
-                  collapsed ? "justify-center" : "justify-between",
-                  "px-6 py-3 mx-2",
-                  "rounded-lg",
-                  "text-foreground",
-                  "hover:bg-orange-100",
-                  "transition-colors duration-200",
-                  "cursor-pointer",
-                  isItemActive(item) && "bg-orange-100 text-orange-600"
-                )}
-              >
-                <div className={cn("flex items-center", collapsed && "m-0")}>
-                  <item.icon
-                    className={cn(
-                      collapsed ? "mr-0" : "mr-3",
-                      isItemActive(item) && "text-orange-600"
-                    )}
-                    size={20}
-                  />
-                  {!collapsed && item.name}
-                </div>
-                {!collapsed && item.children && (
-                  <ChevronDown
-                    size={18}
-                    className={cn(
-                      "transform transition-transform duration-200",
-                      openDropdown === item.name ? "rotate-0" : "-rotate-90"
-                    )}
-                  />
-                )}
-              </a>
+              {item.children ? (
+                <a
+                  href="#"
+                  onClick={() => handleClick(item)}
+                  className={cn(
+                    "flex items-center",
+                    collapsed ? "justify-center" : "justify-between",
+                    "px-6 py-3 mx-2",
+                    "rounded-lg",
+                    "text-foreground",
+                    "hover:bg-orange-100",
+                    "transition-colors duration-200",
+                    "cursor-pointer",
+                    isItemActive(item) && "bg-orange-100 text-orange-600"
+                  )}
+                >
+                  <div className={cn("flex items-center", collapsed && "m-0")}>
+                    <item.icon
+                      className={cn(
+                        collapsed ? "mr-0" : "mr-3",
+                        isItemActive(item) && "text-orange-600"
+                      )}
+                      size={20}
+                    />
+                    {!collapsed && item.name}
+                  </div>
+                  {!collapsed && item.children && (
+                    <ChevronDown
+                      size={18}
+                      className={cn(
+                        "transform transition-transform duration-200",
+                        openDropdown === item.name ? "rotate-0" : "-rotate-90"
+                      )}
+                    />
+                  )}
+                </a>
+              ) : (
+                <Link
+                  to={item.path || "#"}
+                  onClick={() => handleClick(item)}
+                  className={cn(
+                    "flex items-center",
+                    collapsed ? "justify-center" : "justify-between",
+                    "px-6 py-3 mx-2",
+                    "rounded-lg",
+                    "text-foreground",
+                    "hover:bg-orange-100",
+                    "transition-colors duration-200",
+                    "cursor-pointer",
+                    isItemActive(item) && "bg-orange-100 text-orange-600"
+                  )}
+                >
+                  <div className={cn("flex items-center", collapsed && "m-0")}>
+                    <item.icon
+                      className={cn(
+                        collapsed ? "mr-0" : "mr-3",
+                        isItemActive(item) && "text-orange-600"
+                      )}
+                      size={20}
+                    />
+                    {!collapsed && item.name}
+                  </div>
+                </Link>
+              )}
               {!collapsed && item.children && (
                 <div
                   className={cn(
@@ -192,9 +245,8 @@ export function Sidebar({
                             : "-translate-x-3 opacity-0"
                         )}
                       >
-                        <a
-                          href="#"
-                          onClick={(e) => handleChildClick(child.name, e)}
+                        <Link
+                          to={child.path || "#"}
                           className={cn(
                             "flex items-center",
                             "px-6 py-2 pl-12",
@@ -202,18 +254,20 @@ export function Sidebar({
                             "hover:text-orange-600",
                             "transition-colors duration-200",
                             "text-sm",
-                            currentPage === child.name && "text-orange-600"
+                            location.pathname === child.path &&
+                              "text-orange-600"
                           )}
                         >
                           <child.icon
                             className={cn(
                               "mr-3",
-                              currentPage === child.name && "text-orange-600"
+                              location.pathname === child.path &&
+                                "text-orange-600"
                             )}
                             size={16}
                           />
                           {child.name}
-                        </a>
+                        </Link>
                       </li>
                     ))}
                   </ul>

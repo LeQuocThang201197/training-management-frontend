@@ -1,0 +1,23 @@
+[33mcommit 4bff79fdd45ea7be190457f10d6154f6346b2e0f[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmaster[m[33m, [m[1;31morigin/master[m[33m)[m
+Author: Thang Le <lequocthang201197@gmail.com>
+Date:   Mon Jan 6 07:01:04 2025 +0700
+
+    Pagging for Tags page
+
+[33mcommit f39ef9eef6fb0331cea8301e48473e2cc1da6a26[m
+Author: Thang Le <lequocthang201197@gmail.com>
+Date:   Sun Jan 5 16:26:08 2025 +0700
+
+    update tags
+
+[33mcommit 21e5c56df2d969e0ea0c08727ecfd50d017f1f9f[m
+Author: Thang Le <lequocthang201197@gmail.com>
+Date:   Sun Jan 5 10:45:38 2025 +0700
+
+    Bắt đầu thói quen push code thường xuyên
+
+[33mcommit 9ace365768809e9ffc6ebf4625efb95a9bf2607c[m
+Author: Thang Le <lequocthang201197@gmail.com>
+Date:   Fri Dec 20 08:44:26 2024 +0700
+
+    Initial commit

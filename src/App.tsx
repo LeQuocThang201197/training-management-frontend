@@ -1,49 +1,19 @@
-import { useState, useEffect } from "react";
-import { AuthProvider } from "@/contexts/AuthContext";
+import { AuthProvider } from "./contexts/AuthProvider";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
-import { ProtectedRoute } from "@/components/ProtectedRoute";
-import { LoginPage } from "@/pages/auth/Login";
-import { RegisterPage } from "@/pages/auth/Register";
-import { AppLayout } from "@/components/AppLayout";
-import { OverviewPage } from "@/pages/Overview";
-import { DocumentsPage } from "@/pages/Documents";
-import { TagsPage } from "@/pages/Tags";
-import { TrainingPage } from "@/pages/Training";
-import { AdditionalTrainingPage } from "@/pages/AdditionalTraining";
-import { PersonnelPage } from "@/pages/Personnel";
-import { SportsPage } from "@/pages/Sports";
-import { TeamsPage } from "@/pages/Teams";
+import { ProtectedRoute } from "./components/ProtectedRoute";
+import { LoginPage } from "./pages/auth/Login";
+import { RegisterPage } from "./pages/auth/Register";
+import { AppLayout } from "./components/AppLayout";
+import { OverviewPage } from "./pages/Overview";
+import { DocumentsPage } from "./pages/Documents";
+import { TagsPage } from "./pages/Tags";
+import { TrainingPage } from "./pages/Training";
+import { AdditionalTrainingPage } from "./pages/AdditionalTraining";
+import { PersonnelPage } from "./pages/Personnel";
+import { SportsPage } from "./pages/Sports";
+import { TeamsPage } from "./pages/Teams";
 
 function App() {
-  const [currentPage, setCurrentPage] = useState("Tổng quan");
-
-  useEffect(() => {
-    document.title = `${currentPage} | Quản lý Huấn luyện và Công tác Chính trị`;
-  }, [currentPage]);
-
-  const renderPage = () => {
-    switch (currentPage) {
-      case "Tổng quan":
-        return <OverviewPage />;
-      case "Văn bản, giấy tờ":
-        return <DocumentsPage />;
-      case "Thẻ":
-        return <TagsPage />;
-      case "Tập trung":
-        return <TrainingPage />;
-      case "Tập huấn Bổ sung":
-        return <AdditionalTrainingPage />;
-      case "Nhân sự":
-        return <PersonnelPage />;
-      case "Môn thể thao":
-        return <SportsPage />;
-      case "Đội":
-        return <TeamsPage />;
-      default:
-        return null;
-    }
-  };
-
   return (
     <AuthProvider>
       <BrowserRouter>
@@ -54,11 +24,53 @@ function App() {
             path="/*"
             element={
               <ProtectedRoute>
-                <AppLayout
-                  currentPage={currentPage}
-                  onPageChange={setCurrentPage}
-                >
-                  {renderPage()}
+                <AppLayout>
+                  <Routes>
+                    <Route path="/" element={<OverviewPage />} />
+
+                    {/* Quản lý routes */}
+                    <Route path="/management">
+                      <Route path="documents" element={<DocumentsPage />} />
+                      <Route path="training" element={<TrainingPage />} />
+                      <Route
+                        path="additional-training"
+                        element={<AdditionalTrainingPage />}
+                      />
+                      <Route
+                        path="minus-training"
+                        element={<div>Thôi tập huấn</div>}
+                      />
+                      <Route
+                        path="training-camp"
+                        element={<div>Tập huấn</div>}
+                      />
+                      <Route path="competition" element={<div>Thi đấu</div>} />
+                      <Route path="personnel" element={<PersonnelPage />} />
+                    </Route>
+
+                    {/* Thiết lập routes */}
+                    <Route path="/settings">
+                      <Route path="personnel" element={<PersonnelPage />} />
+                      <Route path="tags" element={<TagsPage />} />
+                      <Route path="roles" element={<div>Vai trò</div>} />
+                      <Route path="sports" element={<SportsPage />} />
+                      <Route path="teams" element={<TeamsPage />} />
+                    </Route>
+
+                    <Route
+                      path="/achievement"
+                      element={<div>Thành tích</div>}
+                    />
+
+                    {/* Tổ chuyên môn routes */}
+                    <Route path="/specialized-team">
+                      <Route
+                        path="habit"
+                        element={<div>Thói quen ghi chép</div>}
+                      />
+                      <Route path="statistics" element={<div>Chỉ số</div>} />
+                    </Route>
+                  </Routes>
                 </AppLayout>
               </ProtectedRoute>
             }

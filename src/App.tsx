@@ -12,6 +12,8 @@ import { AdditionalTrainingPage } from "./pages/AdditionalTraining";
 import { PersonnelPage } from "./pages/Personnel";
 import { SportsPage } from "./pages/Sports";
 import { TeamsPage } from "./pages/Teams";
+import { PermissionGate } from "./components/PermissionGate";
+import { Permission } from "./types/auth";
 
 function App() {
   return (
@@ -45,7 +47,18 @@ function App() {
                         element={<div>Tập huấn</div>}
                       />
                       <Route path="competition" element={<div>Thi đấu</div>} />
-                      <Route path="personnel" element={<PersonnelPage />} />
+                      <Route
+                        path="personnel"
+                        element={
+                          <ProtectedRoute>
+                            <PermissionGate
+                              permission={Permission.MANAGE_PERSONNEL}
+                            >
+                              <PersonnelPage />
+                            </PermissionGate>
+                          </ProtectedRoute>
+                        }
+                      />
                     </Route>
 
                     {/* Thiết lập routes */}

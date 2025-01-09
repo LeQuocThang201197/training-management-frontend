@@ -18,11 +18,27 @@ export interface AuthState {
 }
 
 export enum Permission {
+  // Quản lý thẻ
   CREATE_TAG = "create:tag",
   EDIT_TAG = "edit:tag",
   DELETE_TAG = "delete:tag",
   VIEW_TAG = "view:tag",
-  // Thêm các permission khác...
+
+  // Quản lý văn bản
+  CREATE_DOCUMENT = "create:document",
+  EDIT_DOCUMENT = "edit:document",
+  DELETE_DOCUMENT = "delete:document",
+  VIEW_DOCUMENT = "view:document",
+
+  // Quản lý nhân sự
+  MANAGE_PERSONNEL = "manage:personnel",
+  VIEW_PERSONNEL = "view:personnel",
+
+  // Quản lý tập huấn
+  MANAGE_TRAINING = "manage:training",
+  VIEW_TRAINING = "view:training",
+
+  // ... thêm các permission khác
 }
 
 export enum Role {
@@ -36,17 +52,31 @@ export enum Role {
 
 export const RolePermissions: Record<Role, Permission[]> = {
   [Role.ADMIN]: Object.values(Permission), // Admin có tất cả quyền
+
   [Role.MANAGER]: [
     Permission.VIEW_TAG,
     Permission.CREATE_TAG,
-    // Thêm các quyền khác...
+    Permission.VIEW_DOCUMENT,
+    Permission.CREATE_DOCUMENT,
+    Permission.MANAGE_PERSONNEL,
+    Permission.MANAGE_TRAINING,
   ],
+
   [Role.TRAINING_OFFICER]: [
     Permission.VIEW_TAG,
     Permission.CREATE_TAG,
-    // Thêm các quyền khác...
+    Permission.VIEW_DOCUMENT,
+    Permission.VIEW_PERSONNEL,
+    Permission.VIEW_TRAINING,
   ],
-  [Role.SPECIALIZED_TEAM_MEMBER]: [Permission.VIEW_TAG],
-  [Role.SURVEY_RESPONDENT]: [Permission.VIEW_TAG],
+
+  [Role.SPECIALIZED_TEAM_MEMBER]: [
+    Permission.VIEW_TAG,
+    Permission.VIEW_DOCUMENT,
+    Permission.VIEW_TRAINING,
+  ],
+
+  [Role.SURVEY_RESPONDENT]: [Permission.VIEW_TAG, Permission.VIEW_DOCUMENT],
+
   [Role.GUEST]: [Permission.VIEW_TAG],
 };

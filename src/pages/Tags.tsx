@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -20,6 +20,15 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { API_URL } from "@/config/api";
 
 interface Tag {
   id: string;
@@ -43,90 +52,208 @@ const sortOptions: SortOption[] = [
   { field: "usage", direction: "desc", label: "Lượt dùng (Cao-Thấp)" },
 ];
 
-export function TagsPage() {
-  console.log("Rendering TagsPage");
+interface TagFormData {
+  name: string;
+  color: string;
+}
 
-  const [tags] = useState<Tag[]>([
-    {
-      id: "1",
-      name: "Huấn luyện",
-      color: "bg-orange-100",
-      usageCount: 24,
-    },
-    {
-      id: "2",
-      name: "Thi đấu",
-      color: "bg-blue-100",
-      usageCount: 15,
-    },
-    {
-      id: "3",
-      name: "Chính trị",
-      color: "bg-green-100",
-      usageCount: 18,
-    },
-    {
-      id: "4",
-      name: "Thể thao",
-      color: "bg-purple-100",
-      usageCount: 30,
-    },
-    {
-      id: "5",
-      name: "Văn hóa",
-      color: "bg-pink-100",
-      usageCount: 12,
-    },
-    {
-      id: "6",
-      name: "Đào tạo",
-      color: "bg-yellow-100",
-      usageCount: 22,
-    },
-    {
-      id: "7",
-      name: "Giáo dục",
-      color: "bg-indigo-100",
-      usageCount: 28,
-    },
-    {
-      id: "8",
-      name: "Kỹ thuật",
-      color: "bg-red-100",
-      usageCount: 16,
-    },
-    {
-      id: "9",
-      name: "Quân sự",
-      color: "bg-teal-100",
-      usageCount: 35,
-    },
-    {
-      id: "10",
-      name: "Chiến thuật",
-      color: "bg-cyan-100",
-      usageCount: 20,
-    },
-    {
-      id: "11",
-      name: "Chiến lược",
-      color: "bg-emerald-100",
-      usageCount: 25,
-    },
-    {
-      id: "12",
-      name: "Nghiên cứu",
-      color: "bg-violet-100",
-      usageCount: 14,
-    },
-  ]);
+const colors = [
+  "blue",
+  "green",
+  "yellow",
+  "red",
+  "purple",
+  "pink",
+  "indigo",
+  "orange",
+  "teal",
+  "cyan",
+];
+
+export function TagsPage() {
+  const [tags, setTags] = useState<Tag[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [currentSort, setCurrentSort] = useState<SortOption>(sortOptions[0]);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [formData, setFormData] = useState<TagFormData>({
+    name: "",
+    color: "bg-blue-100",
+  });
+  const [searchTerm, setSearchTerm] = useState("");
 
-  const totalPages = Math.ceil(tags.length / ITEMS_PER_PAGE);
+  const getRandomColor = () => {
+    const randomIndex = Math.floor(Math.random() * colors.length);
+    return `bg-${colors[randomIndex]}-100`;
+  };
 
-  // Cập nhật logic sắp xếp
-  const sortedAndPaginatedTags = [...tags]
+  const handleOpenChange = (open: boolean) => {
+    setIsDialogOpen(open);
+    if (open) {
+      setFormData({
+        name: "",
+        color: getRandomColor(),
+      });
+    }
+  };
+
+  // Fetch tags từ API
+  useEffect(() => {
+    const fetchTags = async () => {
+      try {
+        const response = await fetch(`${API_URL}/tags`, {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        });
+        if (!response.ok) throw new Error("Failed to fetch tags");
+
+        const data = await response.json();
+        setTags(data.data);
+        setError(null);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Error fetching tags");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchTags();
+  }, []);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm]);
+
+  // Loading state
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center min-h-[400px]">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
+  // Error state
+  if (error) {
+    return (
+      <div className="flex justify-center items-center min-h-[400px] text-red-500">
+        <p>Error: {error}</p>
+      </div>
+    );
+  }
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      const response = await fetch(`${API_URL}/tags`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+        body: JSON.stringify(formData),
+      });
+
+      if (!response.ok) throw new Error("Failed to create tag");
+
+      const newTag = await response.json();
+      setTags((prevTags) => [...prevTags, newTag.data]);
+      setIsDialogOpen(false);
+      setFormData({ name: "", color: "bg-blue-100" });
+    } catch (err) {
+      console.error("Error creating tag:", err);
+    }
+  };
+
+  // Nếu không có tags
+  if (tags.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[400px] gap-4">
+        <p className="text-gray-500">Chưa có thẻ nào</p>
+        <PermissionGate permission={Permission.CREATE_TAG}>
+          <Dialog open={isDialogOpen} onOpenChange={handleOpenChange}>
+            <DialogTrigger asChild>
+              <Button>
+                <Plus className="mr-2 h-4 w-4" />
+                Thêm thẻ mới
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Tạo thẻ mới</DialogTitle>
+              </DialogHeader>
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="name">Tên thẻ</Label>
+                  <Input
+                    id="name"
+                    value={formData.name}
+                    onChange={(e) =>
+                      setFormData({ ...formData, name: e.target.value })
+                    }
+                    placeholder="Nhập tên thẻ..."
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Màu sắc</Label>
+                  <div className="grid grid-cols-5 gap-2">
+                    {[
+                      "blue",
+                      "green",
+                      "yellow",
+                      "red",
+                      "purple",
+                      "pink",
+                      "indigo",
+                      "orange",
+                      "teal",
+                      "cyan",
+                    ].map((color) => (
+                      <div
+                        key={color}
+                        className={`w-8 h-8 rounded-full bg-${color}-100 cursor-pointer border-2 ${
+                          formData.color === `bg-${color}-100`
+                            ? "border-primary"
+                            : "border-transparent"
+                        }`}
+                        onClick={() =>
+                          setFormData({
+                            ...formData,
+                            color: `bg-${color}-100`,
+                          })
+                        }
+                      />
+                    ))}
+                  </div>
+                </div>
+                <div className="flex justify-end gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => setIsDialogOpen(false)}
+                  >
+                    Hủy
+                  </Button>
+                  <Button type="submit">Tạo thẻ</Button>
+                </div>
+              </form>
+            </DialogContent>
+          </Dialog>
+        </PermissionGate>
+      </div>
+    );
+  }
+
+  const filteredTags = tags.filter((tag) =>
+    tag.name.toLowerCase().includes(searchTerm.toLowerCase().trim())
+  );
+
+  const totalPages = Math.ceil(filteredTags.length / ITEMS_PER_PAGE);
+
+  const sortedAndPaginatedTags = [...filteredTags]
     .sort((a, b) => {
       const modifier = currentSort.direction === "asc" ? 1 : -1;
       if (currentSort.field === "name") {
@@ -136,7 +263,6 @@ export function TagsPage() {
     })
     .slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
 
-  // Xử lý chuyển trang
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
   };
@@ -166,17 +292,87 @@ export function TagsPage() {
           </DropdownMenu>
 
           <PermissionGate permission={Permission.CREATE_TAG}>
-            <Button>
-              <Plus className="mr-2 h-4 w-4" />
-              Thêm thẻ mới
-            </Button>
+            <Dialog open={isDialogOpen} onOpenChange={handleOpenChange}>
+              <DialogTrigger asChild>
+                <Button>
+                  <Plus className="mr-2 h-4 w-4" />
+                  Thêm thẻ mới
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Tạo thẻ mới</DialogTitle>
+                </DialogHeader>
+                <form onSubmit={handleSubmit} className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="name">Tên thẻ</Label>
+                    <Input
+                      id="name"
+                      value={formData.name}
+                      onChange={(e) =>
+                        setFormData({ ...formData, name: e.target.value })
+                      }
+                      placeholder="Nhập tên thẻ..."
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Màu sắc</Label>
+                    <div className="grid grid-cols-5 gap-2">
+                      {[
+                        "blue",
+                        "green",
+                        "yellow",
+                        "red",
+                        "purple",
+                        "pink",
+                        "indigo",
+                        "orange",
+                        "teal",
+                        "cyan",
+                      ].map((color) => (
+                        <div
+                          key={color}
+                          className={`w-8 h-8 rounded-full bg-${color}-100 cursor-pointer border-2 ${
+                            formData.color === `bg-${color}-100`
+                              ? "border-primary"
+                              : "border-transparent"
+                          }`}
+                          onClick={() =>
+                            setFormData({
+                              ...formData,
+                              color: `bg-${color}-100`,
+                            })
+                          }
+                        />
+                      ))}
+                    </div>
+                  </div>
+                  <div className="flex justify-end gap-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => setIsDialogOpen(false)}
+                    >
+                      Hủy
+                    </Button>
+                    <Button type="submit">Tạo thẻ</Button>
+                  </div>
+                </form>
+              </DialogContent>
+            </Dialog>
           </PermissionGate>
         </div>
       </div>
 
       <div className="relative mb-6">
         <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500" />
-        <Input placeholder="Tìm kiếm thẻ..." className="pl-10" />
+        <Input
+          placeholder="Tìm kiếm thẻ..."
+          className="pl-10"
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+        />
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">

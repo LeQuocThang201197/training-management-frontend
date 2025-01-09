@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { AuthContext } from "./AuthContext";
 import { AuthState } from "../types/auth";
 import { API_URL, API_ENDPOINTS } from "../config/api";
+import { Permission, Role, RolePermissions } from "../types/auth";
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [authState, setAuthState] = useState<AuthState & { loading: boolean }>({
@@ -97,8 +98,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     });
   };
 
-  const hasPermission = (permission: string) => {
-    return authState.user?.permissions.includes(permission) ?? false;
+  const hasPermission = (permission: Permission) => {
+    if (!authState.user) {
+      console.log("No user found");
+      return false;
+    }
+
+    const userRole = authState.user.role.key as Role;
+    console.log("User role:", userRole);
+    console.log("Available permissions:", RolePermissions[userRole]);
+
+    const permissions = RolePermissions[userRole] || [];
+    const hasPermission = permissions.includes(permission);
+
+    console.log("Checking permission:", permission);
+    console.log("Has permission:", hasPermission);
+
+    return hasPermission;
   };
 
   const register = async (userData: {

@@ -5,7 +5,7 @@ interface AuthContextType extends AuthState {
   loading: boolean;
   login: (email: string, password: string) => Promise<void>;
   logout: () => void;
-  hasPermission: (permission: string) => boolean;
+  hasPermission: (permission: Permission) => boolean;
   register: (userData: {
     fullName: string;
     email: string;

@@ -51,7 +51,14 @@ function App() {
                     {/* Thiết lập routes */}
                     <Route path="/settings">
                       <Route path="personnel" element={<PersonnelPage />} />
-                      <Route path="tags" element={<TagsPage />} />
+                      <Route
+                        path="tags"
+                        element={
+                          <ProtectedRoute>
+                            <TagsPage />
+                          </ProtectedRoute>
+                        }
+                      />
                       <Route path="roles" element={<div>Vai trò</div>} />
                       <Route path="sports" element={<SportsPage />} />
                       <Route path="teams" element={<TeamsPage />} />

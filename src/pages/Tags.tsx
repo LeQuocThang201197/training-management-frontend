@@ -29,6 +29,17 @@ import {
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { API_URL } from "@/config/api";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { cn } from "@/lib/utils";
 
 interface Tag {
   id: string;
@@ -58,16 +69,16 @@ interface TagFormData {
 }
 
 const colors = [
-  "blue",
-  "green",
-  "yellow",
-  "red",
-  "purple",
-  "pink",
-  "indigo",
-  "orange",
-  "teal",
-  "cyan",
+  { value: "bg-blue-100", label: "Xanh dương" },
+  { value: "bg-green-100", label: "Xanh lá" },
+  { value: "bg-yellow-100", label: "Vàng" },
+  { value: "bg-red-100", label: "Đỏ" },
+  { value: "bg-purple-100", label: "Tím" },
+  { value: "bg-pink-100", label: "Hồng" },
+  { value: "bg-indigo-100", label: "Chàm" },
+  { value: "bg-orange-100", label: "Cam" },
+  { value: "bg-teal-100", label: "Xanh ngọc" },
+  { value: "bg-cyan-100", label: "Xanh lơ" },
 ];
 
 export function TagsPage() {
@@ -82,6 +93,8 @@ export function TagsPage() {
     color: "bg-blue-100",
   });
   const [searchTerm, setSearchTerm] = useState("");
+  const [editingTag, setEditingTag] = useState<Tag | null>(null);
+  const [tagToDelete, setTagToDelete] = useState<Tag | null>(null);
 
   const getRandomColor = () => {
     const randomIndex = Math.floor(Math.random() * colors.length);
@@ -90,11 +103,13 @@ export function TagsPage() {
 
   const handleOpenChange = (open: boolean) => {
     setIsDialogOpen(open);
-    if (open) {
+    if (open && !editingTag) {
       setFormData({
         name: "",
         color: getRandomColor(),
       });
+    } else if (!open) {
+      setEditingTag(null);
     }
   };
 
@@ -167,6 +182,66 @@ export function TagsPage() {
     }
   };
 
+  const handleEdit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingTag) return;
+
+    try {
+      const response = await fetch(`${API_URL}/tags/${editingTag.id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+        body: JSON.stringify(formData),
+      });
+
+      if (!response.ok) throw new Error("Failed to update tag");
+
+      const updatedTag = await response.json();
+      setTags((prevTags) =>
+        prevTags.map((tag) =>
+          tag.id === editingTag.id ? updatedTag.data : tag
+        )
+      );
+      setIsDialogOpen(false);
+      setEditingTag(null);
+    } catch (err) {
+      console.error("Error updating tag:", err);
+    }
+  };
+
+  const openEditForm = (tag: Tag) => {
+    setEditingTag(tag);
+    setFormData({
+      name: tag.name,
+      color: tag.color,
+    });
+    setIsDialogOpen(true);
+  };
+
+  const handleDelete = async () => {
+    if (!tagToDelete) return;
+
+    try {
+      const response = await fetch(`${API_URL}/tags/${tagToDelete.id}`, {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      });
+
+      if (!response.ok) throw new Error("Failed to delete tag");
+
+      setTags((prevTags) =>
+        prevTags.filter((tag) => tag.id !== tagToDelete.id)
+      );
+      setTagToDelete(null);
+    } catch (err) {
+      console.error("Error deleting tag:", err);
+    }
+  };
+
   // Nếu không có tags
   if (tags.length === 0) {
     return (
@@ -200,31 +275,20 @@ export function TagsPage() {
                 <div className="space-y-2">
                   <Label>Màu sắc</Label>
                   <div className="grid grid-cols-5 gap-2">
-                    {[
-                      "blue",
-                      "green",
-                      "yellow",
-                      "red",
-                      "purple",
-                      "pink",
-                      "indigo",
-                      "orange",
-                      "teal",
-                      "cyan",
-                    ].map((color) => (
+                    {colors.map((color) => (
                       <div
-                        key={color}
-                        className={`w-8 h-8 rounded-full bg-${color}-100 cursor-pointer border-2 ${
-                          formData.color === `bg-${color}-100`
+                        key={color.value}
+                        className={cn(
+                          "w-8 h-8 rounded-full cursor-pointer border-2",
+                          color.value,
+                          formData.color === color.value
                             ? "border-primary"
                             : "border-transparent"
-                        }`}
+                        )}
                         onClick={() =>
-                          setFormData({
-                            ...formData,
-                            color: `bg-${color}-100`,
-                          })
+                          setFormData({ ...formData, color: color.value })
                         }
+                        title={color.label}
                       />
                     ))}
                   </div>
@@ -301,9 +365,14 @@ export function TagsPage() {
               </DialogTrigger>
               <DialogContent>
                 <DialogHeader>
-                  <DialogTitle>Tạo thẻ mới</DialogTitle>
+                  <DialogTitle>
+                    {editingTag ? "Chỉnh sửa thẻ" : "Tạo thẻ mới"}
+                  </DialogTitle>
                 </DialogHeader>
-                <form onSubmit={handleSubmit} className="space-y-4">
+                <form
+                  onSubmit={editingTag ? handleEdit : handleSubmit}
+                  className="space-y-4"
+                >
                   <div className="space-y-2">
                     <Label htmlFor="name">Tên thẻ</Label>
                     <Input
@@ -319,31 +388,20 @@ export function TagsPage() {
                   <div className="space-y-2">
                     <Label>Màu sắc</Label>
                     <div className="grid grid-cols-5 gap-2">
-                      {[
-                        "blue",
-                        "green",
-                        "yellow",
-                        "red",
-                        "purple",
-                        "pink",
-                        "indigo",
-                        "orange",
-                        "teal",
-                        "cyan",
-                      ].map((color) => (
+                      {colors.map((color) => (
                         <div
-                          key={color}
-                          className={`w-8 h-8 rounded-full bg-${color}-100 cursor-pointer border-2 ${
-                            formData.color === `bg-${color}-100`
+                          key={color.value}
+                          className={cn(
+                            "w-8 h-8 rounded-full cursor-pointer border-2",
+                            color.value,
+                            formData.color === color.value
                               ? "border-primary"
                               : "border-transparent"
-                          }`}
+                          )}
                           onClick={() =>
-                            setFormData({
-                              ...formData,
-                              color: `bg-${color}-100`,
-                            })
+                            setFormData({ ...formData, color: color.value })
                           }
+                          title={color.label}
                         />
                       ))}
                     </div>
@@ -356,7 +414,9 @@ export function TagsPage() {
                     >
                       Hủy
                     </Button>
-                    <Button type="submit">Tạo thẻ</Button>
+                    <Button type="submit">
+                      {editingTag ? "Cập nhật" : "Tạo thẻ"}
+                    </Button>
                   </div>
                 </form>
               </DialogContent>
@@ -379,14 +439,18 @@ export function TagsPage() {
         {sortedAndPaginatedTags.map((tag) => (
           <Card
             key={tag.id}
-            className={`${tag.color} hover:shadow-lg transition-all duration-300 group relative overflow-hidden`}
+            className={cn(
+              "hover:shadow-lg transition-all duration-300 group relative overflow-hidden",
+              tag.color
+            )}
           >
             <div className="p-4 flex items-center justify-between relative">
               <div className="flex items-center space-x-3">
                 <div
-                  className={`w-3 h-3 rounded-full bg-${
-                    tag.color.split("-")[1]
-                  }-500`}
+                  className={cn(
+                    "w-3 h-3 rounded-full",
+                    tag.color.replace("bg-", "bg-")
+                  )}
                 />
                 <span className="font-medium text-lg">{tag.name}</span>
               </div>
@@ -407,6 +471,7 @@ export function TagsPage() {
                       variant="ghost"
                       size="icon"
                       className="h-8 w-8 hover:bg-white/60"
+                      onClick={() => openEditForm(tag)}
                     >
                       <Pencil className="h-4 w-4" />
                     </Button>
@@ -416,6 +481,7 @@ export function TagsPage() {
                       variant="ghost"
                       size="icon"
                       className="h-8 w-8 hover:bg-white/60"
+                      onClick={() => setTagToDelete(tag)}
                     >
                       <Trash2 className="h-4 w-4" />
                     </Button>
@@ -462,6 +528,32 @@ export function TagsPage() {
           </Button>
         </div>
       )}
+
+      <AlertDialog
+        open={!!tagToDelete}
+        onOpenChange={(open) => !open && setTagToDelete(null)}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Bạn có chắc chắn muốn xóa?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Thẻ "{tagToDelete?.name}" sẽ bị xóa vĩnh viễn và không thể khôi
+              phục.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="sm:space-x-4">
+            <AlertDialogCancel className="w-full sm:w-32 bg-gray-100 hover:bg-gray-200 border-none text-gray-900">
+              Không
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDelete}
+              className="w-full sm:w-32 bg-red-500 hover:bg-red-600 text-white border-none"
+            >
+              Có, xóa thẻ
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

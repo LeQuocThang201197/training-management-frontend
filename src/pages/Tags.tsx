@@ -98,7 +98,7 @@ export function TagsPage() {
 
   const getRandomColor = () => {
     const randomIndex = Math.floor(Math.random() * colors.length);
-    return `bg-${colors[randomIndex]}-100`;
+    return colors[randomIndex].value;
   };
 
   const handleOpenChange = (open: boolean) => {
@@ -161,6 +161,18 @@ export function TagsPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Kiểm tra tên thẻ đã tồn tại chưa (không phân biệt hoa thường)
+    const isExist = tags.some(
+      (tag) => tag.name.toLowerCase() === formData.name.toLowerCase()
+    );
+
+    if (isExist) {
+      // Hiển thị thông báo lỗi
+      alert("Thẻ này đã tồn tại!"); // Hoặc dùng toast/alert đẹp hơn
+      return;
+    }
+
     try {
       const response = await fetch(`${API_URL}/tags`, {
         method: "POST",
@@ -171,20 +183,36 @@ export function TagsPage() {
         body: JSON.stringify(formData),
       });
 
-      if (!response.ok) throw new Error("Failed to create tag");
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message);
+      }
 
       const newTag = await response.json();
       setTags((prevTags) => [...prevTags, newTag.data]);
       setIsDialogOpen(false);
-      setFormData({ name: "", color: "bg-blue-100" });
+      setFormData({ name: "", color: getRandomColor() });
     } catch (err) {
       console.error("Error creating tag:", err);
+      // Hiển thị lỗi từ server nếu có
     }
   };
 
   const handleEdit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!editingTag) return;
+
+    // Kiểm tra tên thẻ đã tồn tại chưa (không tính thẻ đang edit)
+    const isExist = tags.some(
+      (tag) =>
+        tag.id !== editingTag.id &&
+        tag.name.toLowerCase() === formData.name.toLowerCase()
+    );
+
+    if (isExist) {
+      alert("Thẻ này đã tồn tại!"); // Hoặc dùng toast/alert đẹp hơn
+      return;
+    }
 
     try {
       const response = await fetch(`${API_URL}/tags/${editingTag.id}`, {
@@ -196,7 +224,10 @@ export function TagsPage() {
         body: JSON.stringify(formData),
       });
 
-      if (!response.ok) throw new Error("Failed to update tag");
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message);
+      }
 
       const updatedTag = await response.json();
       setTags((prevTags) =>

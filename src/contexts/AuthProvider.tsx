@@ -3,6 +3,7 @@ import { AuthContext } from "./AuthContext";
 import { AuthState } from "../types/auth";
 import { API_URL, API_ENDPOINTS } from "../config/api";
 import { Permission, Role, RolePermissions } from "../types/auth";
+import Cookies from "js-cookie";
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [authState, setAuthState] = useState<AuthState & { loading: boolean }>({
@@ -14,11 +15,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     const initializeAuth = async () => {
-      const token = localStorage.getItem("token");
-      const userStr = localStorage.getItem("user");
+      setAuthState((prev) => ({ ...prev, loading: true }));
+
+      const token = Cookies.get("token");
+      const userStr = Cookies.get("user");
 
       if (token && userStr) {
         try {
+          const response = await fetch(`${API_URL}/auth/verify`, {
+            credentials: "include",
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          });
+
+          if (!response.ok) {
+            throw new Error("Token invalid or expired");
+          }
+
           const user = JSON.parse(userStr);
           setAuthState({
             user,
@@ -26,9 +40,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             isAuthenticated: true,
             loading: false,
           });
-        } catch {
-          localStorage.removeItem("token");
-          localStorage.removeItem("user");
+        } catch (error) {
+          console.error("Auth error:", error);
+          Cookies.remove("token");
+          Cookies.remove("user");
           setAuthState({
             user: null,
             token: null,
@@ -49,6 +64,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email, password }),
+      credentials: "include",
     });
 
     const data = await response.json();
@@ -65,18 +81,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       permissions: [],
     };
 
-    console.log("Saving to localStorage:", {
-      token: data.data.token,
-      user: formattedUser,
+    Cookies.set("token", data.data.token, {
+      expires: 1,
+      secure: true,
+      sameSite: "strict",
     });
 
-    localStorage.setItem("token", data.data.token);
-    localStorage.setItem("user", JSON.stringify(formattedUser));
-
-    // Kiểm tra ngay sau khi lưu
-    console.log("Verify localStorage:", {
-      token: localStorage.getItem("token"),
-      user: JSON.parse(localStorage.getItem("user") || "{}"),
+    Cookies.set("user", JSON.stringify(formattedUser), {
+      expires: 1,
+      secure: true,
+      sameSite: "strict",
     });
 
     setAuthState({
@@ -88,8 +102,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const logout = () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
+    Cookies.remove("token");
+    Cookies.remove("user");
     setAuthState({
       user: null,
       token: null,

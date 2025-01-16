@@ -118,17 +118,18 @@ export function TagsPage() {
     const fetchTags = async () => {
       try {
         const response = await fetch(`${API_URL}/tags`, {
+          credentials: "include",
           headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
+            "Content-Type": "application/json",
           },
         });
-        if (!response.ok) throw new Error("Failed to fetch tags");
+        if (!response.ok) throw new Error("Lấy dữ liệu thẻ thất bại");
 
         const data = await response.json();
         setTags(data.data);
         setError(null);
       } catch (err) {
-        setError(err instanceof Error ? err.message : "Error fetching tags");
+        setError(err instanceof Error ? err.message : "Lỗi lấy dữ liệu thẻ");
       } finally {
         setLoading(false);
       }
@@ -154,7 +155,7 @@ export function TagsPage() {
   if (error) {
     return (
       <div className="flex justify-center items-center min-h-[400px] text-red-500">
-        <p>Error: {error}</p>
+        <p>Lỗi: {error}</p>
       </div>
     );
   }
@@ -176,9 +177,9 @@ export function TagsPage() {
     try {
       const response = await fetch(`${API_URL}/tags`, {
         method: "POST",
+        credentials: "include",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
         body: JSON.stringify(formData),
       });
@@ -193,7 +194,7 @@ export function TagsPage() {
       setIsDialogOpen(false);
       setFormData({ name: "", color: getRandomColor() });
     } catch (err) {
-      console.error("Error creating tag:", err);
+      console.error("Lỗi tạo thẻ:", err);
       // Hiển thị lỗi từ server nếu có
     }
   };
@@ -217,9 +218,9 @@ export function TagsPage() {
     try {
       const response = await fetch(`${API_URL}/tags/${editingTag.id}`, {
         method: "PUT",
+        credentials: "include",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
         body: JSON.stringify(formData),
       });
@@ -238,7 +239,7 @@ export function TagsPage() {
       setIsDialogOpen(false);
       setEditingTag(null);
     } catch (err) {
-      console.error("Error updating tag:", err);
+      console.error("Lỗi cập nhật thẻ:", err);
     }
   };
 
@@ -257,19 +258,20 @@ export function TagsPage() {
     try {
       const response = await fetch(`${API_URL}/tags/${tagToDelete.id}`, {
         method: "DELETE",
+        credentials: "include",
         headers: {
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
+          "Content-Type": "application/json",
         },
       });
 
-      if (!response.ok) throw new Error("Failed to delete tag");
+      if (!response.ok) throw new Error("Xóa thẻ thất bại");
 
       setTags((prevTags) =>
         prevTags.filter((tag) => tag.id !== tagToDelete.id)
       );
       setTagToDelete(null);
     } catch (err) {
-      console.error("Error deleting tag:", err);
+      console.error("Lỗi xóa thẻ:", err);
     }
   };
 

@@ -73,7 +73,14 @@ function App() {
                         }
                       />
                       <Route path="roles" element={<div>Vai trò</div>} />
-                      <Route path="sports" element={<SportsPage />} />
+                      <Route
+                        path="sports"
+                        element={
+                          <ProtectedRoute>
+                            <SportsPage />
+                          </ProtectedRoute>
+                        }
+                      />
                       <Route path="teams" element={<TeamsPage />} />
                     </Route>
 

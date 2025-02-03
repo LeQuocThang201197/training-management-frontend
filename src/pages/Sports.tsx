@@ -42,18 +42,15 @@ import {
 interface Sport {
   id: number;
   name: string;
-  teamCount: number;
-  image: string | null;
   createdAt: string;
   updatedAt: string;
 }
 
 interface SportFormData {
   name: string;
-  image?: File | null;
 }
 
-const ITEMS_PER_PAGE = 12;
+const ITEMS_PER_PAGE = 30;
 
 type SortOption = {
   field: "name";
@@ -71,24 +68,18 @@ const MOCK_SPORTS: Sport[] = [
   {
     id: 1,
     name: "Aerobic",
-    teamCount: 3,
-    image: null,
     createdAt: "2024-01-16T02:05:23.950Z",
     updatedAt: "2024-01-16T02:05:23.950Z",
   },
   {
     id: 2,
     name: "Bóng đá",
-    teamCount: 5,
-    image: null,
     createdAt: "2024-01-16T02:05:23.950Z",
     updatedAt: "2024-01-16T02:05:23.950Z",
   },
   {
     id: 3,
     name: "Bơi lội",
-    teamCount: 2,
-    image: null,
     createdAt: "2024-01-16T02:05:23.950Z",
     updatedAt: "2024-01-16T02:05:23.950Z",
   },
@@ -103,7 +94,6 @@ export function SportsPage() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [formData, setFormData] = useState<SportFormData>({
     name: "",
-    image: null,
   });
   const [searchTerm, setSearchTerm] = useState("");
   const [editingSport, setEditingSport] = useState<Sport | null>(null);
@@ -114,7 +104,6 @@ export function SportsPage() {
     if (open && !editingSport) {
       setFormData({
         name: "",
-        image: null,
       });
     } else if (!open) {
       setEditingSport(null);
@@ -195,7 +184,7 @@ export function SportsPage() {
       if (data.success) {
         setSports([...sports, data.data]);
         setIsDialogOpen(false);
-        setFormData({ name: "", image: null });
+        setFormData({ name: "" });
       }
     } catch (err) {
       console.error("Create sport error:", err);
@@ -243,7 +232,6 @@ export function SportsPage() {
     setEditingSport(sport);
     setFormData({
       name: sport.name,
-      image: null,
     });
     setIsDialogOpen(true);
   };
@@ -300,20 +288,6 @@ export function SportsPage() {
                     }
                     placeholder="Nhập tên môn thể thao..."
                     required
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="image">Hình ảnh</Label>
-                  <Input
-                    id="image"
-                    type="file"
-                    accept="image/*"
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        image: e.target.files?.[0] || null,
-                      })
-                    }
                   />
                 </div>
                 <Button type="submit" className="w-full">
@@ -400,20 +374,6 @@ export function SportsPage() {
                       required
                     />
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="image">Hình ảnh</Label>
-                    <Input
-                      id="image"
-                      type="file"
-                      accept="image/*"
-                      onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          image: e.target.files?.[0] || null,
-                        })
-                      }
-                    />
-                  </div>
                   <Button type="submit" className="w-full">
                     {editingSport ? "Cập nhật" : "Thêm mới"}
                   </Button>
@@ -443,29 +403,26 @@ export function SportsPage() {
             <div className="p-4">
               <div className="flex items-center justify-between">
                 <h3 className="font-semibold text-lg">{sport.name}</h3>
-                <span className="text-sm text-muted-foreground">
-                  {sport.teamCount} đội
-                </span>
-              </div>
-              <div className="mt-4 flex justify-end gap-2">
-                <PermissionGate permission={Permission.EDIT_TAG}>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => openEditForm(sport)}
-                  >
-                    <Pencil className="h-4 w-4" />
-                  </Button>
-                </PermissionGate>
-                <PermissionGate permission={Permission.DELETE_TAG}>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setSportToDelete(sport)}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </PermissionGate>
+                <div className="flex gap-2">
+                  <PermissionGate permission={Permission.EDIT_TAG}>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => openEditForm(sport)}
+                    >
+                      <Pencil className="h-4 w-4" />
+                    </Button>
+                  </PermissionGate>
+                  <PermissionGate permission={Permission.DELETE_TAG}>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setSportToDelete(sport)}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </PermissionGate>
+                </div>
               </div>
             </div>
           </Card>

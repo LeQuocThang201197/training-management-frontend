@@ -17,42 +17,32 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const initializeAuth = async () => {
       setAuthState((prev) => ({ ...prev, loading: true }));
 
-      const token = Cookies.get("token");
-      const userStr = Cookies.get("user");
+      try {
+        const response = await fetch(`${API_URL}/auth/verify`, {
+          credentials: "include",
+        });
 
-      if (token && userStr) {
-        try {
-          const response = await fetch(`${API_URL}/auth/verify`, {
-            credentials: "include",
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          });
+        if (!response.ok) throw new Error("Token invalid");
 
-          if (!response.ok) {
-            throw new Error("Token invalid or expired");
-          }
+        const userStr = Cookies.get("user");
+        if (!userStr) throw new Error("No user info");
 
-          const user = JSON.parse(userStr);
-          setAuthState({
-            user,
-            token,
-            isAuthenticated: true,
-            loading: false,
-          });
-        } catch (error) {
-          console.error("Auth error:", error);
-          Cookies.remove("token");
-          Cookies.remove("user");
-          setAuthState({
-            user: null,
-            token: null,
-            isAuthenticated: false,
-            loading: false,
-          });
-        }
-      } else {
-        setAuthState((prev) => ({ ...prev, loading: false }));
+        const user = JSON.parse(userStr);
+        setAuthState({
+          user,
+          token: null,
+          isAuthenticated: true,
+          loading: false,
+        });
+      } catch (error) {
+        console.error("Auth error:", error);
+        Cookies.remove("user");
+        setAuthState({
+          user: null,
+          token: null,
+          isAuthenticated: false,
+          loading: false,
+        });
       }
     };
 
@@ -62,13 +52,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const login = async (email: string, password: string) => {
     const response = await fetch(`${API_URL}${API_ENDPOINTS.LOGIN}`, {
       method: "POST",
+      credentials: "include",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email, password }),
-      credentials: "include",
     });
 
     const data = await response.json();
-
     if (!response.ok || !data.success) {
       throw new Error(data.message);
     }
@@ -81,12 +70,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       permissions: [],
     };
 
-    Cookies.set("token", data.data.token, {
-      expires: 1,
-      secure: true,
-      sameSite: "strict",
-    });
-
     Cookies.set("user", JSON.stringify(formattedUser), {
       expires: 1,
       secure: true,
@@ -95,7 +78,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     setAuthState({
       user: formattedUser,
-      token: data.data.token,
+      token: null,
       isAuthenticated: true,
       loading: false,
     });

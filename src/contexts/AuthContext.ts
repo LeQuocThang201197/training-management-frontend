@@ -1,5 +1,5 @@
 import { createContext } from "react";
-import { AuthState } from "../types/auth";
+import { AuthState, Permission } from "../types/auth";
 
 interface AuthContextType extends AuthState {
   loading: boolean;

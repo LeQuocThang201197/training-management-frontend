@@ -103,6 +103,10 @@ export function TeamsPage() {
     rooms: [],
     genders: [],
   });
+  const [filters, setFilters] = useState({
+    room: "",
+    type: "",
+  });
 
   useEffect(() => {
     const fetchTeams = async () => {
@@ -405,14 +409,48 @@ export function TeamsPage() {
               </div>
             </div>
 
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500" />
-              <Input
-                placeholder="Tìm kiếm đội..."
-                className="pl-10"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
+            <div className="flex gap-4">
+              <div className="flex-1 relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500" />
+                <Input
+                  placeholder="Tìm kiếm đội..."
+                  className="pl-10"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
+              </div>
+              <div className="w-64">
+                <select
+                  value={filters.room}
+                  onChange={(e) =>
+                    setFilters((prev) => ({ ...prev, room: e.target.value }))
+                  }
+                  className="w-full p-2 border rounded-md"
+                >
+                  <option value="">Tất cả phòng</option>
+                  {enums.rooms.map((room) => (
+                    <option key={room.value} value={room.value}>
+                      {room.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="w-64">
+                <select
+                  value={filters.type}
+                  onChange={(e) =>
+                    setFilters((prev) => ({ ...prev, type: e.target.value }))
+                  }
+                  className="w-full p-2 border rounded-md"
+                >
+                  <option value="">Tất cả đội</option>
+                  {enums.types.map((type) => (
+                    <option key={type.value} value={type.value}>
+                      {type.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
             </div>
 
             <div className="flex justify-center items-center min-h-[200px]">
@@ -426,8 +464,10 @@ export function TeamsPage() {
 
   const filteredTeams = teams.filter(
     (team) =>
-      team.sport.toLowerCase().includes(searchTerm.toLowerCase().trim()) ||
-      team.type.toLowerCase().includes(searchTerm.toLowerCase().trim())
+      (filters.room ? team.rawData.room === filters.room : true) &&
+      (filters.type ? team.rawData.type === filters.type : true) &&
+      (team.sport.toLowerCase().includes(searchTerm.toLowerCase().trim()) ||
+        team.type.toLowerCase().includes(searchTerm.toLowerCase().trim()))
   );
 
   const totalPages = Math.ceil(filteredTeams.length / ITEMS_PER_PAGE);
@@ -585,14 +625,48 @@ export function TeamsPage() {
             </div>
           </div>
 
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500" />
-            <Input
-              placeholder="Tìm kiếm đội..."
-              className="pl-10"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
+          <div className="flex gap-4">
+            <div className="flex-1 relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500" />
+              <Input
+                placeholder="Tìm kiếm đội..."
+                className="pl-10"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+            </div>
+            <div className="w-64">
+              <select
+                value={filters.room}
+                onChange={(e) =>
+                  setFilters((prev) => ({ ...prev, room: e.target.value }))
+                }
+                className="w-full p-2 border rounded-md"
+              >
+                <option value="">Tất cả phòng</option>
+                {enums.rooms.map((room) => (
+                  <option key={room.value} value={room.value}>
+                    {room.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="w-64">
+              <select
+                value={filters.type}
+                onChange={(e) =>
+                  setFilters((prev) => ({ ...prev, type: e.target.value }))
+                }
+                className="w-full p-2 border rounded-md"
+              >
+                <option value="">Tất cả đội</option>
+                {enums.types.map((type) => (
+                  <option key={type.value} value={type.value}>
+                    {type.label}
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
 
           <div className="grid grid-cols-1 gap-4">

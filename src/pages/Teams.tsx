@@ -262,195 +262,26 @@ export function TeamsPage() {
   if (loading) {
     return (
       <div className="space-y-4">
-        <Card className="bg-gray-50/50">
+        <Card>
           <div className="p-6 space-y-4">
             <div className="flex justify-between items-center">
               <h2 className="text-2xl font-bold">Danh mục đội</h2>
               <div className="flex items-center gap-2">
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="outline" size="sm">
-                      <ArrowUpDown className="mr-2 h-4 w-4" />
-                      {currentSort.label}
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    {sortOptions.map((option) => (
-                      <DropdownMenuItem
-                        key={option.direction}
-                        onClick={() => setCurrentSort(option)}
-                      >
-                        {option.label}
-                      </DropdownMenuItem>
-                    ))}
-                  </DropdownMenuContent>
-                </DropdownMenu>
-
-                <PermissionGate permission={Permission.CREATE_TAG}>
-                  <Dialog
-                    open={isDialogOpen}
-                    onOpenChange={(open) => {
-                      setIsDialogOpen(open);
-                      if (!open) {
-                        // Khi đóng dialog
-                        resetForm();
-                      }
-                    }}
-                  >
-                    <DialogTrigger asChild>
-                      <Button>
-                        <Plus className="mr-2 h-4 w-4" />
-                        Thêm đội
-                      </Button>
-                    </DialogTrigger>
-                    <DialogContent>
-                      <DialogHeader>
-                        <DialogTitle>
-                          {editingTeam ? "Chỉnh sửa đội" : "Thêm đội mới"}
-                        </DialogTitle>
-                      </DialogHeader>
-                      <form
-                        onSubmit={editingTeam ? handleEdit : handleSubmit}
-                        className="space-y-4"
-                      >
-                        <div className="space-y-2">
-                          <Label htmlFor="sportId">Môn thể thao</Label>
-                          <select
-                            id="sportId"
-                            value={formData.sportId}
-                            onChange={(e) =>
-                              setFormData({
-                                ...formData,
-                                sportId: Number(e.target.value),
-                              })
-                            }
-                            className="w-full p-2 border rounded-md"
-                            required
-                          >
-                            <option value="">Chọn môn thể thao</option>
-                            {sports.map((sport) => (
-                              <option key={sport.id} value={sport.id}>
-                                {sport.name}
-                              </option>
-                            ))}
-                          </select>
-                        </div>
-
-                        <div className="space-y-2">
-                          <Label htmlFor="type">Đội</Label>
-                          <select
-                            id="type"
-                            value={formData.type}
-                            onChange={(e) =>
-                              setFormData({ ...formData, type: e.target.value })
-                            }
-                            className="w-full p-2 border rounded-md"
-                            required
-                          >
-                            <option value="">Chọn đội</option>
-                            {enums.types.map((type) => (
-                              <option key={type.value} value={type.value}>
-                                {type.label}
-                              </option>
-                            ))}
-                          </select>
-                        </div>
-
-                        <div className="space-y-2">
-                          <Label htmlFor="room">Quản lý</Label>
-                          <select
-                            id="room"
-                            value={formData.room}
-                            onChange={(e) =>
-                              setFormData({ ...formData, room: e.target.value })
-                            }
-                            className="w-full p-2 border rounded-md"
-                            required
-                          >
-                            <option value="">Chọn quản lý</option>
-                            {enums.rooms.map((room) => (
-                              <option key={room.value} value={room.value}>
-                                {room.label}
-                              </option>
-                            ))}
-                          </select>
-                        </div>
-
-                        <div className="space-y-2">
-                          <Label htmlFor="gender">Giới tính</Label>
-                          <select
-                            id="gender"
-                            value={formData.gender}
-                            onChange={(e) =>
-                              setFormData({
-                                ...formData,
-                                gender: e.target.value,
-                              })
-                            }
-                            className="w-full p-2 border rounded-md"
-                            required
-                          >
-                            <option value="">Chọn giới tính</option>
-                            {enums.genders.map((gender) => (
-                              <option key={gender.value} value={gender.value}>
-                                {gender.label}
-                              </option>
-                            ))}
-                          </select>
-                        </div>
-
-                        <Button type="submit" className="w-full">
-                          {editingTeam ? "Cập nhật" : "Thêm mới"}
-                        </Button>
-                      </form>
-                    </DialogContent>
-                  </Dialog>
-                </PermissionGate>
+                <Button variant="outline" size="sm" disabled>
+                  <ArrowUpDown className="mr-2 h-4 w-4" />
+                  Sắp xếp
+                </Button>
+                <Button disabled>
+                  <Plus className="mr-2 h-4 w-4" />
+                  Thêm đội
+                </Button>
               </div>
             </div>
 
             <div className="flex gap-4">
-              <div className="flex-1 relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500" />
-                <Input
-                  placeholder="Tìm kiếm đội..."
-                  className="pl-10"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                />
-              </div>
-              <div className="w-64">
-                <select
-                  value={filters.room}
-                  onChange={(e) =>
-                    setFilters((prev) => ({ ...prev, room: e.target.value }))
-                  }
-                  className="w-full p-2 border rounded-md"
-                >
-                  <option value="">Tất cả phòng</option>
-                  {enums.rooms.map((room) => (
-                    <option key={room.value} value={room.value}>
-                      {room.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div className="w-64">
-                <select
-                  value={filters.type}
-                  onChange={(e) =>
-                    setFilters((prev) => ({ ...prev, type: e.target.value }))
-                  }
-                  className="w-full p-2 border rounded-md"
-                >
-                  <option value="">Tất cả đội</option>
-                  {enums.types.map((type) => (
-                    <option key={type.value} value={type.value}>
-                      {type.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
+              <div className="flex-1 h-10 bg-gray-200 animate-pulse rounded-md"></div>
+              <div className="w-64 h-10 bg-gray-200 animate-pulse rounded-md"></div>
+              <div className="w-64 h-10 bg-gray-200 animate-pulse rounded-md"></div>
             </div>
 
             <div className="flex justify-center items-center min-h-[200px]">
@@ -601,7 +432,10 @@ export function TeamsPage() {
                           id="gender"
                           value={formData.gender}
                           onChange={(e) =>
-                            setFormData({ ...formData, gender: e.target.value })
+                            setFormData({
+                              ...formData,
+                              gender: e.target.value,
+                            })
                           }
                           className="w-full p-2 border rounded-md"
                           required

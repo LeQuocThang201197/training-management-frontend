@@ -48,7 +48,7 @@ interface Tag {
   usageCount: number;
 }
 
-const ITEMS_PER_PAGE = 12; // Số thẻ trên mỗi trang
+const ITEMS_PER_PAGE = 30; // Số thẻ trên mỗi trang
 
 type SortOption = {
   field: "name" | "usage";

@@ -63,18 +63,13 @@ const menuItems: MenuItem[] = [
       },
       { name: "Tập huấn", icon: Dumbbell, path: "/management/training-camp" },
       { name: "Thi đấu", icon: Trophy, path: "/management/competition" },
-      { name: "Nhân sự", icon: User, path: "/management/personnel" },
-    ],
-  },
-  {
-    name: "Thiết lập",
-    icon: Settings,
-    children: [
-      { name: "Nhân sự", icon: SquareUserRound, path: "/settings/personnel" },
-      { name: "Thẻ", icon: Tag, path: "/settings/tags" },
-      { name: "Vai trò", icon: UserCog, path: "/settings/roles" },
-      { name: "Môn thể thao", icon: Volleyball, path: "/settings/sports" },
-      { name: "Đội", icon: Users, path: "/settings/teams" },
+      { name: "Quản lý nhân sự", icon: User, path: "/management/personnel" },
+      { name: "Quản lý đội", icon: Users, path: "/management/teams" },
+      {
+        name: "Quản lý môn thể thao",
+        icon: Volleyball,
+        path: "/management/sports",
+      },
     ],
   },
   { name: "Thành tích", icon: Medal, path: "/achievement" },
@@ -92,6 +87,29 @@ const menuItems: MenuItem[] = [
         icon: ChartColumnIncreasing,
         path: "/specialized-team/statistics",
       },
+    ],
+  },
+  {
+    name: "Thiết lập",
+    icon: Settings,
+    children: [
+      {
+        name: "Vai trò nhân sự",
+        icon: SquareUserRound,
+        path: "/settings/roles/personnel",
+      },
+      {
+        name: "Vai trò người dùng",
+        icon: UserCog,
+        path: "/settings/roles/users",
+      },
+      { name: "Danh mục thẻ", icon: Tag, path: "/settings/categories/tags" },
+      {
+        name: "Danh mục môn thể thao",
+        icon: Volleyball,
+        path: "/settings/categories/sports",
+      },
+      { name: "Danh mục đội", icon: Users, path: "/settings/categories/teams" },
     ],
   },
 ];

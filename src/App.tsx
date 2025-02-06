@@ -28,12 +28,27 @@ function App() {
               <ProtectedRoute>
                 <AppLayout>
                   <Routes>
+                    {/* Trang chủ */}
                     <Route path="/" element={<OverviewPage />} />
 
                     {/* Quản lý routes */}
                     <Route path="/management">
-                      <Route path="documents" element={<DocumentsPage />} />
-                      <Route path="training" element={<TrainingPage />} />
+                      <Route
+                        path="documents"
+                        element={
+                          <PermissionGate permission={Permission.VIEW_DOCUMENT}>
+                            <DocumentsPage />
+                          </PermissionGate>
+                        }
+                      />
+                      <Route
+                        path="training"
+                        element={
+                          <PermissionGate permission={Permission.VIEW_TRAINING}>
+                            <TrainingPage />
+                          </PermissionGate>
+                        }
+                      />
                       <Route
                         path="additional-training"
                         element={<AdditionalTrainingPage />}
@@ -50,40 +65,70 @@ function App() {
                       <Route
                         path="personnel"
                         element={
-                          <ProtectedRoute>
+                          <PermissionGate
+                            permission={Permission.MANAGE_PERSONNEL}
+                          >
+                            <PersonnelPage />
+                          </PermissionGate>
+                        }
+                      />
+                      <Route path="teams" element={<TeamsPage />} />
+                      <Route path="sports" element={<SportsPage />} />
+                    </Route>
+
+                    {/* Thiết lập routes */}
+                    <Route path="/settings">
+                      <Route path="roles">
+                        <Route
+                          path="personnel"
+                          element={
                             <PermissionGate
                               permission={Permission.MANAGE_PERSONNEL}
                             >
                               <PersonnelPage />
                             </PermissionGate>
-                          </ProtectedRoute>
-                        }
-                      />
+                          }
+                        />
+                        <Route
+                          path="users"
+                          element={
+                            <PermissionGate
+                              permission={Permission.MANAGE_PERSONNEL}
+                            >
+                              <div>Vai trò người dùng</div>
+                            </PermissionGate>
+                          }
+                        />
+                      </Route>
+                      <Route path="categories">
+                        <Route
+                          path="tags"
+                          element={
+                            <PermissionGate permission={Permission.VIEW_TAG}>
+                              <TagsPage />
+                            </PermissionGate>
+                          }
+                        />
+                        <Route
+                          path="sports"
+                          element={
+                            <PermissionGate permission={Permission.VIEW_TAG}>
+                              <SportsPage />
+                            </PermissionGate>
+                          }
+                        />
+                        <Route
+                          path="teams"
+                          element={
+                            <PermissionGate permission={Permission.VIEW_TAG}>
+                              <TeamsPage />
+                            </PermissionGate>
+                          }
+                        />
+                      </Route>
                     </Route>
 
-                    {/* Thiết lập routes */}
-                    <Route path="/settings">
-                      <Route path="personnel" element={<PersonnelPage />} />
-                      <Route
-                        path="tags"
-                        element={
-                          <ProtectedRoute>
-                            <TagsPage />
-                          </ProtectedRoute>
-                        }
-                      />
-                      <Route path="roles" element={<div>Vai trò</div>} />
-                      <Route
-                        path="sports"
-                        element={
-                          <ProtectedRoute>
-                            <SportsPage />
-                          </ProtectedRoute>
-                        }
-                      />
-                      <Route path="teams" element={<TeamsPage />} />
-                    </Route>
-
+                    {/* Thành tích */}
                     <Route
                       path="/achievement"
                       element={<div>Thành tích</div>}

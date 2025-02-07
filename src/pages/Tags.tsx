@@ -5,12 +5,9 @@ import {
   Search,
   Plus,
   ArrowUpDown,
-  Pencil,
-  Trash2,
   ChevronLeft,
   ChevronRight,
 } from "lucide-react";
-import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { PermissionGate } from "@/components/PermissionGate";
 import { Permission } from "@/types/auth";
@@ -40,6 +37,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { cn } from "@/lib/utils";
+import { HoverCard } from "@/components/HoverCard";
 
 interface Tag {
   id: string;
@@ -477,59 +475,25 @@ export function TagsPage() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {sortedAndPaginatedTags.map((tag) => (
-          <Card
+          <HoverCard
             key={tag.id}
-            className={cn(
-              "hover:shadow-lg transition-all duration-300 group relative overflow-hidden",
-              tag.color
-            )}
-          >
-            <div className="p-4 flex items-center justify-between relative">
-              <div className="flex items-center space-x-3">
-                <div
-                  className={cn(
-                    "w-3 h-3 rounded-full",
-                    tag.color.replace("bg-", "bg-")
-                  )}
-                />
-                <span className="font-medium text-lg">{tag.name}</span>
-              </div>
-
-              <div className="absolute right-4 top-1/2 -translate-y-1/2 transition-transform duration-300 group-hover:translate-x-[-120%]">
+            id={tag.id}
+            title={
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-3">
+                  <span>{tag.name}</span>
+                </div>
                 <Badge
                   variant="secondary"
-                  className="bg-white/80 backdrop-blur-sm"
+                  className="bg-white/80 backdrop-blur-sm transition-transform duration-300 group-hover:translate-x-[-80px]"
                 >
                   {tag.usageCount} lượt
                 </Badge>
               </div>
-
-              <div className="absolute right-0 top-0 h-full flex items-center opacity-0 transform translate-x-full transition-all duration-300 group-hover:opacity-100 group-hover:translate-x-0 bg-gradient-to-l from-white/80 via-white/60 to-transparent pr-2">
-                <div className="flex items-center space-x-1">
-                  <PermissionGate permission={Permission.EDIT_TAG}>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-8 w-8 hover:bg-white/60"
-                      onClick={() => openEditForm(tag)}
-                    >
-                      <Pencil className="h-4 w-4" />
-                    </Button>
-                  </PermissionGate>
-                  <PermissionGate permission={Permission.DELETE_TAG}>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-8 w-8 hover:bg-white/60"
-                      onClick={() => setTagToDelete(tag)}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </PermissionGate>
-                </div>
-              </div>
-            </div>
-          </Card>
+            }
+            onEdit={() => openEditForm(tag)}
+            onDelete={() => setTagToDelete(tag)}
+          />
         ))}
       </div>
 

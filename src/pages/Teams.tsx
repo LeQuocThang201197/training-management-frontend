@@ -5,8 +5,6 @@ import {
   Search,
   Plus,
   ArrowUpDown,
-  Pencil,
-  Trash2,
   ChevronLeft,
   ChevronRight,
 } from "lucide-react";
@@ -38,6 +36,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { HoverCard } from "@/components/HoverCard";
 
 interface Team {
   id: number;
@@ -522,58 +521,25 @@ export function TeamsPage() {
               </div>
             ) : (
               sortedAndPaginatedTeams.map((team) => (
-                <Card
+                <HoverCard
                   key={team.id}
-                  className="hover:shadow-lg transition-all duration-300"
-                >
-                  <div className="p-4">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <h3 className="font-semibold text-lg">
-                          {`Đội tuyển ${
-                            team.type === "Trẻ"
-                              ? `${team.type.toLocaleLowerCase()}`
-                              : ""
-                          } ${team.sport} ${
-                            team.gender === "Cả nam và nữ"
-                              ? ""
-                              : `${team.gender.toLocaleLowerCase()}`
-                          } quốc gia`}
-                        </h3>
-                        <p className="text-sm text-gray-500">{team.room}</p>
-                      </div>
-                      <div className="flex gap-2">
-                        <PermissionGate permission={Permission.EDIT_TAG}>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => {
-                              setEditingTeam(team);
-                              setFormData({
-                                sportId: team.rawData.sportId,
-                                type: team.rawData.type,
-                                room: team.rawData.room,
-                                gender: team.rawData.gender,
-                              });
-                              setIsDialogOpen(true);
-                            }}
-                          >
-                            <Pencil className="h-4 w-4" />
-                          </Button>
-                        </PermissionGate>
-                        <PermissionGate permission={Permission.DELETE_TAG}>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => setTeamToDelete(team)}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </PermissionGate>
-                      </div>
-                    </div>
-                  </div>
-                </Card>
+                  id={team.id}
+                  title={`Đội tuyển ${team.sport}${
+                    team.rawData.type === "ADULT" ? "" : ` ${team.type}`
+                  } quốc gia Việt Nam`}
+                  subtitle={team.room}
+                  onEdit={() => {
+                    setEditingTeam(team);
+                    setFormData({
+                      sportId: team.rawData.sportId,
+                      type: team.rawData.type,
+                      room: team.rawData.room,
+                      gender: team.rawData.gender,
+                    });
+                    setIsDialogOpen(true);
+                  }}
+                  onDelete={() => setTeamToDelete(team)}
+                />
               ))
             )}
           </div>

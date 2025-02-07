@@ -5,12 +5,9 @@ import {
   Search,
   Plus,
   ArrowUpDown,
-  Pencil,
-  Trash2,
   ChevronLeft,
   ChevronRight,
 } from "lucide-react";
-import { Card } from "@/components/ui/card";
 import { PermissionGate } from "@/components/PermissionGate";
 import { Permission } from "@/types/auth";
 import {
@@ -38,6 +35,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { HoverCard } from "@/components/HoverCard";
 
 interface Sport {
   id: number;
@@ -404,36 +402,13 @@ export function SportsPage() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {sortedAndPaginatedSports.map((sport) => (
-          <Card
+          <HoverCard
             key={sport.id}
-            className="hover:shadow-lg transition-all duration-300"
-          >
-            <div className="p-4">
-              <div className="flex items-center justify-between">
-                <h3 className="font-semibold text-lg">{sport.name}</h3>
-                <div className="flex gap-2">
-                  <PermissionGate permission={Permission.EDIT_TAG}>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => openEditForm(sport)}
-                    >
-                      <Pencil className="h-4 w-4" />
-                    </Button>
-                  </PermissionGate>
-                  <PermissionGate permission={Permission.DELETE_TAG}>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setSportToDelete(sport)}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </PermissionGate>
-                </div>
-              </div>
-            </div>
-          </Card>
+            id={sport.id}
+            title={sport.name}
+            onEdit={() => openEditForm(sport)}
+            onDelete={() => setSportToDelete(sport)}
+          />
         ))}
       </div>
 

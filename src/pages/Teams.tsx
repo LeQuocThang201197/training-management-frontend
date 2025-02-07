@@ -510,7 +510,7 @@ export function TeamsPage() {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {error ? (
               <div className="col-span-full text-center py-10">
                 <p className="text-red-500">{error}</p>
@@ -524,9 +524,15 @@ export function TeamsPage() {
                 <HoverCard
                   key={team.id}
                   id={team.id}
-                  title={`Đội tuyển ${team.sport}${
-                    team.rawData.type === "ADULT" ? "" : ` ${team.type}`
-                  } quốc gia Việt Nam`}
+                  title={`Đội tuyển ${
+                    team.type === "Trẻ"
+                      ? ` ${team.type.toLocaleLowerCase()}`
+                      : ""
+                  } ${team.sport} ${
+                    team.gender === "Cả nam và nữ"
+                      ? ""
+                      : `${team.gender.toLocaleLowerCase()}`
+                  } quốc gia`}
                   subtitle={team.room}
                   onEdit={() => {
                     setEditingTeam(team);

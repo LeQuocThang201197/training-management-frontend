@@ -503,6 +503,14 @@ export function TeamsPage() {
             </div>
           </div>
 
+          <div className="flex justify-between items-center text-sm text-gray-500">
+            <div>
+              Hiển thị {sortedAndPaginatedTeams.length} / {filteredTeams.length}{" "}
+              đội
+              {searchTerm || filters.room || filters.type ? " (đã lọc)" : ""}
+            </div>
+          </div>
+
           <div className="grid grid-cols-1 gap-4">
             {error ? (
               <div className="col-span-full text-center py-10">
@@ -530,7 +538,7 @@ export function TeamsPage() {
                             team.gender === "Cả nam và nữ"
                               ? ""
                               : `${team.gender.toLocaleLowerCase()}`
-                          } quốc gia Việt Nam`}
+                          } quốc gia`}
                         </h3>
                         <p className="text-sm text-gray-500">{team.room}</p>
                       </div>

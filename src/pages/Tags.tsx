@@ -36,7 +36,6 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { cn } from "@/lib/utils";
 import { HoverCard } from "@/components/HoverCard";
 
 interface Tag {
@@ -46,7 +45,7 @@ interface Tag {
   usageCount: number;
 }
 
-const ITEMS_PER_PAGE = 30; // Số thẻ trên mỗi trang
+const ITEMS_PER_PAGE = 15; // Số thẻ trên mỗi trang
 
 type SortOption = {
   field: "name" | "usage";
@@ -66,19 +65,6 @@ interface TagFormData {
   color: string;
 }
 
-const colors = [
-  { value: "bg-blue-100", label: "Xanh dương" },
-  { value: "bg-green-100", label: "Xanh lá" },
-  { value: "bg-yellow-100", label: "Vàng" },
-  { value: "bg-red-100", label: "Đỏ" },
-  { value: "bg-purple-100", label: "Tím" },
-  { value: "bg-pink-100", label: "Hồng" },
-  { value: "bg-indigo-100", label: "Chàm" },
-  { value: "bg-orange-100", label: "Cam" },
-  { value: "bg-teal-100", label: "Xanh ngọc" },
-  { value: "bg-cyan-100", label: "Xanh lơ" },
-];
-
 export function TagsPage() {
   const [tags, setTags] = useState<Tag[]>([]);
   const [loading, setLoading] = useState(true);
@@ -88,23 +74,18 @@ export function TagsPage() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [formData, setFormData] = useState<TagFormData>({
     name: "",
-    color: "bg-blue-100",
+    color: "",
   });
   const [searchTerm, setSearchTerm] = useState("");
   const [editingTag, setEditingTag] = useState<Tag | null>(null);
   const [tagToDelete, setTagToDelete] = useState<Tag | null>(null);
-
-  const getRandomColor = () => {
-    const randomIndex = Math.floor(Math.random() * colors.length);
-    return colors[randomIndex].value;
-  };
 
   const handleOpenChange = (open: boolean) => {
     setIsDialogOpen(open);
     if (open && !editingTag) {
       setFormData({
         name: "",
-        color: getRandomColor(),
+        color: "",
       });
     } else if (!open) {
       setEditingTag(null);
@@ -190,7 +171,7 @@ export function TagsPage() {
       const newTag = await response.json();
       setTags((prevTags) => [...prevTags, newTag.data]);
       setIsDialogOpen(false);
-      setFormData({ name: "", color: getRandomColor() });
+      setFormData({ name: "", color: "" });
     } catch (err) {
       console.error("Lỗi tạo thẻ:", err);
       // Hiển thị lỗi từ server nếu có
@@ -303,27 +284,6 @@ export function TagsPage() {
                     required
                   />
                 </div>
-                <div className="space-y-2">
-                  <Label>Màu sắc</Label>
-                  <div className="grid grid-cols-5 gap-2">
-                    {colors.map((color) => (
-                      <div
-                        key={color.value}
-                        className={cn(
-                          "w-8 h-8 rounded-full cursor-pointer border-2",
-                          color.value,
-                          formData.color === color.value
-                            ? "border-primary"
-                            : "border-transparent"
-                        )}
-                        onClick={() =>
-                          setFormData({ ...formData, color: color.value })
-                        }
-                        title={color.label}
-                      />
-                    ))}
-                  </div>
-                </div>
                 <div className="flex justify-end gap-2">
                   <Button
                     type="button"
@@ -415,27 +375,6 @@ export function TagsPage() {
                       placeholder="Nhập tên thẻ..."
                       required
                     />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Màu sắc</Label>
-                    <div className="grid grid-cols-5 gap-2">
-                      {colors.map((color) => (
-                        <div
-                          key={color.value}
-                          className={cn(
-                            "w-8 h-8 rounded-full cursor-pointer border-2",
-                            color.value,
-                            formData.color === color.value
-                              ? "border-primary"
-                              : "border-transparent"
-                          )}
-                          onClick={() =>
-                            setFormData({ ...formData, color: color.value })
-                          }
-                          title={color.label}
-                        />
-                      ))}
-                    </div>
                   </div>
                   <div className="flex justify-end gap-2">
                     <Button

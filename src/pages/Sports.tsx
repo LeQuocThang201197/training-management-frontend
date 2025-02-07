@@ -48,7 +48,7 @@ interface SportFormData {
   name: string;
 }
 
-const ITEMS_PER_PAGE = 30;
+const ITEMS_PER_PAGE = 15;
 
 type SortOption = {
   field: "name";

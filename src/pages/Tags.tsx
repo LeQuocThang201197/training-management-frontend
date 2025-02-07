@@ -468,6 +468,13 @@ export function TagsPage() {
         />
       </div>
 
+      <div className="flex justify-between items-center text-sm text-gray-500">
+        <div>
+          Hiển thị {sortedAndPaginatedTags.length} / {filteredTags.length} thẻ
+          {searchTerm ? " (đã lọc)" : ""}
+        </div>
+      </div>
+
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {sortedAndPaginatedTags.map((tag) => (
           <Card

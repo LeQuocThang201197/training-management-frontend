@@ -394,6 +394,14 @@ export function SportsPage() {
         />
       </div>
 
+      <div className="flex justify-between items-center text-sm text-gray-500">
+        <div>
+          Hiển thị {sortedAndPaginatedSports.length} / {filteredSports.length}{" "}
+          môn thể thao
+          {searchTerm ? " (đã lọc)" : ""}
+        </div>
+      </div>
+
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {sortedAndPaginatedSports.map((sport) => (
           <Card

@@ -8,7 +8,6 @@ import {
   ChevronLeft,
   ChevronRight,
 } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
 import { PermissionGate } from "@/components/PermissionGate";
 import { Permission } from "@/types/auth";
 import {
@@ -41,14 +40,12 @@ import { HoverCard } from "@/components/HoverCard";
 interface Tag {
   id: string;
   name: string;
-  color: string;
-  usageCount: number;
 }
 
-const ITEMS_PER_PAGE = 15; // Số thẻ trên mỗi trang
+const ITEMS_PER_PAGE = 21; // Số thẻ trên mỗi trang
 
 type SortOption = {
-  field: "name" | "usage";
+  field: "name";
   direction: "asc" | "desc";
   label: string;
 };
@@ -56,13 +53,10 @@ type SortOption = {
 const sortOptions: SortOption[] = [
   { field: "name", direction: "asc", label: "Tên (A-Z)" },
   { field: "name", direction: "desc", label: "Tên (Z-A)" },
-  { field: "usage", direction: "asc", label: "Lượt dùng (Thấp-Cao)" },
-  { field: "usage", direction: "desc", label: "Lượt dùng (Cao-Thấp)" },
 ];
 
 interface TagFormData {
   name: string;
-  color: string;
 }
 
 export function TagsPage() {
@@ -74,7 +68,6 @@ export function TagsPage() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [formData, setFormData] = useState<TagFormData>({
     name: "",
-    color: "",
   });
   const [searchTerm, setSearchTerm] = useState("");
   const [editingTag, setEditingTag] = useState<Tag | null>(null);
@@ -85,7 +78,6 @@ export function TagsPage() {
     if (open && !editingTag) {
       setFormData({
         name: "",
-        color: "",
       });
     } else if (!open) {
       setEditingTag(null);
@@ -157,10 +149,8 @@ export function TagsPage() {
       const response = await fetch(`${API_URL}/tags`, {
         method: "POST",
         credentials: "include",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(formData),
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: formData.name }),
       });
 
       if (!response.ok) {
@@ -171,7 +161,7 @@ export function TagsPage() {
       const newTag = await response.json();
       setTags((prevTags) => [...prevTags, newTag.data]);
       setIsDialogOpen(false);
-      setFormData({ name: "", color: "" });
+      setFormData({ name: "" });
     } catch (err) {
       console.error("Lỗi tạo thẻ:", err);
       // Hiển thị lỗi từ server nếu có
@@ -201,7 +191,7 @@ export function TagsPage() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({ name: formData.name }),
       });
 
       if (!response.ok) {
@@ -226,7 +216,6 @@ export function TagsPage() {
     setEditingTag(tag);
     setFormData({
       name: tag.name,
-      color: tag.color,
     });
     setIsDialogOpen(true);
   };
@@ -311,10 +300,7 @@ export function TagsPage() {
   const sortedAndPaginatedTags = [...filteredTags]
     .sort((a, b) => {
       const modifier = currentSort.direction === "asc" ? 1 : -1;
-      if (currentSort.field === "name") {
-        return a.name.localeCompare(b.name) * modifier;
-      }
-      return (a.usageCount - b.usageCount) * modifier;
+      return a.name.localeCompare(b.name) * modifier;
     })
     .slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
 
@@ -417,19 +403,7 @@ export function TagsPage() {
           <HoverCard
             key={tag.id}
             id={tag.id}
-            title={
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-3">
-                  <span>{tag.name}</span>
-                </div>
-                <Badge
-                  variant="secondary"
-                  className="bg-white/80 backdrop-blur-sm transition-transform duration-300 group-hover:translate-x-[-80px]"
-                >
-                  {tag.usageCount} lượt
-                </Badge>
-              </div>
-            }
+            title={tag.name}
             onEdit={() => openEditForm(tag)}
             onDelete={() => setTagToDelete(tag)}
           />

@@ -296,8 +296,7 @@ export function TeamsPage() {
     (team) =>
       (filters.room ? team.rawData.room === filters.room : true) &&
       (filters.type ? team.rawData.type === filters.type : true) &&
-      (team.sport.toLowerCase().includes(searchTerm.toLowerCase().trim()) ||
-        team.type.toLowerCase().includes(searchTerm.toLowerCase().trim()))
+      team.sport.toLowerCase().includes(searchTerm.toLowerCase().trim())
   );
 
   const totalPages = Math.ceil(filteredTeams.length / ITEMS_PER_PAGE);

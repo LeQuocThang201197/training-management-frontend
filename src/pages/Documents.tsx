@@ -27,6 +27,7 @@ import {
 import { API_URL } from "@/config/api";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { DatePicker } from "@/components/ui/date-picker";
 
 interface Document {
   id: number;
@@ -254,24 +255,26 @@ export function DocumentsPage() {
                                 code: e.target.value,
                               }))
                             }
-                            placeholder="VD: QĐ-CTDTT"
+                            placeholder="VD: QĐ-TCTDTT"
                             required
                           />
                         </div>
 
                         <div className="space-y-2 w-40">
                           <Label htmlFor="date">Ngày ban hành</Label>
-                          <Input
-                            id="date"
-                            type="date"
-                            value={formData.date}
-                            onChange={(e) =>
+                          <DatePicker
+                            value={
+                              formData.date ? new Date(formData.date) : null
+                            }
+                            onChange={(date) =>
                               setFormData((prev) => ({
                                 ...prev,
-                                date: e.target.value,
+                                date: date
+                                  ? date.toISOString().split("T")[0]
+                                  : "",
                               }))
                             }
-                            required
+                            placeholder="Chọn ngày"
                           />
                         </div>
                       </div>

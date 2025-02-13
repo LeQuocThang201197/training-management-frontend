@@ -10,6 +10,8 @@ interface HoverCardProps {
   id: string | number;
   title: React.ReactNode;
   subtitle?: React.ReactNode;
+  description?: string;
+  status?: string;
   onEdit?: () => void;
   onDelete?: () => void;
   className?: string;
@@ -20,6 +22,8 @@ export function HoverCard({
   id,
   title,
   subtitle,
+  description,
+  status,
   onEdit,
   onDelete,
   className,

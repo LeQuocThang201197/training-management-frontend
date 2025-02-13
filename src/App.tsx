@@ -7,13 +7,13 @@ import { AppLayout } from "./components/AppLayout";
 import { OverviewPage } from "./pages/Overview";
 import { DocumentsPage } from "./pages/Documents";
 import { TagsPage } from "./pages/Tags";
-import { TrainingPage } from "./pages/Training";
 import { AdditionalTrainingPage } from "./pages/AdditionalTraining";
 import { PersonnelPage } from "./pages/Personnel";
 import { SportsPage } from "./pages/Sports";
 import { TeamsPage } from "./pages/Teams";
 import { PermissionGate } from "./components/PermissionGate";
 import { Permission } from "./types/auth";
+import { RecruitmentPage } from "./pages/Recruitment";
 
 function App() {
   return (
@@ -45,7 +45,7 @@ function App() {
                         path="training"
                         element={
                           <PermissionGate permission={Permission.VIEW_TRAINING}>
-                            <TrainingPage />
+                            <RecruitmentPage />
                           </PermissionGate>
                         }
                       />

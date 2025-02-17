@@ -36,29 +36,48 @@ import {
 import { HoverCard } from "@/components/HoverCard";
 import { DatePicker } from "@/components/ui/date-picker";
 
-interface Recruitment {
-  id: number;
-  name: string;
-  year: number;
-  start_date: string;
-  end_date: string;
-  status: "draft" | "published";
-  createdAt: string;
-  updatedAt: string;
-  team_id: number;
-}
-
 interface Team {
   id: number;
   sport: string;
   type: string;
   room: string;
   gender: string;
+  createdAt: string;
+  updatedAt: string;
+  rawData: {
+    sportId: number;
+    type: string;
+    room: string;
+    gender: string;
+  };
 }
 
-interface RecruitmentFormData {
+interface Submitter {
+  id: number;
+  name: string;
+  email: string;
+}
+
+interface Concentration {
+  id: number;
+  teamId: number;
+  sequence_number: number;
+  related_year: number;
+  location: string;
+  startDate: string;
+  endDate: string;
+  note: string;
+  submitter_id: number;
+  createdAt: string;
+  updatedAt: string;
+  team: Team;
+  submitter: Submitter;
+}
+
+interface ConcentrationFormData {
   team_id: number;
-  year: number;
+  related_year: number;
+  sequence_number: number;
   location: string;
   note: string;
   start_date: string;
@@ -80,41 +99,42 @@ const sortOptions: SortOption[] = [
   { field: "year", direction: "asc", label: "Năm (Cũ nhất)" },
 ];
 
-export function RecruitmentPage() {
-  const [recruitments, setRecruitments] = useState<Recruitment[]>([]);
+export function ConcentrationPage() {
+  const [concentrations, setConcentrations] = useState<Concentration[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [currentSort, setCurrentSort] = useState<SortOption>(sortOptions[0]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [formData, setFormData] = useState<RecruitmentFormData>({
+  const [formData, setFormData] = useState<ConcentrationFormData>({
     team_id: 0,
-    year: new Date().getFullYear(),
+    related_year: new Date().getFullYear(),
+    sequence_number: 1,
     location: "",
     note: "",
     start_date: "",
     end_date: "",
   });
   const [searchTerm, setSearchTerm] = useState("");
-  const [editingRecruitment, setEditingRecruitment] =
-    useState<Recruitment | null>(null);
-  const [recruitmentToDelete, setRecruitmentToDelete] =
-    useState<Recruitment | null>(null);
+  const [editingConcentration, setEditingConcentration] =
+    useState<Concentration | null>(null);
+  const [concentrationToDelete, setConcentrationToDelete] =
+    useState<Concentration | null>(null);
   const [teams, setTeams] = useState<Team[]>([]);
   const [teamSearchTerm, setTeamSearchTerm] = useState("");
   const [isTeamDropdownOpen, setIsTeamDropdownOpen] = useState(false);
 
   useEffect(() => {
-    const fetchRecruitments = async () => {
+    const fetchConcentrations = async () => {
       try {
-        const response = await fetch(`${API_URL}/recruitments`, {
+        const response = await fetch(`${API_URL}/concentrations`, {
           credentials: "include",
         });
         if (!response.ok) throw new Error("Không thể tải danh sách tập trung");
 
         const data = await response.json();
         if (data.success) {
-          setRecruitments(data.data);
+          setConcentrations(data.data);
         }
       } catch (err) {
         setError(err instanceof Error ? err.message : "Lỗi tải dữ liệu");
@@ -123,7 +143,7 @@ export function RecruitmentPage() {
       }
     };
 
-    fetchRecruitments();
+    fetchConcentrations();
   }, []);
 
   useEffect(() => {
@@ -149,22 +169,35 @@ export function RecruitmentPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const response = await fetch(`${API_URL}/recruitments`, {
+      const dataToSubmit = {
+        teamId: formData.team_id,
+        location: formData.location,
+        related_year: formData.related_year,
+        sequence_number: formData.sequence_number,
+        startDate: formData.start_date,
+        endDate: formData.end_date,
+        note: formData.note,
+      };
+
+      const response = await fetch(`${API_URL}/concentrations`, {
         method: "POST",
         credentials: "include",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(dataToSubmit),
       });
 
       if (!response.ok) throw new Error("Không thể tạo đợt tập trung");
 
       const data = await response.json();
       if (data.success) {
-        setRecruitments((prev) => [...prev, data.data]);
+        setConcentrations((prev) => [...prev, data.data]);
         setIsDialogOpen(false);
         setFormData({
           team_id: 0,
-          year: new Date().getFullYear(),
+          related_year: new Date().getFullYear(),
+          sequence_number: 1,
           location: "",
           note: "",
           start_date: "",
@@ -172,18 +205,18 @@ export function RecruitmentPage() {
         });
       }
     } catch (err) {
-      console.error("Create recruitment error:", err);
+      console.error("Create concentration error:", err);
       alert(err instanceof Error ? err.message : "Lỗi khi tạo đợt tập trung");
     }
   };
 
   const handleEdit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!editingRecruitment) return;
+    if (!editingConcentration) return;
 
     try {
       const response = await fetch(
-        `${API_URL}/recruitments/${editingRecruitment.id}`,
+        `${API_URL}/concentrations/${editingConcentration.id}`,
         {
           method: "PUT",
           credentials: "include",
@@ -196,16 +229,18 @@ export function RecruitmentPage() {
 
       const data = await response.json();
       if (data.success) {
-        setRecruitments((prev) =>
-          prev.map((recruitment) =>
-            recruitment.id === editingRecruitment.id ? data.data : recruitment
+        setConcentrations((prev) =>
+          prev.map((concentration) =>
+            concentration.id === editingConcentration.id
+              ? data.data
+              : concentration
           )
         );
         setIsDialogOpen(false);
-        setEditingRecruitment(null);
+        setEditingConcentration(null);
       }
     } catch (err) {
-      console.error("Update recruitment error:", err);
+      console.error("Update concentration error:", err);
       alert(
         err instanceof Error ? err.message : "Lỗi khi cập nhật đợt tập trung"
       );
@@ -213,11 +248,11 @@ export function RecruitmentPage() {
   };
 
   const handleDelete = async () => {
-    if (!recruitmentToDelete) return;
+    if (!concentrationToDelete) return;
 
     try {
       const response = await fetch(
-        `${API_URL}/recruitments/${recruitmentToDelete.id}`,
+        `${API_URL}/concentrations/${concentrationToDelete.id}`,
         {
           method: "DELETE",
           credentials: "include",
@@ -226,12 +261,14 @@ export function RecruitmentPage() {
 
       if (!response.ok) throw new Error("Không thể xóa đợt tập trung");
 
-      setRecruitments((prev) =>
-        prev.filter((recruitment) => recruitment.id !== recruitmentToDelete.id)
+      setConcentrations((prev) =>
+        prev.filter(
+          (concentration) => concentration.id !== concentrationToDelete.id
+        )
       );
-      setRecruitmentToDelete(null);
+      setConcentrationToDelete(null);
     } catch (err) {
-      console.error("Delete recruitment error:", err);
+      console.error("Delete concentration error:", err);
       alert(err instanceof Error ? err.message : "Lỗi khi xóa đợt tập trung");
     }
   };
@@ -252,26 +289,38 @@ export function RecruitmentPage() {
     );
   }
 
-  const filteredRecruitments = recruitments.filter((recruitment) =>
-    recruitment.name.toLowerCase().includes(searchTerm.toLowerCase().trim())
+  const filteredConcentrations = concentrations.filter((concentration) =>
+    concentration.team.sport
+      ? concentration.team.sport
+          .toLowerCase()
+          .includes(searchTerm.toLowerCase().trim())
+      : false
   );
 
-  const totalPages = Math.ceil(filteredRecruitments.length / ITEMS_PER_PAGE);
+  const totalPages = Math.ceil(filteredConcentrations.length / ITEMS_PER_PAGE);
 
-  const sortedAndPaginatedRecruitments = [...filteredRecruitments]
+  const sortedAndPaginatedConcentrations = [...filteredConcentrations]
     .sort((a, b) => {
       const modifier = currentSort.direction === "asc" ? 1 : -1;
       if (currentSort.field === "year") {
-        return (a.year - b.year) * modifier;
+        return (
+          (new Date(a.startDate).getFullYear() -
+            new Date(b.startDate).getFullYear()) *
+          modifier
+        );
       }
-      return a.name.localeCompare(b.name) * modifier;
+      return a.team.sport.localeCompare(b.team.sport) * modifier;
     })
     .slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
 
   const filteredTeams = teams.filter(
     (team) =>
-      team.type.toLowerCase().includes(teamSearchTerm.toLowerCase()) ||
-      team.sport.toLowerCase().includes(teamSearchTerm.toLowerCase())
+      (team.type
+        ? team.type.toLowerCase().includes(teamSearchTerm.toLowerCase())
+        : false) ||
+      (team.sport
+        ? team.sport.toLowerCase().includes(teamSearchTerm.toLowerCase())
+        : false)
   );
 
   return (
@@ -308,13 +357,13 @@ export function RecruitmentPage() {
             <DialogContent>
               <DialogHeader>
                 <DialogTitle>
-                  {editingRecruitment
+                  {editingConcentration
                     ? "Chỉnh sửa đợt tập trung"
                     : "Thêm đợt tập trung mới"}
                 </DialogTitle>
               </DialogHeader>
               <form
-                onSubmit={editingRecruitment ? handleEdit : handleSubmit}
+                onSubmit={editingConcentration ? handleEdit : handleSubmit}
                 className="space-y-4"
               >
                 <div className="space-y-2">
@@ -356,20 +405,39 @@ export function RecruitmentPage() {
                   </div>
                 </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="year">Năm</Label>
-                  <Input
-                    id="year"
-                    type="number"
-                    value={formData.year}
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        year: parseInt(e.target.value),
-                      })
-                    }
-                    required
-                  />
+                <div className="flex gap-4">
+                  <div className="space-y-2 w-24">
+                    <Label htmlFor="sequence_number">Đợt</Label>
+                    <Input
+                      id="sequence_number"
+                      type="number"
+                      min={1}
+                      value={formData.sequence_number}
+                      onChange={(e) =>
+                        setFormData((prev) => ({
+                          ...prev,
+                          sequence_number: parseInt(e.target.value) || 1,
+                        }))
+                      }
+                      required
+                    />
+                  </div>
+
+                  <div className="space-y-2 flex-1">
+                    <Label htmlFor="related_year">Năm</Label>
+                    <Input
+                      id="related_year"
+                      type="number"
+                      value={formData.related_year}
+                      onChange={(e) =>
+                        setFormData((prev) => ({
+                          ...prev,
+                          related_year: parseInt(e.target.value),
+                        }))
+                      }
+                      required
+                    />
+                  </div>
                 </div>
 
                 <div className="space-y-2">
@@ -451,7 +519,7 @@ export function RecruitmentPage() {
                     Hủy
                   </Button>
                   <Button type="submit">
-                    {editingRecruitment ? "Cập nhật" : "Thêm mới"}
+                    {editingConcentration ? "Cập nhật" : "Thêm mới"}
                   </Button>
                 </div>
               </form>
@@ -471,42 +539,51 @@ export function RecruitmentPage() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {sortedAndPaginatedRecruitments.map((recruitment) => (
+        {sortedAndPaginatedConcentrations.map((concentration) => (
           <HoverCard
-            key={recruitment.id}
-            id={recruitment.id}
-            title={`${
-              teams.find((t) => t.id === recruitment.team_id)?.type || ""
-            } - ${
-              teams.find((t) => t.id === recruitment.team_id)?.sport || ""
+            key={concentration.id}
+            id={concentration.id}
+            title={`Đội ${
+              concentration.team.type === "Tuyển"
+                ? concentration.team.type.toLowerCase()
+                : ""
+            } ${concentration.team.sport} ${
+              concentration.team.gender === "Cả nam và nữ"
+                ? ""
+                : concentration.team.gender.toLowerCase()
+            } đợt ${concentration.sequence_number} năm ${
+              concentration.related_year
             }`}
-            subtitle={`${new Date(recruitment.start_date).toLocaleDateString(
-              "vi-VN"
-            )} - ${new Date(recruitment.end_date).toLocaleDateString("vi-VN")}`}
-            status={
-              recruitment.status === "published" ? "Đã phát hành" : "Nháp"
+            subtitle={
+              <>
+                <div>
+                  {new Date(concentration.startDate).toLocaleDateString(
+                    "vi-VN"
+                  )}
+                  {" - "}
+                  {new Date(concentration.endDate).toLocaleDateString("vi-VN")}
+                </div>
+              </>
             }
+            status={concentration.location}
             onEdit={() => {
-              setEditingRecruitment(recruitment);
-              const selectedTeam = teams.find(
-                (t) => t.id === recruitment.team_id
-              );
+              setEditingConcentration(concentration);
+              const selectedTeam = concentration.team;
               setTeamSearchTerm(
-                selectedTeam
-                  ? `${selectedTeam.type} - ${selectedTeam.sport} (${selectedTeam.gender})`
-                  : ""
+                `${selectedTeam.type} - ${selectedTeam.sport} (${selectedTeam.gender})`
               );
               setFormData({
-                team_id: recruitment.team_id,
-                year: recruitment.year,
-                location: "",
-                note: "",
-                start_date: recruitment.start_date,
-                end_date: recruitment.end_date,
+                team_id: concentration.teamId,
+                related_year: concentration.related_year,
+                sequence_number: concentration.sequence_number,
+                location: concentration.location,
+                note: concentration.note,
+                start_date: concentration.startDate.split("T")[0],
+                end_date: concentration.endDate.split("T")[0],
               });
               setIsDialogOpen(true);
             }}
-            onDelete={() => setRecruitmentToDelete(recruitment)}
+            onDelete={() => setConcentrationToDelete(concentration)}
           />
         ))}
       </div>
@@ -546,15 +623,15 @@ export function RecruitmentPage() {
       )}
 
       <AlertDialog
-        open={!!recruitmentToDelete}
-        onOpenChange={(open) => !open && setRecruitmentToDelete(null)}
+        open={!!concentrationToDelete}
+        onOpenChange={(open) => !open && setConcentrationToDelete(null)}
       >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Bạn có chắc chắn muốn xóa?</AlertDialogTitle>
             <AlertDialogDescription>
-              Đợt tập trung "{recruitmentToDelete?.name}" sẽ bị xóa vĩnh viễn và
-              không thể khôi phục.
+              Đợt tập trung "{concentrationToDelete?.team.sport}" sẽ bị xóa vĩnh
+              viễn và không thể khôi phục.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter className="sm:space-x-4">

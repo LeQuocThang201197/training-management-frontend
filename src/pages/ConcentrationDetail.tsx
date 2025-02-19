@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { API_URL } from "@/config/api";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -66,6 +66,10 @@ export function ConcentrationDetailPage() {
   const [loading, setLoading] = useState(true);
   const [isNoteDialogOpen, setIsNoteDialogOpen] = useState(false);
   const [noteInput, setNoteInput] = useState("");
+  const [papers, setPapers] = useState<Paper[]>([]);
+  const [loadingPapers, setLoadingPapers] = useState(false);
+  const [linkedPapers, setLinkedPapers] = useState<Paper[]>([]);
+  const [loadingLinkedPapers, setLoadingLinkedPapers] = useState(false);
 
   useEffect(() => {
     const fetchDetail = async () => {
@@ -136,6 +140,49 @@ export function ConcentrationDetailPage() {
       console.error("Delete note error:", err);
     }
   };
+
+  const fetchPapers = async () => {
+    try {
+      setLoadingPapers(true);
+      const response = await fetch(`${API_URL}/papers`, {
+        credentials: "include",
+      });
+      if (!response.ok) throw new Error("Không thể tải danh sách giấy tờ");
+
+      const data = await response.json();
+      if (data.success) {
+        setPapers(data.data);
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoadingPapers(false);
+    }
+  };
+
+  const fetchLinkedPapers = useCallback(async () => {
+    try {
+      setLoadingLinkedPapers(true);
+      const response = await fetch(`${API_URL}/concentrations/${id}/papers`, {
+        credentials: "include",
+      });
+      if (!response.ok)
+        throw new Error("Không thể tải danh sách giấy tờ liên kết");
+
+      const data = await response.json();
+      if (data.success) {
+        setLinkedPapers(data.data);
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoadingLinkedPapers(false);
+    }
+  }, [id]);
+
+  useEffect(() => {
+    if (id) fetchLinkedPapers();
+  }, [id, fetchLinkedPapers]);
 
   if (loading) {
     return <div>Đang tải...</div>;
@@ -256,18 +303,61 @@ export function ConcentrationDetailPage() {
             <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle>Giấy tờ</CardTitle>
               <div className="flex gap-2">
-                <Dialog>
+                <Dialog
+                  onOpenChange={(open) => {
+                    if (open) fetchPapers();
+                  }}
+                >
                   <DialogTrigger asChild>
                     <Button variant="outline" size="sm">
                       <Link2 className="h-4 w-4 mr-2" />
                       Gán giấy tờ
                     </Button>
                   </DialogTrigger>
-                  <DialogContent>
+                  <DialogContent className="max-w-3xl">
                     <DialogHeader>
                       <DialogTitle>Liên kết giấy tờ</DialogTitle>
                     </DialogHeader>
-                    {/* Thêm nội dung dialog sau */}
+                    <div className="max-h-[60vh] overflow-y-auto">
+                      {loadingPapers ? (
+                        <div className="flex justify-center py-8">
+                          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900" />
+                        </div>
+                      ) : (
+                        <div className="space-y-4">
+                          {papers.map((paper) => (
+                            <Card
+                              key={paper.id}
+                              className="hover:bg-gray-50 cursor-pointer"
+                            >
+                              <CardContent className="p-4">
+                                <div className="flex items-start justify-between">
+                                  <div className="flex items-start space-x-4">
+                                    <FileText className="h-5 w-5 text-gray-500 mt-1" />
+                                    <div>
+                                      <p className="font-medium">
+                                        {paper.type} - Số {paper.number}
+                                      </p>
+                                      <p className="text-sm text-gray-500">
+                                        {new Date(
+                                          paper.date
+                                        ).toLocaleDateString("vi-VN")}
+                                      </p>
+                                      <p className="text-sm text-gray-600 mt-1">
+                                        {paper.content}
+                                      </p>
+                                    </div>
+                                  </div>
+                                  <Button variant="outline" size="sm">
+                                    Chọn
+                                  </Button>
+                                </div>
+                              </CardContent>
+                            </Card>
+                          ))}
+                        </div>
+                      )}
+                    </div>
                   </DialogContent>
                 </Dialog>
 
@@ -289,8 +379,12 @@ export function ConcentrationDetailPage() {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {detail.papers.length > 0 ? (
-                  detail.papers.map((paper) => (
+                {loadingLinkedPapers ? (
+                  <div className="flex justify-center py-8">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900" />
+                  </div>
+                ) : linkedPapers.length > 0 ? (
+                  linkedPapers.map((paper) => (
                     <Card key={paper.id}>
                       <CardContent className="p-4">
                         <div className="flex items-start justify-between">

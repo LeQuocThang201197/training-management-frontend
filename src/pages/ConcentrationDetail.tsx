@@ -24,6 +24,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { cn } from "@/lib/utils";
 
 interface Paper {
   id: number;
@@ -70,6 +71,7 @@ export function ConcentrationDetailPage() {
   const [loadingPapers, setLoadingPapers] = useState(false);
   const [linkedPapers, setLinkedPapers] = useState<Paper[]>([]);
   const [loadingLinkedPapers, setLoadingLinkedPapers] = useState(false);
+  const [selectedPaperIds, setSelectedPaperIds] = useState<number[]>([]);
 
   useEffect(() => {
     const fetchDetail = async () => {
@@ -183,6 +185,55 @@ export function ConcentrationDetailPage() {
   useEffect(() => {
     if (id) fetchLinkedPapers();
   }, [id, fetchLinkedPapers]);
+
+  const handleLinkPapers = async () => {
+    try {
+      const response = await fetch(`${API_URL}/concentrations/${id}/papers`, {
+        method: "POST",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ paperIds: selectedPaperIds }),
+      });
+
+      if (!response.ok) throw new Error("Không thể liên kết giấy tờ");
+
+      const data = await response.json();
+      if (data.success) {
+        await fetchLinkedPapers(); // Refresh danh sách giấy tờ đã liên kết
+        setSelectedPaperIds([]); // Reset selection
+        // Đóng dialog
+        const dialogElement = document.querySelector("[data-state='open']");
+        if (dialogElement) {
+          (dialogElement as HTMLElement).click();
+        }
+      }
+    } catch (err) {
+      console.error("Link papers error:", err);
+    }
+  };
+
+  const handleUnlinkPaper = async (paperId: number) => {
+    try {
+      const response = await fetch(
+        `${API_URL}/concentrations/${id}/papers/${paperId}`,
+        {
+          method: "DELETE",
+          credentials: "include",
+        }
+      );
+
+      if (!response.ok) throw new Error("Không thể bỏ liên kết giấy tờ");
+
+      const data = await response.json();
+      if (data.success) {
+        await fetchLinkedPapers(); // Refresh danh sách
+      }
+    } catch (err) {
+      console.error("Unlink paper error:", err);
+    }
+  };
 
   if (loading) {
     return <div>Đang tải...</div>;
@@ -328,7 +379,18 @@ export function ConcentrationDetailPage() {
                           {papers.map((paper) => (
                             <Card
                               key={paper.id}
-                              className="hover:bg-gray-50 cursor-pointer"
+                              className={cn(
+                                "hover:bg-gray-50 cursor-pointer",
+                                selectedPaperIds.includes(paper.id) &&
+                                  "border-primary"
+                              )}
+                              onClick={() => {
+                                setSelectedPaperIds((prev) =>
+                                  prev.includes(paper.id)
+                                    ? prev.filter((id) => id !== paper.id)
+                                    : [...prev, paper.id]
+                                );
+                              }}
                             >
                               <CardContent className="p-4">
                                 <div className="flex items-start justify-between">
@@ -336,7 +398,9 @@ export function ConcentrationDetailPage() {
                                     <FileText className="h-5 w-5 text-gray-500 mt-1" />
                                     <div>
                                       <p className="font-medium">
-                                        {paper.type} - Số {paper.number}
+                                        {paper.type} - Số: {paper.number}
+                                        {" /"}
+                                        {paper.code}
                                       </p>
                                       <p className="text-sm text-gray-500">
                                         {new Date(
@@ -348,9 +412,6 @@ export function ConcentrationDetailPage() {
                                       </p>
                                     </div>
                                   </div>
-                                  <Button variant="outline" size="sm">
-                                    Chọn
-                                  </Button>
                                 </div>
                               </CardContent>
                             </Card>
@@ -358,15 +419,23 @@ export function ConcentrationDetailPage() {
                         </div>
                       )}
                     </div>
+                    <div className="mt-4 flex justify-end">
+                      <Button
+                        onClick={handleLinkPapers}
+                        disabled={selectedPaperIds.length === 0}
+                      >
+                        Liên kết {selectedPaperIds.length} giấy tờ
+                      </Button>
+                    </div>
                   </DialogContent>
                 </Dialog>
 
                 <Dialog>
                   <DialogTrigger asChild>
-                    <Button size="sm">
+                    {/* <Button size="sm">
                       <Plus className="h-4 w-4 mr-2" />
                       Thêm giấy tờ
-                    </Button>
+                    </Button> */}
                   </DialogTrigger>
                   <DialogContent>
                     <DialogHeader>
@@ -392,7 +461,7 @@ export function ConcentrationDetailPage() {
                             <FileText className="h-5 w-5 text-gray-500 mt-1" />
                             <div>
                               <p className="font-medium">
-                                {paper.type} - Số {paper.number}
+                                {paper.type} - Số: {paper.number}/{paper.code}
                               </p>
                               <p className="text-sm text-gray-500">
                                 {new Date(paper.date).toLocaleDateString(
@@ -404,9 +473,19 @@ export function ConcentrationDetailPage() {
                               </p>
                             </div>
                           </div>
-                          <Button variant="ghost" size="sm">
-                            Xem file
-                          </Button>
+                          <div className="flex gap-2">
+                            <Button variant="ghost" size="sm">
+                              Xem file
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="text-red-500 hover:text-red-600"
+                              onClick={() => handleUnlinkPaper(paper.id)}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
                         </div>
                       </CardContent>
                     </Card>

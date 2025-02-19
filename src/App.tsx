@@ -14,6 +14,7 @@ import { TeamsPage } from "./pages/Teams";
 import { PermissionGate } from "./components/PermissionGate";
 import { Permission } from "./types/auth";
 import { ConcentrationPage } from "./pages/Concentration";
+import { ConcentrationDetailPage } from "./pages/ConcentrationDetail";
 
 function App() {
   return (
@@ -74,6 +75,10 @@ function App() {
                       />
                       <Route path="teams" element={<TeamsPage />} />
                       <Route path="sports" element={<SportsPage />} />
+                      <Route
+                        path="training/:id"
+                        element={<ConcentrationDetailPage />}
+                      />
                     </Route>
 
                     {/* Thiết lập routes */}

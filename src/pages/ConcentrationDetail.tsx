@@ -1,0 +1,293 @@
+import { useState, useEffect } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import { API_URL } from "@/config/api";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  MapPin,
+  User,
+  Users,
+  Clock,
+  ChevronLeft,
+  FileText,
+  Plus,
+  Link2,
+} from "lucide-react";
+import { Concentration } from "@/types/concentration";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+
+interface Paper {
+  id: number;
+  number: number;
+  code: string;
+  date: string;
+  type: string;
+  content: string;
+  publisher: string;
+}
+
+interface ConcentrationDetail extends Concentration {
+  athletes?: Athlete[];
+  schedules?: Schedule[];
+  papers: Paper[];
+}
+
+interface Athlete {
+  id: number;
+  name: string;
+  dob: string;
+  gender: string;
+  avatar?: string;
+  status: "active" | "inactive";
+}
+
+interface Schedule {
+  id: number;
+  date: string;
+  time: string;
+  activity: string;
+  location: string;
+  note?: string;
+}
+
+export function ConcentrationDetailPage() {
+  const { id } = useParams();
+  const navigate = useNavigate();
+  const [detail, setDetail] = useState<ConcentrationDetail | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchDetail = async () => {
+      try {
+        const response = await fetch(`${API_URL}/concentrations/${id}`, {
+          credentials: "include",
+        });
+        if (!response.ok) throw new Error("Không thể tải thông tin chi tiết");
+
+        const data = await response.json();
+        if (data.success) {
+          setDetail(data.data);
+        }
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchDetail();
+  }, [id]);
+
+  if (loading) {
+    return <div>Đang tải...</div>;
+  }
+
+  if (!detail) {
+    return <div>Không tìm thấy thông tin</div>;
+  }
+
+  return (
+    <div className="container mx-auto p-6 bg-white rounded-lg shadow">
+      {/* Breadcrumb */}
+      <div className="mb-4">
+        <button
+          onClick={() => navigate("/management/training")}
+          className="flex items-center text-sm text-gray-500 hover:text-gray-700"
+        >
+          <ChevronLeft className="h-4 w-4 mr-1" />
+          Quay lại Danh sách Tập trung
+        </button>
+      </div>
+
+      {/* Header Section */}
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold mb-4">
+          Đội {detail.team.type === "Tuyển" ? "tuyển" : ""} {detail.team.sport}{" "}
+          {detail.team.gender === "Cả nam và nữ"
+            ? ""
+            : detail.team.gender.toLowerCase()}
+          đợt {detail.sequence_number} năm {detail.related_year}
+        </h1>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <Card>
+            <CardContent className="flex items-center p-4">
+              <Clock className="h-5 w-5 mr-3 text-green-500" />
+              <div>
+                <p className="text-sm text-gray-500">Thời gian</p>
+                <p className="font-medium">
+                  {new Date(detail.startDate).toLocaleDateString("vi-VN")} -{" "}
+                  {new Date(detail.endDate).toLocaleDateString("vi-VN")}
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="flex items-center p-4">
+              <MapPin className="h-5 w-5 mr-3 text-red-500" />
+              <div>
+                <p className="text-sm text-gray-500">Địa điểm</p>
+                <p className="font-medium">{detail.location}</p>
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="flex items-center p-4">
+              <User className="h-5 w-5 mr-3 text-blue-500" />
+              <div>
+                <p className="text-sm text-gray-500">Số HLV</p>
+                <p className="font-medium">0</p>
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="flex items-center p-4">
+              <Users className="h-5 w-5 mr-3 text-purple-500" />
+              <div>
+                <p className="text-sm text-gray-500">Số VĐV</p>
+                <p className="font-medium">{detail.athletes?.length || 0}</p>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+
+      {/* Tabs Section */}
+      <Tabs defaultValue="athletes" className="space-y-4">
+        <TabsList>
+          <TabsTrigger value="athletes">Danh sách đội</TabsTrigger>
+          <TabsTrigger value="papers">Giấy tờ</TabsTrigger>
+          <TabsTrigger value="notes">Ghi chú</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="athletes" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Danh sách đội</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {detail.athletes?.map((athlete) => (
+                  <Card key={athlete.id}>
+                    <CardContent className="flex items-center p-4">
+                      <div className="w-12 h-12 rounded-full bg-gray-200 mr-4">
+                        {athlete.avatar && (
+                          <img
+                            src={athlete.avatar}
+                            alt={athlete.name}
+                            className="w-full h-full rounded-full object-cover"
+                          />
+                        )}
+                      </div>
+                      <div>
+                        <p className="font-medium">{athlete.name}</p>
+                        <p className="text-sm text-gray-500">
+                          {new Date(athlete.dob).toLocaleDateString("vi-VN")}
+                        </p>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="papers">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between">
+              <CardTitle>Giấy tờ</CardTitle>
+              <div className="flex gap-2">
+                <Dialog>
+                  <DialogTrigger asChild>
+                    <Button variant="outline" size="sm">
+                      <Link2 className="h-4 w-4 mr-2" />
+                      Gán giấy tờ
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle>Liên kết giấy tờ</DialogTitle>
+                    </DialogHeader>
+                    {/* Thêm nội dung dialog sau */}
+                  </DialogContent>
+                </Dialog>
+
+                <Dialog>
+                  <DialogTrigger asChild>
+                    <Button size="sm">
+                      <Plus className="h-4 w-4 mr-2" />
+                      Thêm giấy tờ
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle>Chọn giấy tờ</DialogTitle>
+                    </DialogHeader>
+                    {/* Thêm nội dung dialog sau */}
+                  </DialogContent>
+                </Dialog>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {detail.papers.length > 0 ? (
+                  detail.papers.map((paper) => (
+                    <Card key={paper.id}>
+                      <CardContent className="p-4">
+                        <div className="flex items-start justify-between">
+                          <div className="flex items-start space-x-4">
+                            <FileText className="h-5 w-5 text-gray-500 mt-1" />
+                            <div>
+                              <p className="font-medium">
+                                {paper.type} - Số {paper.number}
+                              </p>
+                              <p className="text-sm text-gray-500">
+                                {new Date(paper.date).toLocaleDateString(
+                                  "vi-VN"
+                                )}
+                              </p>
+                              <p className="text-sm text-gray-600 mt-1">
+                                {paper.content}
+                              </p>
+                            </div>
+                          </div>
+                          <Button variant="ghost" size="sm">
+                            Xem file
+                          </Button>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))
+                ) : (
+                  <p className="text-gray-500 text-center py-4">
+                    Chưa có giấy tờ nào được gán
+                  </p>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="notes">
+          <Card>
+            <CardHeader>
+              <CardTitle>Ghi chú</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-gray-600">
+                {detail.note || "Không có ghi chú"}
+              </p>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
+    </div>
+  );
+}

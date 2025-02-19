@@ -35,6 +35,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { HoverCard } from "@/components/HoverCard";
 import { DatePicker } from "@/components/ui/date-picker";
+import { useNavigate } from "react-router-dom";
 
 interface Team {
   id: number;
@@ -123,6 +124,7 @@ export function ConcentrationPage() {
   const [teams, setTeams] = useState<Team[]>([]);
   const [teamSearchTerm, setTeamSearchTerm] = useState("");
   const [isTeamDropdownOpen, setIsTeamDropdownOpen] = useState(false);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchConcentrations = async () => {
@@ -584,7 +586,17 @@ export function ConcentrationPage() {
               setIsDialogOpen(true);
             }}
             onDelete={() => setConcentrationToDelete(concentration)}
-          />
+          >
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() =>
+                navigate(`/management/training/${concentration.id}`)
+              }
+            >
+              Chi tiết
+            </Button>
+          </HoverCard>
         ))}
       </div>
 

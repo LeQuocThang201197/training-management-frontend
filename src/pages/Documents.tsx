@@ -112,18 +112,13 @@ export function DocumentsPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
-    const formDataToSend = new FormData();
-    Object.entries(formData).forEach(([key, value]) => {
-      if (key === "file" && value) {
-        formDataToSend.append("file", value);
-      } else {
-        formDataToSend.append(key, String(value));
-      }
-    });
-
     try {
-      const response = await fetch(`${API_URL}/papers`, {
+      const formDataToSend = new FormData();
+      Object.entries(formData).forEach(([key, value]) => {
+        if (value !== null) formDataToSend.append(key, value);
+      });
+
+      const response = await fetch(`${API_URL}/documents`, {
         method: "POST",
         credentials: "include",
         body: formDataToSend,
@@ -135,21 +130,19 @@ export function DocumentsPage() {
       if (data.success) {
         setDocuments((prev) => [...prev, data.data]);
         setIsDialogOpen(false);
-        // Reset form
         setFormData({
           number: 0,
           code: "",
-          publisher: "",
+          date: "",
           type: "",
-          content: "",
           related_year: new Date().getFullYear(),
-          date: new Date().toISOString().split("T")[0],
+          publisher: "",
+          content: "",
           file: null,
         });
       }
     } catch (err) {
       console.error("Create document error:", err);
-      alert(err instanceof Error ? err.message : "Lỗi khi tạo văn bản");
     }
   };
 

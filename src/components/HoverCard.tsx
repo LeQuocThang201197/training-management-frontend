@@ -16,18 +16,18 @@ interface HoverCardProps {
   onDelete?: () => void;
   className?: string;
   useConsistentColor?: boolean;
+  children?: React.ReactNode;
 }
 
 export function HoverCard({
   id,
   title,
   subtitle,
-  description,
-  status,
   onEdit,
   onDelete,
   className,
   useConsistentColor = true,
+  children,
 }: HoverCardProps) {
   const bgColor = useConsistentColor
     ? getConsistentColor(id)
@@ -49,6 +49,7 @@ export function HoverCard({
 
         <div className="absolute right-0 top-0 h-full flex items-center opacity-0 transform translate-x-full transition-all duration-300 group-hover:opacity-100 group-hover:translate-x-0 bg-gradient-to-l from-white/80 via-white/60 to-transparent pr-2">
           <div className="flex items-center space-x-1">
+            {children}
             {onEdit && (
               <PermissionGate permission={Permission.EDIT_TAG}>
                 <Button

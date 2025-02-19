@@ -12,6 +12,8 @@ import {
   FileText,
   Plus,
   Link2,
+  Pencil,
+  Trash2,
 } from "lucide-react";
 import { Concentration } from "@/types/concentration";
 import { Button } from "@/components/ui/button";
@@ -62,6 +64,8 @@ export function ConcentrationDetailPage() {
   const navigate = useNavigate();
   const [detail, setDetail] = useState<ConcentrationDetail | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isNoteDialogOpen, setIsNoteDialogOpen] = useState(false);
+  const [noteInput, setNoteInput] = useState("");
 
   useEffect(() => {
     const fetchDetail = async () => {
@@ -84,6 +88,54 @@ export function ConcentrationDetailPage() {
 
     fetchDetail();
   }, [id]);
+
+  const handleUpdateNote = async () => {
+    try {
+      const response = await fetch(`${API_URL}/concentrations/${id}/note`, {
+        method: "PUT",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ note: noteInput }),
+      });
+
+      if (!response.ok) throw new Error("Không thể cập nhật ghi chú");
+
+      const data = await response.json();
+      if (data.success) {
+        setDetail((prev) => (prev ? { ...prev, note: noteInput } : null));
+        setIsNoteDialogOpen(false);
+        setNoteInput("");
+      }
+    } catch (err) {
+      console.error("Update note error:", err);
+    }
+  };
+
+  const handleEditNote = () => {
+    if (!detail) return;
+    setNoteInput(detail.note || "");
+    setIsNoteDialogOpen(true);
+  };
+
+  const handleDeleteNote = async () => {
+    try {
+      const response = await fetch(`${API_URL}/concentrations/${id}/note`, {
+        method: "DELETE",
+        credentials: "include",
+      });
+
+      if (!response.ok) throw new Error("Không thể xóa ghi chú");
+
+      const data = await response.json();
+      if (data.success) {
+        setDetail((prev) => (prev ? { ...prev, note: "" } : null));
+      }
+    } catch (err) {
+      console.error("Delete note error:", err);
+    }
+  };
 
   if (loading) {
     return <div>Đang tải...</div>;
@@ -267,7 +319,7 @@ export function ConcentrationDetailPage() {
                   ))
                 ) : (
                   <p className="text-gray-500 text-center py-4">
-                    Chưa có giấy tờ nào được gán
+                    Chưa có giấy tờ nào được liên kết
                   </p>
                 )}
               </div>
@@ -277,11 +329,89 @@ export function ConcentrationDetailPage() {
 
         <TabsContent value="notes">
           <Card>
-            <CardHeader>
+            <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle>Ghi chú</CardTitle>
+              <div className="flex gap-2">
+                {detail.note ? (
+                  <>
+                    <Dialog
+                      open={isNoteDialogOpen}
+                      onOpenChange={setIsNoteDialogOpen}
+                    >
+                      <DialogTrigger asChild>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={handleEditNote}
+                        >
+                          <Pencil className="h-4 w-4 mr-2" />
+                          Sửa ghi chú
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent>
+                        <DialogHeader>
+                          <DialogTitle>
+                            {detail.note ? "Sửa ghi chú" : "Tạo ghi chú"}
+                          </DialogTitle>
+                        </DialogHeader>
+                        <div className="space-y-4">
+                          <textarea
+                            value={noteInput}
+                            onChange={(e) => setNoteInput(e.target.value)}
+                            className="w-full min-h-[100px] p-2 border rounded-md"
+                            placeholder="Nhập ghi chú..."
+                          />
+                          <div className="flex justify-end">
+                            <Button onClick={handleUpdateNote}>Lưu</Button>
+                          </div>
+                        </div>
+                      </DialogContent>
+                    </Dialog>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="text-red-500 hover:text-red-600"
+                      onClick={handleDeleteNote}
+                    >
+                      <Trash2 className="h-4 w-4 mr-2" />
+                      Xóa ghi chú
+                    </Button>
+                  </>
+                ) : (
+                  <Dialog
+                    open={isNoteDialogOpen}
+                    onOpenChange={setIsNoteDialogOpen}
+                  >
+                    <DialogTrigger asChild>
+                      <Button size="sm">
+                        <Plus className="h-4 w-4 mr-2" />
+                        Tạo ghi chú
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent>
+                      <DialogHeader>
+                        <DialogTitle>
+                          {detail.note ? "Sửa ghi chú" : "Tạo ghi chú"}
+                        </DialogTitle>
+                      </DialogHeader>
+                      <div className="space-y-4">
+                        <textarea
+                          value={noteInput}
+                          onChange={(e) => setNoteInput(e.target.value)}
+                          className="w-full min-h-[100px] p-2 border rounded-md"
+                          placeholder="Nhập ghi chú..."
+                        />
+                        <div className="flex justify-end">
+                          <Button onClick={handleUpdateNote}>Lưu</Button>
+                        </div>
+                      </div>
+                    </DialogContent>
+                  </Dialog>
+                )}
+              </div>
             </CardHeader>
             <CardContent>
-              <p className="text-gray-600">
+              <p className="text-gray-500 text-center py-4">
                 {detail.note || "Không có ghi chú"}
               </p>
             </CardContent>

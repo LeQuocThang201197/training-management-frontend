@@ -72,6 +72,7 @@ export function ConcentrationDetailPage() {
   const [linkedPapers, setLinkedPapers] = useState<Paper[]>([]);
   const [loadingLinkedPapers, setLoadingLinkedPapers] = useState(false);
   const [selectedPaperIds, setSelectedPaperIds] = useState<number[]>([]);
+  const [availablePapers, setAvailablePapers] = useState<Paper[]>([]);
 
   useEffect(() => {
     const fetchDetail = async () => {
@@ -186,6 +187,17 @@ export function ConcentrationDetailPage() {
     if (id) fetchLinkedPapers();
   }, [id, fetchLinkedPapers]);
 
+  useEffect(() => {
+    const filterAvailablePapers = () => {
+      const linkedIds = linkedPapers.map((paper) => paper.id);
+      setAvailablePapers(
+        papers.filter((paper) => !linkedIds.includes(paper.id))
+      );
+    };
+
+    filterAvailablePapers();
+  }, [papers, linkedPapers]);
+
   const handleLinkPapers = async () => {
     try {
       const response = await fetch(`${API_URL}/concentrations/${id}/papers`, {
@@ -235,6 +247,37 @@ export function ConcentrationDetailPage() {
     }
   };
 
+  const handleViewFile = async (id: number) => {
+    try {
+      const response = await fetch(`${API_URL}/papers/${id}/file`, {
+        credentials: "include",
+      });
+
+      if (!response.ok) throw new Error("Không thể tải file");
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      window.open(url, "_blank");
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error("View file error:", err);
+      alert("Không thể mở file");
+    }
+  };
+
+  const handlePaperSelect = (paper: Paper) => {
+    if (linkedPapers.some((linked) => linked.id === paper.id)) {
+      alert("Giấy tờ này đã được liên kết với đợt tập trung");
+      return;
+    }
+
+    setSelectedPaperIds((prev) =>
+      prev.includes(paper.id)
+        ? prev.filter((id) => id !== paper.id)
+        : [...prev, paper.id]
+    );
+  };
+
   if (loading) {
     return <div>Đang tải...</div>;
   }
@@ -258,13 +301,20 @@ export function ConcentrationDetailPage() {
 
       {/* Header Section */}
       <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-4">
-          Đội {detail.team.type === "Tuyển" ? "tuyển" : ""} {detail.team.sport}{" "}
-          {detail.team.gender === "Cả nam và nữ"
-            ? ""
-            : detail.team.gender.toLowerCase()}
-          đợt {detail.sequence_number} năm {detail.related_year}
-        </h1>
+        <div className="flex items-baseline gap-4 mb-4">
+          <h1 className="text-3xl font-bold">
+            Đội tuyển {detail.team.type === "Tuyển" ? "tuyển" : ""}{" "}
+            {detail.team.sport}{" "}
+            {detail.team.gender === "Cả nam và nữ"
+              ? ""
+              : detail.team.gender.toLowerCase() + " "}
+            {detail.team.type === "Trẻ"
+              ? detail.team.type.toLowerCase() + " "
+              : ""}
+            đợt {detail.sequence_number} năm {detail.related_year}
+          </h1>
+          <p className="text-sm text-gray-500">{detail.team.room}</p>
+        </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <Card>
             <CardContent className="flex items-center p-4">
@@ -376,46 +426,47 @@ export function ConcentrationDetailPage() {
                         </div>
                       ) : (
                         <div className="space-y-4">
-                          {papers.map((paper) => (
-                            <Card
-                              key={paper.id}
-                              className={cn(
-                                "hover:bg-gray-50 cursor-pointer",
-                                selectedPaperIds.includes(paper.id) &&
-                                  "border-primary"
-                              )}
-                              onClick={() => {
-                                setSelectedPaperIds((prev) =>
-                                  prev.includes(paper.id)
-                                    ? prev.filter((id) => id !== paper.id)
-                                    : [...prev, paper.id]
-                                );
-                              }}
-                            >
-                              <CardContent className="p-4">
-                                <div className="flex items-start justify-between">
-                                  <div className="flex items-start space-x-4">
-                                    <FileText className="h-5 w-5 text-gray-500 mt-1" />
-                                    <div>
-                                      <p className="font-medium">
-                                        {paper.type} - Số: {paper.number}
-                                        {" /"}
-                                        {paper.code}
-                                      </p>
-                                      <p className="text-sm text-gray-500">
-                                        {new Date(
-                                          paper.date
-                                        ).toLocaleDateString("vi-VN")}
-                                      </p>
-                                      <p className="text-sm text-gray-600 mt-1">
-                                        {paper.content}
-                                      </p>
+                          {availablePapers.length > 0 ? (
+                            availablePapers.map((paper) => (
+                              <Card
+                                key={paper.id}
+                                className={cn(
+                                  "hover:bg-gray-50",
+                                  selectedPaperIds.includes(paper.id) &&
+                                    "border-primary"
+                                )}
+                                onClick={() => {
+                                  handlePaperSelect(paper);
+                                }}
+                              >
+                                <CardContent className="p-4">
+                                  <div className="flex items-start justify-between">
+                                    <div className="flex items-start space-x-4">
+                                      <FileText className="h-5 w-5 text-gray-500 mt-1" />
+                                      <div>
+                                        <p className="font-medium">
+                                          {paper.type} - Số: {paper.number}/
+                                          {paper.code}
+                                        </p>
+                                        <p className="text-sm text-gray-500">
+                                          {new Date(
+                                            paper.date
+                                          ).toLocaleDateString("vi-VN")}
+                                        </p>
+                                        <p className="text-sm text-gray-600 mt-1">
+                                          {paper.content}
+                                        </p>
+                                      </div>
                                     </div>
                                   </div>
-                                </div>
-                              </CardContent>
-                            </Card>
-                          ))}
+                                </CardContent>
+                              </Card>
+                            ))
+                          ) : (
+                            <p className="text-center py-4 text-gray-500">
+                              Không còn giấy tờ nào có thể liên kết
+                            </p>
+                          )}
                         </div>
                       )}
                     </div>
@@ -474,7 +525,11 @@ export function ConcentrationDetailPage() {
                             </div>
                           </div>
                           <div className="flex gap-2">
-                            <Button variant="ghost" size="sm">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleViewFile(paper.id)}
+                            >
                               Xem file
                             </Button>
                             <Button

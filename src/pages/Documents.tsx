@@ -118,7 +118,7 @@ export function DocumentsPage() {
         if (value !== null) formDataToSend.append(key, value);
       });
 
-      const response = await fetch(`${API_URL}/documents`, {
+      const response = await fetch(`${API_URL}/papers`, {
         method: "POST",
         credentials: "include",
         body: formDataToSend,
@@ -410,7 +410,7 @@ Huấn luyện Thể thao quốc gia thành phố Hồ Chí Minh năm 2025"
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Số hiệu</TableHead>
+                    <TableHead>Số</TableHead>
                     <TableHead>Loại</TableHead>
                     <TableHead>Nội dung</TableHead>
                     <TableHead>Ngày ban hành</TableHead>
@@ -422,7 +422,7 @@ Huấn luyện Thể thao quốc gia thành phố Hồ Chí Minh năm 2025"
                   {documents.map((doc) => (
                     <TableRow key={doc.id}>
                       <TableCell className="font-medium">
-                        {doc.number}/{doc.code}
+                        {doc.number} /{doc.code}
                       </TableCell>
                       <TableCell>{doc.type}</TableCell>
                       <TableCell>{doc.content}</TableCell>

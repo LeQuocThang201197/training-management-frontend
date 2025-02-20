@@ -545,14 +545,15 @@ export function ConcentrationPage() {
           <HoverCard
             key={concentration.id}
             id={concentration.id}
-            title={`Đội ${
-              concentration.team.type === "Tuyển"
-                ? concentration.team.type.toLowerCase()
-                : ""
-            } ${concentration.team.sport} ${
+            title={`Đội tuyển ${concentration.team.sport} ${
               concentration.team.gender === "Cả nam và nữ"
                 ? ""
-                : concentration.team.gender.toLowerCase()
+                : concentration.team.gender.toLowerCase() + " "
+            }
+            ${
+              concentration.team.type === "Trẻ"
+                ? concentration.team.type.toLowerCase()
+                : ""
             } đợt ${concentration.sequence_number} năm ${
               concentration.related_year
             }`}

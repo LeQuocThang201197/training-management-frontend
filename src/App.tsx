@@ -15,6 +15,7 @@ import { PermissionGate } from "./components/PermissionGate";
 import { Permission } from "./types/auth";
 import { ConcentrationPage } from "./pages/Concentration";
 import { ConcentrationDetailPage } from "./pages/ConcentrationDetail";
+import { DocumentDetailPage } from "./pages/DocumentDetail";
 
 function App() {
   return (
@@ -34,13 +35,10 @@ function App() {
 
                     {/* Quản lý routes */}
                     <Route path="/management">
+                      <Route path="papers" element={<DocumentsPage />} />
                       <Route
-                        path="papers"
-                        element={
-                          <PermissionGate permission={Permission.VIEW_DOCUMENT}>
-                            <DocumentsPage />
-                          </PermissionGate>
-                        }
+                        path="papers/:id"
+                        element={<DocumentDetailPage />}
                       />
                       <Route
                         path="concentrations"

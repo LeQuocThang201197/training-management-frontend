@@ -28,6 +28,7 @@ import { API_URL } from "@/config/api";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { DatePicker } from "@/components/ui/date-picker";
+import { useNavigate } from "react-router-dom";
 
 interface Document {
   id: number;
@@ -73,6 +74,7 @@ export function DocumentsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchDocuments = async () => {
@@ -439,7 +441,13 @@ Huấn luyện Thể thao quốc gia thành phố Hồ Chí Minh năm 2025"
                           >
                             Xem
                           </Button>
-                          <Button variant="ghost" size="sm">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() =>
+                              navigate(`/management/papers/${doc.id}`)
+                            }
+                          >
                             Chi tiết
                           </Button>
                         </div>

@@ -291,7 +291,7 @@ export function ConcentrationDetailPage() {
       {/* Breadcrumb */}
       <div className="mb-4">
         <button
-          onClick={() => navigate("/management/training")}
+          onClick={() => navigate("/management/concentrations")}
           className="flex items-center text-sm text-gray-500 hover:text-gray-700"
         >
           <ChevronLeft className="h-4 w-4 mr-1" />

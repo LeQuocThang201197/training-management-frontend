@@ -30,12 +30,12 @@ function App() {
                 <AppLayout>
                   <Routes>
                     {/* Trang chủ */}
-                    <Route path="/" element={<OverviewPage />} />
+                    <Route path="/overview" element={<OverviewPage />} />
 
                     {/* Quản lý routes */}
                     <Route path="/management">
                       <Route
-                        path="documents"
+                        path="papers"
                         element={
                           <PermissionGate permission={Permission.VIEW_DOCUMENT}>
                             <DocumentsPage />
@@ -43,7 +43,7 @@ function App() {
                         }
                       />
                       <Route
-                        path="training"
+                        path="concentrations"
                         element={
                           <PermissionGate permission={Permission.VIEW_TRAINING}>
                             <ConcentrationPage />
@@ -58,11 +58,8 @@ function App() {
                         path="minus-training"
                         element={<div>Thôi tập huấn</div>}
                       />
-                      <Route
-                        path="training-camp"
-                        element={<div>Tập huấn</div>}
-                      />
-                      <Route path="competition" element={<div>Thi đấu</div>} />
+                      <Route path="trainings" element={<div>Tập huấn</div>} />
+                      <Route path="competitions" element={<div>Thi đấu</div>} />
                       <Route
                         path="personnel"
                         element={

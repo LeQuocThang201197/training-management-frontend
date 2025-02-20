@@ -40,7 +40,7 @@ interface MenuItem {
 }
 
 const menuItems: MenuItem[] = [
-  { name: "Tổng quan", icon: ChartPie, path: "/" },
+  { name: "Tổng quan", icon: ChartPie, path: "/overview" },
   {
     name: "Quản lý",
     icon: ClipboardList,
@@ -48,9 +48,13 @@ const menuItems: MenuItem[] = [
       {
         name: "Văn bản, giấy tờ",
         icon: FileText,
-        path: "/management/documents",
+        path: "/management/papers",
       },
-      { name: "Tập trung", icon: Container, path: "/management/training" },
+      {
+        name: "Tập trung",
+        icon: Container,
+        path: "/management/concentrations",
+      },
       {
         name: "Tập huấn Bổ sung",
         icon: UserPlus,
@@ -61,8 +65,8 @@ const menuItems: MenuItem[] = [
         icon: UserMinus,
         path: "/management/minus-training",
       },
-      { name: "Tập huấn", icon: Dumbbell, path: "/management/training-camp" },
-      { name: "Thi đấu", icon: Trophy, path: "/management/competition" },
+      { name: "Tập huấn", icon: Dumbbell, path: "/management/trainings" },
+      { name: "Thi đấu", icon: Trophy, path: "/management/competitions" },
       { name: "Quản lý nhân sự", icon: User, path: "/management/personnel" },
       { name: "Quản lý đội", icon: Users, path: "/management/teams" },
       {

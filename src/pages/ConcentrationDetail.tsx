@@ -508,7 +508,12 @@ export function ConcentrationDetailPage() {
                     <Card key={paper.id}>
                       <CardContent className="p-4">
                         <div className="flex items-start justify-between">
-                          <div className="flex items-start space-x-4">
+                          <div
+                            className="flex items-start space-x-4 flex-1 cursor-pointer hover:bg-gray-50"
+                            onClick={() =>
+                              navigate(`/management/papers/${paper.id}`)
+                            }
+                          >
                             <FileText className="h-5 w-5 text-gray-500 mt-1" />
                             <div>
                               <p className="font-medium">

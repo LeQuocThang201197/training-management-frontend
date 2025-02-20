@@ -71,7 +71,7 @@ function App() {
                       <Route path="teams" element={<TeamsPage />} />
                       <Route path="sports" element={<SportsPage />} />
                       <Route
-                        path="training/:id"
+                        path="concentrations/:id"
                         element={<ConcentrationDetailPage />}
                       />
                     </Route>

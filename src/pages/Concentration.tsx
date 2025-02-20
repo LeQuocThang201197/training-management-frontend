@@ -34,7 +34,6 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { HoverCard } from "@/components/HoverCard";
-import { DatePicker } from "@/components/ui/date-picker";
 import { useNavigate } from "react-router-dom";
 
 interface Team {
@@ -472,42 +471,36 @@ export function ConcentrationPage() {
                   />
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="start_date">Ngày bắt đầu</Label>
-                    <DatePicker
-                      value={
-                        formData.start_date
-                          ? new Date(formData.start_date)
-                          : null
-                      }
-                      onChange={(date) =>
+                    <input
+                      type="date"
+                      id="start_date"
+                      value={formData.start_date}
+                      onChange={(e) =>
                         setFormData((prev) => ({
                           ...prev,
-                          start_date: date
-                            ? date.toISOString().split("T")[0]
-                            : "",
+                          start_date: e.target.value,
                         }))
                       }
-                      placeholder="dd/mm/yyyy"
+                      className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                     />
                   </div>
 
                   <div className="space-y-2">
                     <Label htmlFor="end_date">Ngày kết thúc</Label>
-                    <DatePicker
-                      value={
-                        formData.end_date ? new Date(formData.end_date) : null
-                      }
-                      onChange={(date) =>
+                    <input
+                      type="date"
+                      id="end_date"
+                      value={formData.end_date}
+                      onChange={(e) =>
                         setFormData((prev) => ({
                           ...prev,
-                          end_date: date
-                            ? date.toISOString().split("T")[0]
-                            : "",
+                          end_date: e.target.value,
                         }))
                       }
-                      placeholder="dd/mm/yyyy"
+                      className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                     />
                   </div>
                 </div>
@@ -592,7 +585,7 @@ export function ConcentrationPage() {
               variant="ghost"
               size="sm"
               onClick={() =>
-                navigate(`/management/training/${concentration.id}`)
+                navigate(`/management/concentrations/${concentration.id}`)
               }
             >
               Chi tiết

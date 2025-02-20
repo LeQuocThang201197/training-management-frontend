@@ -27,7 +27,6 @@ import {
 import { API_URL } from "@/config/api";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { DatePicker } from "@/components/ui/date-picker";
 import { useNavigate } from "react-router-dom";
 
 interface Document {
@@ -255,21 +254,16 @@ export function DocumentsPage() {
                           />
                         </div>
 
-                        <div className="space-y-2 w-40">
+                        <div className="space-y-2">
                           <Label htmlFor="date">Ngày ban hành</Label>
-                          <DatePicker
-                            value={
-                              formData.date ? new Date(formData.date) : null
+                          <input
+                            type="date"
+                            id="date"
+                            value={formData.date}
+                            onChange={(e) =>
+                              setFormData({ ...formData, date: e.target.value })
                             }
-                            onChange={(date) =>
-                              setFormData((prev) => ({
-                                ...prev,
-                                date: date
-                                  ? date.toISOString().split("T")[0]
-                                  : "",
-                              }))
-                            }
-                            placeholder="Chọn ngày"
+                            className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                           />
                         </div>
                       </div>

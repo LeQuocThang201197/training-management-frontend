@@ -3,7 +3,22 @@ import { useParams, useNavigate } from "react-router-dom";
 import { API_URL } from "@/config/api";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ChevronLeft, Calendar, Building2, Tag, Trash2 } from "lucide-react";
+import {
+  ChevronLeft,
+  Calendar,
+  Building2,
+  Tag,
+  Trash2,
+  Link2,
+} from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { cn } from "@/lib/utils";
 
 interface Document {
   id: number;
@@ -45,6 +60,15 @@ export function DocumentDetailPage() {
     LinkedConcentration[]
   >([]);
   const [loadingConcentrations, setLoadingConcentrations] = useState(false);
+  const [concentrations, setConcentrations] = useState<LinkedConcentration[]>(
+    []
+  );
+  const [loadingAllConcentrations, setLoadingAllConcentrations] =
+    useState(false);
+  const [selectedConcentrationIds, setSelectedConcentrationIds] = useState<
+    number[]
+  >([]);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
 
   const fetchLinkedConcentrations = useCallback(async () => {
     try {
@@ -65,6 +89,26 @@ export function DocumentDetailPage() {
       setLoadingConcentrations(false);
     }
   }, [id]);
+
+  const fetchConcentrations = async () => {
+    try {
+      setLoadingAllConcentrations(true);
+      const response = await fetch(`${API_URL}/concentrations`, {
+        credentials: "include",
+      });
+      if (!response.ok)
+        throw new Error("Không thể tải danh sách đợt tập trung");
+
+      const data = await response.json();
+      if (data.success) {
+        setConcentrations(data.data);
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoadingAllConcentrations(false);
+    }
+  };
 
   useEffect(() => {
     if (id) fetchLinkedConcentrations();
@@ -91,6 +135,12 @@ export function DocumentDetailPage() {
 
     fetchDocument();
   }, [id]);
+
+  useEffect(() => {
+    if (isDialogOpen) {
+      fetchConcentrations();
+    }
+  }, [isDialogOpen]);
 
   const handleViewFile = async () => {
     try {
@@ -155,6 +205,30 @@ export function DocumentDetailPage() {
       }
     } catch (err) {
       console.error("Unlink concentration error:", err);
+    }
+  };
+
+  const handleLinkConcentrations = async () => {
+    try {
+      const response = await fetch(`${API_URL}/papers/${id}/concentrations`, {
+        method: "POST",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ concentrationIds: selectedConcentrationIds }),
+      });
+
+      if (!response.ok) throw new Error("Không thể liên kết đợt tập trung");
+
+      const data = await response.json();
+      if (data.success) {
+        await fetchLinkedConcentrations();
+        setSelectedConcentrationIds([]);
+        setIsDialogOpen(false);
+      }
+    } catch (err) {
+      console.error("Link concentrations error:", err);
     }
   };
 
@@ -241,7 +315,95 @@ export function DocumentDetailPage() {
 
       <Card className="mt-8">
         <CardHeader>
-          <CardTitle>Đợt tập trung liên kết</CardTitle>
+          <div className="flex items-center justify-between">
+            <CardTitle>Đợt tập trung liên kết</CardTitle>
+            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+              <DialogTrigger asChild>
+                <Button variant="outline" size="sm">
+                  <Link2 className="h-4 w-4 mr-2" />
+                  Gán đợt tập trung
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-3xl">
+                <DialogHeader>
+                  <DialogTitle>Liên kết đợt tập trung</DialogTitle>
+                </DialogHeader>
+                <div className="max-h-[60vh] overflow-y-auto">
+                  {loadingAllConcentrations ? (
+                    <div className="flex justify-center py-8">
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900" />
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      {concentrations
+                        .filter(
+                          (c) =>
+                            !linkedConcentrations.some((lc) => lc.id === c.id)
+                        )
+                        .map((concentration) => (
+                          <Card
+                            key={concentration.id}
+                            className={cn(
+                              "hover:bg-gray-50",
+                              selectedConcentrationIds.includes(
+                                concentration.id
+                              ) && "border-primary"
+                            )}
+                            onClick={() => {
+                              setSelectedConcentrationIds((prev) =>
+                                prev.includes(concentration.id)
+                                  ? prev.filter((id) => id !== concentration.id)
+                                  : [...prev, concentration.id]
+                              );
+                            }}
+                          >
+                            <CardContent className="p-4">
+                              <div className="flex items-start justify-between">
+                                <div>
+                                  <p className="font-medium">
+                                    Đội tuyển{" "}
+                                    {concentration.team.type === "Trẻ"
+                                      ? "trẻ "
+                                      : ""}
+                                    {concentration.team.sport}{" "}
+                                    {concentration.team.gender ===
+                                    "Cả nam và nữ"
+                                      ? ""
+                                      : concentration.team.gender.toLowerCase()}{" "}
+                                    đợt {concentration.sequence_number} năm{" "}
+                                    {concentration.related_year}
+                                  </p>
+                                  <p className="text-sm text-gray-500 mt-1">
+                                    {new Date(
+                                      concentration.startDate
+                                    ).toLocaleDateString("vi-VN")}{" "}
+                                    -{" "}
+                                    {new Date(
+                                      concentration.endDate
+                                    ).toLocaleDateString("vi-VN")}
+                                  </p>
+                                  <p className="text-sm text-gray-600 mt-1">
+                                    {concentration.location}
+                                  </p>
+                                </div>
+                              </div>
+                            </CardContent>
+                          </Card>
+                        ))}
+                    </div>
+                  )}
+                </div>
+                <div className="mt-4 flex justify-end">
+                  <Button
+                    onClick={handleLinkConcentrations}
+                    disabled={selectedConcentrationIds.length === 0}
+                  >
+                    Liên kết {selectedConcentrationIds.length} đợt tập trung
+                  </Button>
+                </div>
+              </DialogContent>
+            </Dialog>
+          </div>
         </CardHeader>
         <CardContent>
           {loadingConcentrations ? (

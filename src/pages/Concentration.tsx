@@ -80,7 +80,7 @@ interface ConcentrationFormData {
 const ITEMS_PER_PAGE = 21;
 
 type SortOption = {
-  field: "name" | "year";
+  field: "name" | "date";
   direction: "asc" | "desc";
   label: string;
 };
@@ -88,8 +88,8 @@ type SortOption = {
 const sortOptions: SortOption[] = [
   { field: "name", direction: "asc", label: "Tên (A-Z)" },
   { field: "name", direction: "desc", label: "Tên (Z-A)" },
-  { field: "year", direction: "desc", label: "Năm (Mới nhất)" },
-  { field: "year", direction: "asc", label: "Năm (Cũ nhất)" },
+  { field: "date", direction: "desc", label: "Ngày bắt đầu (Mới nhất)" },
+  { field: "date", direction: "asc", label: "Ngày bắt đầu (Cũ nhất)" },
 ];
 
 export function ConcentrationPage() {
@@ -119,7 +119,7 @@ export function ConcentrationPage() {
     { value: "all", label: "Tất cả" },
     { value: "Tuyển", label: "Đội tuyển" },
     { value: "Trẻ", label: "Đội trẻ" },
-    { value: "Khuyết tật", label: "Đội khuyết tật" },
+    { value: "Khuyết tật", label: "Đội người khuyết tật" },
   ];
 
   useEffect(() => {
@@ -242,10 +242,9 @@ export function ConcentrationPage() {
   const sortedAndPaginatedConcentrations = [...filteredConcentrations]
     .sort((a, b) => {
       const modifier = currentSort.direction === "asc" ? 1 : -1;
-      if (currentSort.field === "year") {
+      if (currentSort.field === "date") {
         return (
-          (new Date(a.startDate).getFullYear() -
-            new Date(b.startDate).getFullYear()) *
+          (new Date(a.startDate).getTime() - new Date(b.startDate).getTime()) *
           modifier
         );
       }

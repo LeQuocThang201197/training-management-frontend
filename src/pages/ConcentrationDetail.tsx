@@ -39,28 +39,19 @@ interface Paper {
   publisher: string;
 }
 
-interface ConcentrationDetail extends Concentration {
-  athletes?: Athlete[];
-  schedules?: Schedule[];
-  papers: Paper[];
-}
-
-interface Athlete {
+interface Participant {
   id: number;
   name: string;
-  dob: string;
+  role: string;
   gender: string;
+  dob: string;
   avatar?: string;
-  status: "active" | "inactive";
 }
 
-interface Schedule {
-  id: number;
-  date: string;
-  time: string;
-  activity: string;
-  location: string;
-  note?: string;
+interface ConcentrationDetail extends Concentration {
+  participants: Participant[];
+  participantsCount: number;
+  papers: Paper[];
 }
 
 export function ConcentrationDetailPage() {
@@ -88,6 +79,7 @@ export function ConcentrationDetailPage() {
   const [teamSearchTerm, setTeamSearchTerm] = useState("");
   const [isTeamDropdownOpen, setIsTeamDropdownOpen] = useState(false);
   const [teams, setTeams] = useState<Team[]>([]);
+  const [isAddMemberDialogOpen, setIsAddMemberDialogOpen] = useState(false);
 
   useEffect(() => {
     const fetchDetail = async () => {
@@ -470,7 +462,7 @@ export function ConcentrationDetailPage() {
               <Users className="h-5 w-5 mr-3 text-purple-500" />
               <div>
                 <p className="text-sm text-gray-500">Số VĐV</p>
-                <p className="font-medium">{detail.athletes?.length || 0}</p>
+                <p className="font-medium">{detail.participantsCount}</p>
               </div>
             </CardContent>
           </Card>
@@ -488,32 +480,107 @@ export function ConcentrationDetailPage() {
         <TabsContent value="athletes" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle>Danh sách đội</CardTitle>
+              <div className="flex items-center justify-between">
+                <CardTitle>Danh sách đội</CardTitle>
+                <Dialog
+                  open={isAddMemberDialogOpen}
+                  onOpenChange={setIsAddMemberDialogOpen}
+                >
+                  <DialogTrigger asChild>
+                    <Button size="sm">
+                      <Plus className="h-4 w-4 mr-2" />
+                      Thêm thành viên
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle>Thêm thành viên mới</DialogTitle>
+                    </DialogHeader>
+                    <div className="space-y-4">
+                      <p className="text-sm text-gray-500">
+                        Chức năng đang được phát triển...
+                      </p>
+                    </div>
+                  </DialogContent>
+                </Dialog>
+              </div>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {detail.athletes?.map((athlete) => (
-                  <Card key={athlete.id}>
-                    <CardContent className="flex items-center p-4">
-                      <div className="w-12 h-12 rounded-full bg-gray-200 mr-4">
-                        {athlete.avatar && (
-                          <img
-                            src={athlete.avatar}
-                            alt={athlete.name}
-                            className="w-full h-full rounded-full object-cover"
-                          />
-                        )}
-                      </div>
-                      <div>
-                        <p className="font-medium">{athlete.name}</p>
-                        <p className="text-sm text-gray-500">
-                          {new Date(athlete.dob).toLocaleDateString("vi-VN")}
-                        </p>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
+              {detail.participants.length > 0 ? (
+                <div className="space-y-6">
+                  {/* Phần HLV */}
+                  <div>
+                    <h3 className="font-medium mb-3">Huấn luyện viên</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                      {detail.participants
+                        .filter((p) => p.role === "COACH")
+                        .map((coach) => (
+                          <Card key={coach.id}>
+                            <CardContent className="flex items-center p-4">
+                              <div className="w-12 h-12 rounded-full bg-gray-200 mr-4 flex items-center justify-center">
+                                {coach.avatar ? (
+                                  <img
+                                    src={coach.avatar}
+                                    alt={coach.name}
+                                    className="w-full h-full rounded-full object-cover"
+                                  />
+                                ) : (
+                                  <User className="h-6 w-6 text-gray-400" />
+                                )}
+                              </div>
+                              <div>
+                                <p className="font-medium">{coach.name}</p>
+                                <p className="text-sm text-gray-500">
+                                  {new Date(coach.dob).toLocaleDateString(
+                                    "vi-VN"
+                                  )}
+                                </p>
+                              </div>
+                            </CardContent>
+                          </Card>
+                        ))}
+                    </div>
+                  </div>
+
+                  {/* Phần VĐV */}
+                  <div>
+                    <h3 className="font-medium mb-3">Vận động viên</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                      {detail.participants
+                        .filter((p) => p.role === "ATHLETE")
+                        .map((athlete) => (
+                          <Card key={athlete.id}>
+                            <CardContent className="flex items-center p-4">
+                              <div className="w-12 h-12 rounded-full bg-gray-200 mr-4 flex items-center justify-center">
+                                {athlete.avatar ? (
+                                  <img
+                                    src={athlete.avatar}
+                                    alt={athlete.name}
+                                    className="w-full h-full rounded-full object-cover"
+                                  />
+                                ) : (
+                                  <User className="h-6 w-6 text-gray-400" />
+                                )}
+                              </div>
+                              <div>
+                                <p className="font-medium">{athlete.name}</p>
+                                <p className="text-sm text-gray-500">
+                                  {new Date(athlete.dob).toLocaleDateString(
+                                    "vi-VN"
+                                  )}
+                                </p>
+                              </div>
+                            </CardContent>
+                          </Card>
+                        ))}
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="text-center py-8 text-gray-500">
+                  Chưa có thành viên nào trong đợt tập trung
+                </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>

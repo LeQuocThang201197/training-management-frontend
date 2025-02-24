@@ -274,7 +274,7 @@ export function ConcentrationPage() {
     switch (concentration.team.type) {
       case "Trẻ":
         return "from-white to-blue-50 [&_svg]:text-blue-500 [&_.bg-primary/10]:bg-blue-100/50 [&_h3]:text-blue-700";
-      case "Khuyết tật":
+      case "Người khuyết tật":
         return "from-white to-purple-50 [&_svg]:text-purple-500 [&_.bg-primary/10]:bg-purple-100/50 [&_h3]:text-purple-700";
       case "Tuyển":
         return "from-white to-emerald-50 [&_svg]:text-emerald-500 [&_.bg-primary/10]:bg-emerald-100/50 [&_h3]:text-emerald-700";

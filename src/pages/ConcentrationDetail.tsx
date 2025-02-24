@@ -327,6 +327,29 @@ export function ConcentrationDetailPage() {
     }
   };
 
+  const handleDelete = async () => {
+    if (!window.confirm("Bạn có chắc chắn muốn xóa đợt tập trung này?")) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`${API_URL}/concentrations/${id}`, {
+        method: "DELETE",
+        credentials: "include",
+      });
+
+      if (!response.ok) throw new Error("Không thể xóa đợt tập trung");
+
+      const data = await response.json();
+      if (data.success) {
+        navigate("/management/concentrations");
+      }
+    } catch (err) {
+      console.error("Delete concentration error:", err);
+      alert("Có lỗi xảy ra khi xóa đợt tập trung");
+    }
+  };
+
   useEffect(() => {
     const fetchTeams = async () => {
       try {
@@ -381,29 +404,35 @@ export function ConcentrationDetailPage() {
               : ""}
             đợt {detail.sequence_number} năm {detail.related_year}
           </h1>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => {
-              if (detail) {
-                setEditFormData({
-                  teamId: detail.teamId,
-                  related_year: detail.related_year,
-                  sequence_number: detail.sequence_number,
-                  location: detail.location,
-                  startDate: detail.startDate.split("T")[0],
-                  endDate: detail.endDate.split("T")[0],
-                });
-                setTeamSearchTerm(
-                  `${detail.team.type} - ${detail.team.sport} (${detail.team.gender})`
-                );
-                setIsEditDialogOpen(true);
-              }
-            }}
-          >
-            <Pencil className="h-4 w-4 mr-2" />
-            Chỉnh sửa
-          </Button>
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                if (detail) {
+                  setEditFormData({
+                    teamId: detail.teamId,
+                    related_year: detail.related_year,
+                    sequence_number: detail.sequence_number,
+                    location: detail.location,
+                    startDate: detail.startDate.split("T")[0],
+                    endDate: detail.endDate.split("T")[0],
+                  });
+                  setTeamSearchTerm(
+                    `${detail.team.type} - ${detail.team.sport} (${detail.team.gender})`
+                  );
+                  setIsEditDialogOpen(true);
+                }
+              }}
+            >
+              <Pencil className="h-4 w-4 mr-2" />
+              Chỉnh sửa
+            </Button>
+            <Button variant="destructive" size="sm" onClick={handleDelete}>
+              <Trash2 className="h-4 w-4 mr-2" />
+              Xóa
+            </Button>
+          </div>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <Card>

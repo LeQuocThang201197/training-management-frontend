@@ -16,7 +16,7 @@ import { Permission } from "./types/auth";
 import { ConcentrationPage } from "./pages/Concentration";
 import { ConcentrationDetailPage } from "./pages/ConcentrationDetail";
 import { DocumentDetailPage } from "./pages/DocumentDetail";
-
+import { PersonnelRolesPage } from "./pages/PersonnelRoles";
 function App() {
   return (
     <AuthProvider>
@@ -85,7 +85,7 @@ function App() {
                             <PermissionGate
                               permission={Permission.MANAGE_PERSONNEL}
                             >
-                              <PersonnelPage />
+                              <PersonnelRolesPage />
                             </PermissionGate>
                           }
                         />

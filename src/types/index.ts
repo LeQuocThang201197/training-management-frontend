@@ -9,5 +9,13 @@ export interface Document {
   description: string;
 }
 
+export interface Team {
+  id: number;
+  sport: string;
+  type: string;
+  gender: string;
+  room: string;
+}
+
 export * from "./concentration";
 export * from "./auth";

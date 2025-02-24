@@ -52,6 +52,7 @@ export function PersonnelPage() {
     phone: "",
     email: "",
   });
+  const [editingPerson, setEditingPerson] = useState<Person | null>(null);
 
   useEffect(() => {
     const fetchPersonnel = async () => {
@@ -79,20 +80,29 @@ export function PersonnelPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const response = await fetch(`${API_URL}/persons`, {
-        method: "POST",
-        credentials: "include",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(formData),
-      });
+      const response = await fetch(
+        `${API_URL}/persons${editingPerson ? `/${editingPerson.id}` : ""}`,
+        {
+          method: editingPerson ? "PUT" : "POST",
+          credentials: "include",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(formData),
+        }
+      );
 
-      if (!response.ok) throw new Error("Không thể thêm nhân sự");
+      if (!response.ok) throw new Error("Không thể lưu thông tin nhân sự");
 
       const data = await response.json();
       if (data.success) {
-        setPersonnel((prev) => [...prev, data.data]);
+        if (editingPerson) {
+          setPersonnel((prev) =>
+            prev.map((p) => (p.id === editingPerson.id ? data.data : p))
+          );
+        } else {
+          setPersonnel((prev) => [...prev, data.data]);
+        }
         setIsDialogOpen(false);
         setFormData({
           name: "",
@@ -105,10 +115,27 @@ export function PersonnelPage() {
           phone: "",
           email: "",
         });
+        setEditingPerson(null);
       }
     } catch (err) {
-      console.error("Create person error:", err);
+      console.error("Save person error:", err);
     }
+  };
+
+  const handleEdit = (person: Person) => {
+    setEditingPerson(person);
+    setFormData({
+      name: person.name,
+      identity_number: person.identity_number,
+      identity_date: person.identity_date,
+      identity_place: person.identity_place,
+      social_insurance: person.social_insurance,
+      birthday: person.birthday,
+      gender: person.gender,
+      phone: person.phone,
+      email: person.email,
+    });
+    setIsDialogOpen(true);
   };
 
   const filteredPersonnel = personnel.filter(
@@ -123,7 +150,26 @@ export function PersonnelPage() {
       <Card className="p-6">
         <div className="flex items-center justify-between mb-6">
           <h1 className="text-3xl font-bold">Quản lý Nhân sự</h1>
-          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+          <Dialog
+            open={isDialogOpen}
+            onOpenChange={(open) => {
+              setIsDialogOpen(open);
+              if (!open) {
+                setEditingPerson(null);
+                setFormData({
+                  name: "",
+                  identity_number: "",
+                  identity_date: "",
+                  identity_place: "",
+                  social_insurance: "",
+                  birthday: "",
+                  gender: "",
+                  phone: "",
+                  email: "",
+                });
+              }
+            }}
+          >
             <DialogTrigger asChild>
               <Button>
                 <PlusCircle className="mr-2 h-4 w-4" />
@@ -132,13 +178,21 @@ export function PersonnelPage() {
             </DialogTrigger>
             <DialogContent>
               <DialogHeader>
-                <DialogTitle>Thêm nhân sự mới</DialogTitle>
+                <DialogTitle>
+                  {editingPerson
+                    ? "Chỉnh sửa thông tin nhân sự"
+                    : "Thêm nhân sự mới"}
+                </DialogTitle>
               </DialogHeader>
               <PersonForm
                 formData={formData}
                 setFormData={setFormData}
                 onSubmit={handleSubmit}
-                onCancel={() => setIsDialogOpen(false)}
+                onCancel={() => {
+                  setIsDialogOpen(false);
+                  setEditingPerson(null);
+                }}
+                submitLabel={editingPerson ? "Cập nhật" : "Thêm mới"}
               />
             </DialogContent>
           </Dialog>
@@ -176,9 +230,18 @@ export function PersonnelPage() {
                     <TableCell>{person.email}</TableCell>
                     <TableCell>{person.identity_number}</TableCell>
                     <TableCell>
-                      <Button variant="ghost" size="sm">
-                        Chi tiết
-                      </Button>
+                      <div className="flex gap-2">
+                        <Button variant="ghost" size="sm">
+                          Chi tiết
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleEdit(person)}
+                        >
+                          Chỉnh sửa
+                        </Button>
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))}

@@ -4,10 +4,21 @@ import { Input } from "@/components/ui/input";
 import {
   Search,
   Plus,
-  ArrowUpDown,
   ChevronLeft,
   ChevronRight,
+  Users,
+  Calendar,
+  MapPin,
 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { API_URL } from "@/config/api";
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+} from "@/components/ui/dropdown-menu";
+import { ArrowUpDown } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -16,25 +27,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
-import { API_URL } from "@/config/api";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { HoverCard } from "@/components/HoverCard";
-import { useNavigate } from "react-router-dom";
+import { cn } from "@/lib/utils";
 
 interface Team {
   id: number;
@@ -100,6 +93,7 @@ const sortOptions: SortOption[] = [
 ];
 
 export function ConcentrationPage() {
+  const navigate = useNavigate();
   const [concentrations, setConcentrations] = useState<Concentration[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -116,14 +110,9 @@ export function ConcentrationPage() {
     end_date: "",
   });
   const [searchTerm, setSearchTerm] = useState("");
-  const [editingConcentration, setEditingConcentration] =
-    useState<Concentration | null>(null);
-  const [concentrationToDelete, setConcentrationToDelete] =
-    useState<Concentration | null>(null);
   const [teams, setTeams] = useState<Team[]>([]);
   const [teamSearchTerm, setTeamSearchTerm] = useState("");
   const [isTeamDropdownOpen, setIsTeamDropdownOpen] = useState(false);
-  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchConcentrations = async () => {
@@ -211,69 +200,6 @@ export function ConcentrationPage() {
     }
   };
 
-  const handleEdit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!editingConcentration) return;
-
-    try {
-      const response = await fetch(
-        `${API_URL}/concentrations/${editingConcentration.id}`,
-        {
-          method: "PUT",
-          credentials: "include",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(formData),
-        }
-      );
-
-      if (!response.ok) throw new Error("Không thể cập nhật đợt tập trung");
-
-      const data = await response.json();
-      if (data.success) {
-        setConcentrations((prev) =>
-          prev.map((concentration) =>
-            concentration.id === editingConcentration.id
-              ? data.data
-              : concentration
-          )
-        );
-        setIsDialogOpen(false);
-        setEditingConcentration(null);
-      }
-    } catch (err) {
-      console.error("Update concentration error:", err);
-      alert(
-        err instanceof Error ? err.message : "Lỗi khi cập nhật đợt tập trung"
-      );
-    }
-  };
-
-  const handleDelete = async () => {
-    if (!concentrationToDelete) return;
-
-    try {
-      const response = await fetch(
-        `${API_URL}/concentrations/${concentrationToDelete.id}`,
-        {
-          method: "DELETE",
-          credentials: "include",
-        }
-      );
-
-      if (!response.ok) throw new Error("Không thể xóa đợt tập trung");
-
-      setConcentrations((prev) =>
-        prev.filter(
-          (concentration) => concentration.id !== concentrationToDelete.id
-        )
-      );
-      setConcentrationToDelete(null);
-    } catch (err) {
-      console.error("Delete concentration error:", err);
-      alert(err instanceof Error ? err.message : "Lỗi khi xóa đợt tập trung");
-    }
-  };
-
   if (loading) {
     return (
       <div className="flex justify-center items-center min-h-[400px]">
@@ -324,6 +250,27 @@ export function ConcentrationPage() {
         : false)
   );
 
+  const getCardStyle = (concentration: Concentration) => {
+    const today = new Date();
+    const endDate = new Date(concentration.endDate);
+    const isEnded = endDate < today;
+
+    if (isEnded) {
+      return "from-gray-50 to-gray-100/50 [&_svg]:text-gray-500 [&_.bg-primary/10]:bg-gray-100/80 [&_h3]:text-gray-600";
+    }
+
+    switch (concentration.team.type) {
+      case "Trẻ":
+        return "from-white to-blue-50 [&_svg]:text-blue-500 [&_.bg-primary/10]:bg-blue-100/50 [&_h3]:text-blue-700";
+      case "Khuyết tật":
+        return "from-white to-purple-50 [&_svg]:text-purple-500 [&_.bg-primary/10]:bg-purple-100/50 [&_h3]:text-purple-700";
+      case "Tuyển":
+        return "from-white to-emerald-50 [&_svg]:text-emerald-500 [&_.bg-primary/10]:bg-emerald-100/50 [&_h3]:text-emerald-700";
+      default:
+        return "from-white to-primary/5";
+    }
+  };
+
   return (
     <div className="container mx-auto p-6 bg-white rounded-lg shadow">
       <div className="flex justify-between items-center mb-6">
@@ -357,16 +304,9 @@ export function ConcentrationPage() {
             </DialogTrigger>
             <DialogContent>
               <DialogHeader>
-                <DialogTitle>
-                  {editingConcentration
-                    ? "Chỉnh sửa đợt tập trung"
-                    : "Thêm đợt tập trung mới"}
-                </DialogTitle>
+                <DialogTitle>Thêm đợt tập trung mới</DialogTitle>
               </DialogHeader>
-              <form
-                onSubmit={editingConcentration ? handleEdit : handleSubmit}
-                className="space-y-4"
-              >
+              <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="team">Chọn đội</Label>
                   <div className="relative">
@@ -513,9 +453,7 @@ export function ConcentrationPage() {
                   >
                     Hủy
                   </Button>
-                  <Button type="submit">
-                    {editingConcentration ? "Cập nhật" : "Thêm mới"}
-                  </Button>
+                  <Button type="submit">Thêm mới</Button>
                 </div>
               </form>
             </DialogContent>
@@ -535,62 +473,98 @@ export function ConcentrationPage() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {sortedAndPaginatedConcentrations.map((concentration) => (
-          <HoverCard
+          <div
             key={concentration.id}
-            id={concentration.id}
-            title={`Đội tuyển ${
-              concentration.team.type === "Trẻ"
-                ? concentration.team.type.toLowerCase()
-                : ""
-            } ${concentration.team.sport} ${
-              concentration.team.gender === "Cả nam và nữ"
-                ? ""
-                : concentration.team.gender.toLowerCase() + " "
+            className={cn(
+              "p-6 border rounded-lg hover:shadow-lg transition-all cursor-pointer",
+              "bg-gradient-to-br",
+              getCardStyle(concentration),
+              "hover:scale-[1.02] hover:-translate-y-1",
+              "relative overflow-hidden"
+            )}
+            onClick={() =>
+              navigate(`/management/concentrations/${concentration.id}`)
             }
-             đợt ${concentration.sequence_number} năm ${
-              concentration.related_year
-            }`}
-            subtitle={
-              <>
+          >
+            <div
+              className={cn(
+                "absolute top-0 right-0 w-24 h-1.5 rounded-bl",
+                new Date(concentration.endDate) < new Date()
+                  ? "bg-gray-300"
+                  : concentration.team.type === "Trẻ"
+                  ? "bg-blue-300"
+                  : concentration.team.type === "Khuyết tật"
+                  ? "bg-purple-300"
+                  : "bg-emerald-300"
+              )}
+            />
+
+            {new Date(concentration.endDate) < new Date() && (
+              <div className="absolute top-2 right-2 px-2 py-0.5 bg-gray-100 text-gray-600 text-xs rounded-full">
+                Đã kết thúc
+              </div>
+            )}
+
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center ring-2 ring-primary/20">
+                  <Users className="h-5 w-5 text-primary" />
+                </div>
                 <div>
+                  <span className="font-medium text-lg">
+                    Đợt {concentration.sequence_number}
+                  </span>
+                  <span className="text-sm text-gray-500 block">
+                    Năm {concentration.related_year}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <div className="mb-4">
+              <h3 className="font-semibold text-lg mb-1">
+                {concentration.team.type === "Trẻ" ? "Đội trẻ " : "Đội tuyển "}
+                {concentration.team.sport}
+                {concentration.team.gender !== "Cả nam và nữ" && (
+                  <span className="font-normal">
+                    {" "}
+                    ({concentration.team.gender})
+                  </span>
+                )}
+              </h3>
+              <div className="flex gap-4 text-sm text-gray-600">
+                <div className="flex items-center gap-1">
+                  <Users className="h-4 w-4" />
+                  <span>0 HLV</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <Users className="h-4 w-4" />
+                  <span>0 VĐV</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="space-y-2.5">
+              <div className="flex items-center gap-3 text-sm text-gray-600">
+                <div className="p-1.5 rounded-full bg-primary/10">
+                  <Calendar className="h-4 w-4 text-primary/70" />
+                </div>
+                <span>
                   {new Date(concentration.startDate).toLocaleDateString(
                     "vi-VN"
                   )}
                   {" - "}
                   {new Date(concentration.endDate).toLocaleDateString("vi-VN")}
+                </span>
+              </div>
+              <div className="flex items-center gap-3 text-sm text-gray-600">
+                <div className="p-1.5 rounded-full bg-primary/10">
+                  <MapPin className="h-4 w-4 text-primary/70" />
                 </div>
-              </>
-            }
-            status={concentration.location}
-            onEdit={() => {
-              setEditingConcentration(concentration);
-              const selectedTeam = concentration.team;
-              setTeamSearchTerm(
-                `${selectedTeam.type} - ${selectedTeam.sport} (${selectedTeam.gender})`
-              );
-              setFormData({
-                team_id: concentration.teamId,
-                related_year: concentration.related_year,
-                sequence_number: concentration.sequence_number,
-                location: concentration.location,
-                note: concentration.note,
-                start_date: concentration.startDate.split("T")[0],
-                end_date: concentration.endDate.split("T")[0],
-              });
-              setIsDialogOpen(true);
-            }}
-            onDelete={() => setConcentrationToDelete(concentration)}
-          >
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() =>
-                navigate(`/management/concentrations/${concentration.id}`)
-              }
-            >
-              Chi tiết
-            </Button>
-          </HoverCard>
+                <span>{concentration.location}</span>
+              </div>
+            </div>
+          </div>
         ))}
       </div>
 
@@ -627,32 +601,6 @@ export function ConcentrationPage() {
           </Button>
         </div>
       )}
-
-      <AlertDialog
-        open={!!concentrationToDelete}
-        onOpenChange={(open) => !open && setConcentrationToDelete(null)}
-      >
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Bạn có chắc chắn muốn xóa?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Đợt tập trung "{concentrationToDelete?.team.sport}" sẽ bị xóa vĩnh
-              viễn và không thể khôi phục.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter className="sm:space-x-4">
-            <AlertDialogCancel className="w-full sm:w-32 bg-gray-100 hover:bg-gray-200 border-none text-gray-900">
-              Không
-            </AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleDelete}
-              className="w-full sm:w-32 bg-red-500 hover:bg-red-600 text-white border-none"
-            >
-              Có, xóa
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </div>
   );
 }

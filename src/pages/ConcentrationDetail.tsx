@@ -14,6 +14,7 @@ import {
   Link2,
   Pencil,
   Trash2,
+  Link2Off,
 } from "lucide-react";
 import { Concentration } from "@/types/concentration";
 import { Button } from "@/components/ui/button";
@@ -25,6 +26,8 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
+import { Team } from "@/types/index";
+import { ConcentrationDialog } from "@/components/dialogs/ConcentrationDialog";
 
 interface Paper {
   id: number;
@@ -73,6 +76,18 @@ export function ConcentrationDetailPage() {
   const [loadingLinkedPapers, setLoadingLinkedPapers] = useState(false);
   const [selectedPaperIds, setSelectedPaperIds] = useState<number[]>([]);
   const [availablePapers, setAvailablePapers] = useState<Paper[]>([]);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [editFormData, setEditFormData] = useState({
+    team_id: 0,
+    related_year: new Date().getFullYear(),
+    sequence_number: 1,
+    location: "",
+    start_date: "",
+    end_date: "",
+  });
+  const [teamSearchTerm, setTeamSearchTerm] = useState("");
+  const [isTeamDropdownOpen, setIsTeamDropdownOpen] = useState(false);
+  const [teams, setTeams] = useState<Team[]>([]);
 
   useEffect(() => {
     const fetchDetail = async () => {
@@ -278,6 +293,57 @@ export function ConcentrationDetailPage() {
     );
   };
 
+  const handleEdit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      // Gửi trực tiếp định dạng YYYY-MM-DD
+      const requestData = {
+        ...editFormData,
+        start_date: editFormData.start_date, // Đã ở định dạng YYYY-MM-DD
+        end_date: editFormData.end_date, // Đã ở định dạng YYYY-MM-DD
+      };
+
+      const response = await fetch(`${API_URL}/concentrations/${id}`, {
+        method: "PUT",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(requestData),
+      });
+
+      if (!response.ok) throw new Error("Không thể cập nhật đợt tập trung");
+
+      const data = await response.json();
+      if (data.success) {
+        setDetail(data.data);
+        setIsEditDialogOpen(false);
+      }
+    } catch (err) {
+      console.error("Update concentration error:", err);
+    }
+  };
+
+  useEffect(() => {
+    const fetchTeams = async () => {
+      try {
+        const response = await fetch(`${API_URL}/teams`, {
+          credentials: "include",
+        });
+        if (!response.ok) throw new Error("Không thể tải danh sách đội");
+
+        const data = await response.json();
+        if (data.success) {
+          setTeams(data.data);
+        }
+      } catch (err) {
+        console.error("Fetch teams error:", err);
+      }
+    };
+
+    fetchTeams();
+  }, []);
+
   if (loading) {
     return <div>Đang tải...</div>;
   }
@@ -301,10 +367,9 @@ export function ConcentrationDetailPage() {
 
       {/* Header Section */}
       <div className="mb-8">
-        <div className="flex items-baseline gap-4 mb-4">
+        <div className="flex items-baseline justify-between gap-4 mb-4">
           <h1 className="text-3xl font-bold">
-            Đội tuyển {detail.team.type === "Tuyển" ? "tuyển" : ""}{" "}
-            {detail.team.sport}{" "}
+            Đội tuyển {detail.team.sport}{" "}
             {detail.team.gender === "Cả nam và nữ"
               ? ""
               : detail.team.gender.toLowerCase() + " "}
@@ -313,7 +378,29 @@ export function ConcentrationDetailPage() {
               : ""}
             đợt {detail.sequence_number} năm {detail.related_year}
           </h1>
-          <p className="text-sm text-gray-500">{detail.team.room}</p>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              if (detail) {
+                setEditFormData({
+                  team_id: detail.teamId,
+                  related_year: detail.related_year,
+                  sequence_number: detail.sequence_number,
+                  location: detail.location,
+                  start_date: detail.startDate.split("T")[0],
+                  end_date: detail.endDate.split("T")[0],
+                });
+                setTeamSearchTerm(
+                  `${detail.team.type} - ${detail.team.sport} (${detail.team.gender})`
+                );
+                setIsEditDialogOpen(true);
+              }
+            }}
+          >
+            <Pencil className="h-4 w-4 mr-2" />
+            Chỉnh sửa
+          </Button>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <Card>
@@ -543,7 +630,7 @@ export function ConcentrationDetailPage() {
                               className="text-red-500 hover:text-red-600"
                               onClick={() => handleUnlinkPaper(paper.id)}
                             >
-                              <Trash2 className="h-4 w-4" />
+                              <Link2Off className="h-4 w-4" />
                             </Button>
                           </div>
                         </div>
@@ -651,6 +738,20 @@ export function ConcentrationDetailPage() {
           </Card>
         </TabsContent>
       </Tabs>
+
+      <ConcentrationDialog
+        isOpen={isEditDialogOpen}
+        onOpenChange={setIsEditDialogOpen}
+        formData={editFormData}
+        setFormData={setEditFormData}
+        onSubmit={handleEdit}
+        teams={teams}
+        teamSearchTerm={teamSearchTerm}
+        setTeamSearchTerm={setTeamSearchTerm}
+        isTeamDropdownOpen={isTeamDropdownOpen}
+        setIsTeamDropdownOpen={setIsTeamDropdownOpen}
+        mode="edit"
+      />
     </div>
   );
 }

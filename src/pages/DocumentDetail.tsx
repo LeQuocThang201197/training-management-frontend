@@ -8,7 +8,7 @@ import {
   Calendar,
   Building2,
   Tag,
-  Trash2,
+  Link2Off,
   Link2,
 } from "lucide-react";
 import {
@@ -456,7 +456,7 @@ export function DocumentDetailPage() {
                           handleUnlinkConcentration(concentration.id);
                         }}
                       >
-                        <Trash2 className="h-4 w-4" />
+                        <Link2Off className="h-4 w-4" />
                       </Button>
                     </div>
                   </CardContent>

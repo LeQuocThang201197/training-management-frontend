@@ -113,6 +113,14 @@ export function ConcentrationPage() {
   const [teams, setTeams] = useState<Team[]>([]);
   const [teamSearchTerm, setTeamSearchTerm] = useState("");
   const [isTeamDropdownOpen, setIsTeamDropdownOpen] = useState(false);
+  const [teamTypeFilter, setTeamTypeFilter] = useState<string>("all");
+
+  const filterOptions = [
+    { value: "all", label: "Tất cả" },
+    { value: "Tuyển", label: "Đội tuyển" },
+    { value: "Trẻ", label: "Đội trẻ" },
+    { value: "Khuyết tật", label: "Đội khuyết tật" },
+  ];
 
   useEffect(() => {
     const fetchConcentrations = async () => {
@@ -216,13 +224,18 @@ export function ConcentrationPage() {
     );
   }
 
-  const filteredConcentrations = concentrations.filter((concentration) =>
-    concentration.team.sport
+  const filteredConcentrations = concentrations.filter((concentration) => {
+    const matchesSearch = concentration.team.sport
       ? concentration.team.sport
           .toLowerCase()
           .includes(searchTerm.toLowerCase().trim())
-      : false
-  );
+      : false;
+
+    const matchesType =
+      teamTypeFilter === "all" || concentration.team.type === teamTypeFilter;
+
+    return matchesSearch && matchesType;
+  });
 
   const totalPages = Math.ceil(filteredConcentrations.length / ITEMS_PER_PAGE);
 
@@ -276,6 +289,29 @@ export function ConcentrationPage() {
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold">Quản lý Tập trung</h1>
         <div className="flex gap-2">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" className="flex items-center gap-2">
+                <Users className="h-4 w-4" />
+                {
+                  filterOptions.find(
+                    (option) => option.value === teamTypeFilter
+                  )?.label
+                }
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent>
+              {filterOptions.map((option) => (
+                <DropdownMenuItem
+                  key={option.value}
+                  onClick={() => setTeamTypeFilter(option.value)}
+                >
+                  {option.label}
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="outline" className="flex items-center gap-2">

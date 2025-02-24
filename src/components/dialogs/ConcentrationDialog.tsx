@@ -16,12 +16,12 @@ interface Team {
 }
 
 interface CreateConcentrationFormData {
-  team_id: number;
+  teamId: number;
   related_year: number;
   sequence_number: number;
   location: string;
-  start_date: string;
-  end_date: string;
+  startDate: string;
+  endDate: string;
 }
 
 interface CreateConcentrationDialogProps {
@@ -165,11 +165,11 @@ export function ConcentrationDialog({
               <input
                 type="date"
                 id="start_date"
-                value={formData.start_date}
+                value={formData.startDate}
                 onChange={(e) =>
                   setFormData((prev) => ({
                     ...prev,
-                    start_date: e.target.value,
+                    startDate: e.target.value,
                   }))
                 }
                 className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
@@ -181,11 +181,11 @@ export function ConcentrationDialog({
               <input
                 type="date"
                 id="end_date"
-                value={formData.end_date}
+                value={formData.endDate}
                 onChange={(e) =>
                   setFormData((prev) => ({
                     ...prev,
-                    end_date: e.target.value,
+                    endDate: e.target.value,
                   }))
                 }
                 className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"

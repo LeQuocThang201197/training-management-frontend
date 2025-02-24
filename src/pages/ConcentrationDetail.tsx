@@ -78,12 +78,12 @@ export function ConcentrationDetailPage() {
   const [availablePapers, setAvailablePapers] = useState<Paper[]>([]);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [editFormData, setEditFormData] = useState({
-    team_id: 0,
+    teamId: 0,
     related_year: new Date().getFullYear(),
     sequence_number: 1,
     location: "",
-    start_date: "",
-    end_date: "",
+    startDate: "",
+    endDate: "",
   });
   const [teamSearchTerm, setTeamSearchTerm] = useState("");
   const [isTeamDropdownOpen, setIsTeamDropdownOpen] = useState(false);
@@ -296,11 +296,14 @@ export function ConcentrationDetailPage() {
   const handleEdit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      // Gửi trực tiếp định dạng YYYY-MM-DD
+      // Chuyển đổi tên các trường cho phù hợp với API
       const requestData = {
-        ...editFormData,
-        start_date: editFormData.start_date, // Đã ở định dạng YYYY-MM-DD
-        end_date: editFormData.end_date, // Đã ở định dạng YYYY-MM-DD
+        teamId: editFormData.teamId,
+        related_year: editFormData.related_year,
+        sequence_number: editFormData.sequence_number,
+        location: editFormData.location,
+        startDate: editFormData.startDate,
+        endDate: editFormData.endDate,
       };
 
       const response = await fetch(`${API_URL}/concentrations/${id}`, {
@@ -384,12 +387,12 @@ export function ConcentrationDetailPage() {
             onClick={() => {
               if (detail) {
                 setEditFormData({
-                  team_id: detail.teamId,
+                  teamId: detail.teamId,
                   related_year: detail.related_year,
                   sequence_number: detail.sequence_number,
                   location: detail.location,
-                  start_date: detail.startDate.split("T")[0],
-                  end_date: detail.endDate.split("T")[0],
+                  startDate: detail.startDate.split("T")[0],
+                  endDate: detail.endDate.split("T")[0],
                 });
                 setTeamSearchTerm(
                   `${detail.team.type} - ${detail.team.sport} (${detail.team.gender})`

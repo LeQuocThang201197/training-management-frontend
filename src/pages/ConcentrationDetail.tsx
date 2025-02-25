@@ -28,6 +28,7 @@ import {
 import { cn } from "@/lib/utils";
 import { Team } from "@/types/index";
 import { ConcentrationDialog } from "@/components/dialogs/ConcentrationDialog";
+import { AddParticipantDialog } from "@/components/dialogs/AddParticipantDialog";
 
 interface Paper {
   id: number;
@@ -79,7 +80,8 @@ export function ConcentrationDetailPage() {
   const [teamSearchTerm, setTeamSearchTerm] = useState("");
   const [isTeamDropdownOpen, setIsTeamDropdownOpen] = useState(false);
   const [teams, setTeams] = useState<Team[]>([]);
-  const [isAddMemberDialogOpen, setIsAddMemberDialogOpen] = useState(false);
+  const [isAddParticipantDialogOpen, setIsAddParticipantDialogOpen] =
+    useState(false);
 
   useEffect(() => {
     const fetchDetail = async () => {
@@ -362,6 +364,45 @@ export function ConcentrationDetailPage() {
     fetchTeams();
   }, []);
 
+  const handleAddParticipant = async (formData: {
+    personId: string;
+    roleId: string;
+    organizationId: string;
+    startDate: string;
+    endDate: string;
+    note: string;
+  }) => {
+    try {
+      const response = await fetch(
+        `${API_URL}/concentrations/${id}/participants`,
+        {
+          method: "POST",
+          credentials: "include",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(formData),
+        }
+      );
+
+      if (!response.ok) throw new Error("Không thể thêm thành viên");
+
+      const data = await response.json();
+      if (data.success) {
+        // Cập nhật lại danh sách thành viên
+        setDetail((prev) => ({
+          ...prev!,
+          participants: [...prev!.participants, data.data],
+          participantsCount: prev!.participantsCount + 1,
+        }));
+        setIsAddParticipantDialogOpen(false);
+      }
+    } catch (err) {
+      console.error("Add participant error:", err);
+      alert("Có lỗi xảy ra khi thêm thành viên");
+    }
+  };
+
   if (loading) {
     return <div>Đang tải...</div>;
   }
@@ -482,27 +523,10 @@ export function ConcentrationDetailPage() {
             <CardHeader>
               <div className="flex items-center justify-between">
                 <CardTitle>Danh sách đội</CardTitle>
-                <Dialog
-                  open={isAddMemberDialogOpen}
-                  onOpenChange={setIsAddMemberDialogOpen}
-                >
-                  <DialogTrigger asChild>
-                    <Button size="sm">
-                      <Plus className="h-4 w-4 mr-2" />
-                      Thêm thành viên
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent>
-                    <DialogHeader>
-                      <DialogTitle>Thêm thành viên mới</DialogTitle>
-                    </DialogHeader>
-                    <div className="space-y-4">
-                      <p className="text-sm text-gray-500">
-                        Chức năng đang được phát triển...
-                      </p>
-                    </div>
-                  </DialogContent>
-                </Dialog>
+                <Button onClick={() => setIsAddParticipantDialogOpen(true)}>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Thêm thành viên
+                </Button>
               </div>
             </CardHeader>
             <CardContent>
@@ -583,6 +607,13 @@ export function ConcentrationDetailPage() {
               )}
             </CardContent>
           </Card>
+          <AddParticipantDialog
+            isOpen={isAddParticipantDialogOpen}
+            onOpenChange={setIsAddParticipantDialogOpen}
+            concentrationStartDate={detail.startDate}
+            concentrationEndDate={detail.endDate}
+            onSubmit={handleAddParticipant}
+          />
         </TabsContent>
 
         <TabsContent value="papers">

@@ -17,6 +17,8 @@ import { ConcentrationPage } from "./pages/Concentration";
 import { ConcentrationDetailPage } from "./pages/ConcentrationDetail";
 import { DocumentDetailPage } from "./pages/DocumentDetail";
 import { PersonnelRolesPage } from "./pages/PersonnelRoles";
+import { OrganizationsPage } from "./pages/Organizations";
+
 function App() {
   return (
     <AuthProvider>
@@ -122,6 +124,14 @@ function App() {
                           element={
                             <PermissionGate permission={Permission.VIEW_TAG}>
                               <TeamsPage />
+                            </PermissionGate>
+                          }
+                        />
+                        <Route
+                          path="organizations"
+                          element={
+                            <PermissionGate permission={Permission.VIEW_TAG}>
+                              <OrganizationsPage />
                             </PermissionGate>
                           }
                         />

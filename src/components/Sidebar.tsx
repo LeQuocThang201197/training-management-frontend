@@ -23,6 +23,7 @@ import {
   LucideIcon,
   PanelLeftClose,
   PanelLeftOpen,
+  Building,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -114,6 +115,11 @@ const menuItems: MenuItem[] = [
         path: "/settings/categories/sports",
       },
       { name: "Danh mục đội", icon: Users, path: "/settings/categories/teams" },
+      {
+        name: "Danh mục đơn vị",
+        icon: Building,
+        path: "/settings/categories/organizations",
+      },
     ],
   },
 ];

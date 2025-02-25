@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { API_URL } from "@/config/api";
 import { Input } from "@/components/ui/input";
-import { Search, Plus } from "lucide-react";
+import { Search, Plus, ChevronLeft, ChevronRight } from "lucide-react";
 import { HoverCard } from "@/components/HoverCard";
 import { Button } from "@/components/ui/button";
 import {
@@ -29,6 +29,13 @@ import {
   AlertDialogCancel,
   AlertDialogAction,
 } from "@/components/ui/alert-dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { ArrowUpDown } from "lucide-react";
 
 interface PersonRole {
   id: number;
@@ -56,6 +63,9 @@ export function PersonnelRolesPage() {
   const [roleTypes, setRoleTypes] = useState<RoleType[]>([]);
   const [roleToDelete, setRoleToDelete] = useState<PersonRole | null>(null);
   const [editingRole, setEditingRole] = useState<PersonRole | null>(null);
+  const ITEMS_PER_PAGE = 15;
+  const [currentPage, setCurrentPage] = useState(1);
+  const [selectedType, setSelectedType] = useState<string>("");
 
   useEffect(() => {
     const fetchRoles = async () => {
@@ -99,9 +109,27 @@ export function PersonnelRolesPage() {
     fetchRoleTypes();
   }, []);
 
-  const filteredRoles = roles.filter((role) =>
-    role.name.toLowerCase().includes(searchTerm.toLowerCase().trim())
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm]);
+
+  const filteredRoles = roles.filter((role) => {
+    const matchesSearch = role.name
+      .toLowerCase()
+      .includes(searchTerm.toLowerCase().trim());
+    const matchesType = selectedType ? role.type === selectedType : true;
+    return matchesSearch && matchesType;
+  });
+
+  const totalPages = Math.ceil(filteredRoles.length / ITEMS_PER_PAGE);
+  const paginatedRoles = filteredRoles.slice(
+    (currentPage - 1) * ITEMS_PER_PAGE,
+    currentPage * ITEMS_PER_PAGE
   );
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -204,80 +232,106 @@ export function PersonnelRolesPage() {
   return (
     <div className="container mx-auto p-6 bg-white rounded-lg shadow">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">Quản lý Vai trò</h1>
-        <Dialog
-          open={isDialogOpen}
-          onOpenChange={(open) => {
-            setIsDialogOpen(open);
-            if (!open) {
-              setEditingRole(null);
-              setFormData({ name: "", type: "" });
-            }
-          }}
-        >
-          <DialogTrigger asChild>
-            <Button>
-              <Plus className="h-4 w-4 mr-2" />
-              Thêm vai trò
-            </Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>
-                {editingRole ? "Chỉnh sửa vai trò" : "Thêm vai trò mới"}
-              </DialogTitle>
-            </DialogHeader>
-            <form
-              onSubmit={editingRole ? handleEdit : handleSubmit}
-              className="space-y-4"
-            >
-              <div className="space-y-2">
-                <Label htmlFor="name">Tên vai trò</Label>
-                <Input
-                  id="name"
-                  value={formData.name}
-                  onChange={(e) =>
-                    setFormData((prev) => ({ ...prev, name: e.target.value }))
-                  }
-                  placeholder="Nhập tên vai trò"
-                  required
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="type">Phân loại</Label>
-                <Select
-                  value={formData.type}
-                  onValueChange={(value) =>
-                    setFormData((prev) => ({ ...prev, type: value }))
-                  }
+        <h1 className="text-2xl font-bold">Danh mục vai trò nhân sự</h1>
+        <div className="flex gap-2">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" className="flex items-center gap-2">
+                <ArrowUpDown className="h-4 w-4" />
+                {selectedType
+                  ? roleTypes.find((t) => t.value === selectedType)?.label
+                  : "Tất cả phân loại"}
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent>
+              <DropdownMenuItem onClick={() => setSelectedType("")}>
+                Tất cả phân loại
+              </DropdownMenuItem>
+              {roleTypes.map((type) => (
+                <DropdownMenuItem
+                  key={type.value}
+                  onClick={() => setSelectedType(type.value)}
                 >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Chọn phân loại" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {roleTypes.map((type) => (
-                      <SelectItem key={type.value} value={type.value}>
-                        {type.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="flex justify-end gap-2">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setIsDialogOpen(false)}
-                >
-                  Hủy
-                </Button>
-                <Button type="submit">
-                  {editingRole ? "Cập nhật" : "Thêm mới"}
-                </Button>
-              </div>
-            </form>
-          </DialogContent>
-        </Dialog>
+                  {type.label}
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+
+          <Dialog
+            open={isDialogOpen}
+            onOpenChange={(open) => {
+              setIsDialogOpen(open);
+              if (!open) {
+                setEditingRole(null);
+                setFormData({ name: "", type: "" });
+              }
+            }}
+          >
+            <DialogTrigger asChild>
+              <Button>
+                <Plus className="h-4 w-4 mr-2" />
+                Thêm vai trò
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>
+                  {editingRole ? "Chỉnh sửa vai trò" : "Thêm vai trò mới"}
+                </DialogTitle>
+              </DialogHeader>
+              <form
+                onSubmit={editingRole ? handleEdit : handleSubmit}
+                className="space-y-4"
+              >
+                <div className="space-y-2">
+                  <Label htmlFor="name">Tên vai trò</Label>
+                  <Input
+                    id="name"
+                    value={formData.name}
+                    onChange={(e) =>
+                      setFormData((prev) => ({ ...prev, name: e.target.value }))
+                    }
+                    placeholder="Nhập tên vai trò"
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="type">Phân loại</Label>
+                  <Select
+                    value={formData.type}
+                    onValueChange={(value) =>
+                      setFormData((prev) => ({ ...prev, type: value }))
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Chọn phân loại" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {roleTypes.map((type) => (
+                        <SelectItem key={type.value} value={type.value}>
+                          {type.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="flex justify-end gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => setIsDialogOpen(false)}
+                  >
+                    Hủy
+                  </Button>
+                  <Button type="submit">
+                    {editingRole ? "Cập nhật" : "Thêm mới"}
+                  </Button>
+                </div>
+              </form>
+            </DialogContent>
+          </Dialog>
+        </div>
       </div>
 
       <div className="relative mb-6">
@@ -291,7 +345,7 @@ export function PersonnelRolesPage() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {filteredRoles.map((role) => (
+        {paginatedRoles.map((role) => (
           <HoverCard
             key={role.id}
             id={role.id}
@@ -302,6 +356,40 @@ export function PersonnelRolesPage() {
           ></HoverCard>
         ))}
       </div>
+
+      {totalPages > 1 && (
+        <div className="mt-6 flex items-center justify-center gap-2">
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={() => handlePageChange(currentPage - 1)}
+            disabled={currentPage === 1}
+          >
+            <ChevronLeft className="h-4 w-4" />
+          </Button>
+
+          {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+            <Button
+              key={page}
+              variant={currentPage === page ? "default" : "outline"}
+              size="icon"
+              onClick={() => handlePageChange(page)}
+              className="w-8 h-8"
+            >
+              {page}
+            </Button>
+          ))}
+
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={() => handlePageChange(currentPage + 1)}
+            disabled={currentPage === totalPages}
+          >
+            <ChevronRight className="h-4 w-4" />
+          </Button>
+        </div>
+      )}
 
       <AlertDialog
         open={!!roleToDelete}

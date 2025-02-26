@@ -56,6 +56,7 @@ interface Person {
   name: string;
   gender: string;
   code: string;
+  birthday: string;
 }
 
 interface Role {

@@ -1,12 +1,19 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Pencil, Trash2, User, Mars, Venus } from "lucide-react";
+import { Pencil, Trash2, User, Mars, Venus, FileText } from "lucide-react";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 interface Person {
   id: number;
   name: string;
   gender: string;
   code: string;
+  birthday: string;
 }
 
 interface Role {
@@ -43,6 +50,10 @@ const GenderIcon = ({ gender }: { gender: string }) => {
   return <User className="h-6 w-6 text-gray-400" />;
 };
 
+const getBirthYear = (birthday: string) => {
+  return new Date(birthday).getFullYear();
+};
+
 export function ParticipantCard({
   participant,
   onEdit,
@@ -56,7 +67,21 @@ export function ParticipantCard({
         </div>
         <div className="flex-1">
           <div className="flex justify-between items-start">
-            <p className="font-medium">{participant.person.name}</p>
+            <div className="flex items-center gap-2">
+              <p className="font-medium">{participant.person.name}</p>
+              {participant.note && (
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger>
+                      <FileText className="h-4 w-4 text-gray-400 hover:text-gray-600" />
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p className="max-w-xs break-words">{participant.note}</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              )}
+            </div>
             {(onEdit || onDelete) && (
               <div className="flex gap-2">
                 {onEdit && (
@@ -83,6 +108,7 @@ export function ParticipantCard({
           <div className="text-sm text-gray-500 space-y-1">
             <p>{participant.role.name}</p>
             <p>{participant.organization.name}</p>
+            <p>{getBirthYear(participant.person.birthday)}</p>
             <p>
               {new Date(participant.startDate).toLocaleDateString("vi-VN")} -{" "}
               {new Date(participant.endDate).toLocaleDateString("vi-VN")}

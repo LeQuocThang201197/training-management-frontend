@@ -15,8 +15,6 @@ import {
   Pencil,
   Trash2,
   Link2Off,
-  Mars,
-  Venus,
 } from "lucide-react";
 import { Concentration } from "@/types/concentration";
 import { Button } from "@/components/ui/button";
@@ -41,6 +39,7 @@ import {
   AlertDialogCancel,
   AlertDialogAction,
 } from "@/components/ui/alert-dialog";
+import { ParticipantCard } from "@/components/cards/ParticipantCard";
 
 interface Paper {
   id: number;
@@ -84,12 +83,6 @@ interface ConcentrationDetail extends Concentration {
   participantsCount: number;
   papers: Paper[];
 }
-
-const GenderIcon = ({ gender }: { gender: string }) => {
-  if (gender === "Nam") return <Mars className="h-6 w-6 text-blue-400" />;
-  if (gender === "Nữ") return <Venus className="h-6 w-6 text-pink-400" />;
-  return <User className="h-6 w-6 text-gray-400" />;
-};
 
 export function ConcentrationDetailPage() {
   const { id } = useParams();
@@ -688,53 +681,12 @@ export function ConcentrationDetailPage() {
                         {participants
                           .filter((p) => p.role.type === "COACH")
                           .map((coach) => (
-                            <Card key={coach.id}>
-                              <CardContent className="flex items-center p-4">
-                                <div className="w-12 h-12 rounded-full bg-gray-100 mr-4 flex items-center justify-center">
-                                  <GenderIcon gender={coach.person.gender} />
-                                </div>
-                                <div className="flex-1">
-                                  <div className="flex justify-between items-start">
-                                    <p className="font-medium">
-                                      {coach.person.name}
-                                    </p>
-                                    <div className="flex gap-2">
-                                      <Button
-                                        variant="ghost"
-                                        size="icon"
-                                        onClick={() =>
-                                          setEditingParticipant(coach)
-                                        }
-                                      >
-                                        <Pencil className="h-4 w-4" />
-                                      </Button>
-                                      <Button
-                                        variant="ghost"
-                                        size="icon"
-                                        onClick={() =>
-                                          setParticipantToDelete(coach)
-                                        }
-                                      >
-                                        <Trash2 className="h-4 w-4" />
-                                      </Button>
-                                    </div>
-                                  </div>
-                                  <div className="text-sm text-gray-500 space-y-1">
-                                    <p>{coach.role.name}</p>
-                                    <p>{coach.organization.name}</p>
-                                    <p>
-                                      {new Date(
-                                        coach.startDate
-                                      ).toLocaleDateString("vi-VN")}{" "}
-                                      -{" "}
-                                      {new Date(
-                                        coach.endDate
-                                      ).toLocaleDateString("vi-VN")}
-                                    </p>
-                                  </div>
-                                </div>
-                              </CardContent>
-                            </Card>
+                            <ParticipantCard
+                              key={coach.id}
+                              participant={coach}
+                              onEdit={setEditingParticipant}
+                              onDelete={setParticipantToDelete}
+                            />
                           ))}
                       </div>
                     </div>
@@ -748,53 +700,12 @@ export function ConcentrationDetailPage() {
                         {participants
                           .filter((p) => p.role.type === "ATHLETE")
                           .map((athlete) => (
-                            <Card key={athlete.id}>
-                              <CardContent className="flex items-center p-4">
-                                <div className="w-12 h-12 rounded-full bg-gray-100 mr-4 flex items-center justify-center">
-                                  <GenderIcon gender={athlete.person.gender} />
-                                </div>
-                                <div className="flex-1">
-                                  <div className="flex justify-between items-start">
-                                    <p className="font-medium">
-                                      {athlete.person.name}
-                                    </p>
-                                    <div className="flex gap-2">
-                                      <Button
-                                        variant="ghost"
-                                        size="icon"
-                                        onClick={() =>
-                                          setEditingParticipant(athlete)
-                                        }
-                                      >
-                                        <Pencil className="h-4 w-4" />
-                                      </Button>
-                                      <Button
-                                        variant="ghost"
-                                        size="icon"
-                                        onClick={() =>
-                                          setParticipantToDelete(athlete)
-                                        }
-                                      >
-                                        <Trash2 className="h-4 w-4" />
-                                      </Button>
-                                    </div>
-                                  </div>
-                                  <div className="text-sm text-gray-500 space-y-1">
-                                    <p>{athlete.role.name}</p>
-                                    <p>{athlete.organization.name}</p>
-                                    <p>
-                                      {new Date(
-                                        athlete.startDate
-                                      ).toLocaleDateString("vi-VN")}{" "}
-                                      -{" "}
-                                      {new Date(
-                                        athlete.endDate
-                                      ).toLocaleDateString("vi-VN")}
-                                    </p>
-                                  </div>
-                                </div>
-                              </CardContent>
-                            </Card>
+                            <ParticipantCard
+                              key={athlete.id}
+                              participant={athlete}
+                              onEdit={setEditingParticipant}
+                              onDelete={setParticipantToDelete}
+                            />
                           ))}
                       </div>
                     </div>
@@ -808,53 +719,12 @@ export function ConcentrationDetailPage() {
                         {participants
                           .filter((p) => p.role.type === "OTHER")
                           .map((other) => (
-                            <Card key={other.id}>
-                              <CardContent className="flex items-center p-4">
-                                <div className="w-12 h-12 rounded-full bg-gray-100 mr-4 flex items-center justify-center">
-                                  <GenderIcon gender={other.person.gender} />
-                                </div>
-                                <div className="flex-1">
-                                  <div className="flex justify-between items-start">
-                                    <p className="font-medium">
-                                      {other.person.name}
-                                    </p>
-                                    <div className="flex gap-2">
-                                      <Button
-                                        variant="ghost"
-                                        size="icon"
-                                        onClick={() =>
-                                          setEditingParticipant(other)
-                                        }
-                                      >
-                                        <Pencil className="h-4 w-4" />
-                                      </Button>
-                                      <Button
-                                        variant="ghost"
-                                        size="icon"
-                                        onClick={() =>
-                                          setParticipantToDelete(other)
-                                        }
-                                      >
-                                        <Trash2 className="h-4 w-4" />
-                                      </Button>
-                                    </div>
-                                  </div>
-                                  <div className="text-sm text-gray-500 space-y-1">
-                                    <p>{other.role.name}</p>
-                                    <p>{other.organization.name}</p>
-                                    <p>
-                                      {new Date(
-                                        other.startDate
-                                      ).toLocaleDateString("vi-VN")}{" "}
-                                      -{" "}
-                                      {new Date(
-                                        other.endDate
-                                      ).toLocaleDateString("vi-VN")}
-                                    </p>
-                                  </div>
-                                </div>
-                              </CardContent>
-                            </Card>
+                            <ParticipantCard
+                              key={other.id}
+                              participant={other}
+                              onEdit={setEditingParticipant}
+                              onDelete={setParticipantToDelete}
+                            />
                           ))}
                       </div>
                     </div>

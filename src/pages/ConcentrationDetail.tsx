@@ -42,11 +42,20 @@ interface Paper {
 
 interface Participant {
   id: number;
-  name: string;
-  role: string;
-  gender: string;
-  dob: string;
-  avatar?: string;
+  person: {
+    id: number;
+    name: string;
+    gender: string;
+  };
+  role: {
+    id: number;
+    name: string;
+    type: string;
+  };
+  organization: {
+    id: number;
+    name: string;
+  };
 }
 
 interface ConcentrationDetail extends Concentration {
@@ -82,6 +91,8 @@ export function ConcentrationDetailPage() {
   const [teams, setTeams] = useState<Team[]>([]);
   const [isAddParticipantDialogOpen, setIsAddParticipantDialogOpen] =
     useState(false);
+  const [participants, setParticipants] = useState<Participant[]>([]);
+  const [loadingParticipants, setLoadingParticipants] = useState(true);
 
   useEffect(() => {
     const fetchDetail = async () => {
@@ -103,6 +114,32 @@ export function ConcentrationDetailPage() {
     };
 
     fetchDetail();
+  }, [id]);
+
+  useEffect(() => {
+    const fetchParticipants = async () => {
+      try {
+        const response = await fetch(
+          `${API_URL}/concentrations/${id}/participants`,
+          {
+            credentials: "include",
+          }
+        );
+        if (!response.ok)
+          throw new Error("Không thể tải danh sách người tham gia");
+
+        const data = await response.json();
+        if (data.success) {
+          setParticipants(data.data);
+        }
+      } catch (err) {
+        console.error("Fetch participants error:", err);
+      } finally {
+        setLoadingParticipants(false);
+      }
+    };
+
+    fetchParticipants();
   }, [id]);
 
   const handleUpdateNote = async () => {
@@ -389,12 +426,19 @@ export function ConcentrationDetailPage() {
 
       const data = await response.json();
       if (data.success) {
-        // Cập nhật lại danh sách thành viên
-        setDetail((prev) => ({
-          ...prev!,
-          participants: [...prev!.participants, data.data],
-          participantsCount: prev!.participantsCount + 1,
-        }));
+        // Cập nhật danh sách participants thay vì detail
+        setParticipants((prev) => [...prev, data.data]);
+
+        // Cập nhật số lượng trong detail
+        setDetail((prev) =>
+          prev
+            ? {
+                ...prev,
+                participantsCount: prev.participantsCount + 1,
+              }
+            : null
+        );
+
         setIsAddParticipantDialogOpen(false);
       }
     } catch (err) {
@@ -530,35 +574,33 @@ export function ConcentrationDetailPage() {
               </div>
             </CardHeader>
             <CardContent>
-              {detail.participants.length > 0 ? (
+              {loadingParticipants ? (
+                <div className="flex justify-center py-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                </div>
+              ) : participants.length > 0 ? (
                 <div className="space-y-6">
                   {/* Phần HLV */}
                   <div>
                     <h3 className="font-medium mb-3">Huấn luyện viên</h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                      {detail.participants
-                        .filter((p) => p.role === "COACH")
+                      {participants
+                        .filter((p) => p.role.type === "COACH")
                         .map((coach) => (
                           <Card key={coach.id}>
                             <CardContent className="flex items-center p-4">
                               <div className="w-12 h-12 rounded-full bg-gray-200 mr-4 flex items-center justify-center">
-                                {coach.avatar ? (
-                                  <img
-                                    src={coach.avatar}
-                                    alt={coach.name}
-                                    className="w-full h-full rounded-full object-cover"
-                                  />
-                                ) : (
-                                  <User className="h-6 w-6 text-gray-400" />
-                                )}
+                                <User className="h-6 w-6 text-gray-400" />
                               </div>
-                              <div>
-                                <p className="font-medium">{coach.name}</p>
-                                <p className="text-sm text-gray-500">
-                                  {new Date(coach.dob).toLocaleDateString(
-                                    "vi-VN"
-                                  )}
+                              <div className="flex-1">
+                                <p className="font-medium">
+                                  {coach.person.name}
                                 </p>
+                                <div className="text-sm text-gray-500 space-y-1">
+                                  <p>{coach.role.name}</p>
+                                  <p>{coach.organization.name}</p>
+                                  <p>{coach.person.gender}</p>
+                                </div>
                               </div>
                             </CardContent>
                           </Card>
@@ -570,29 +612,23 @@ export function ConcentrationDetailPage() {
                   <div>
                     <h3 className="font-medium mb-3">Vận động viên</h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                      {detail.participants
-                        .filter((p) => p.role === "ATHLETE")
+                      {participants
+                        .filter((p) => p.role.type === "ATHLETE")
                         .map((athlete) => (
                           <Card key={athlete.id}>
                             <CardContent className="flex items-center p-4">
                               <div className="w-12 h-12 rounded-full bg-gray-200 mr-4 flex items-center justify-center">
-                                {athlete.avatar ? (
-                                  <img
-                                    src={athlete.avatar}
-                                    alt={athlete.name}
-                                    className="w-full h-full rounded-full object-cover"
-                                  />
-                                ) : (
-                                  <User className="h-6 w-6 text-gray-400" />
-                                )}
+                                <User className="h-6 w-6 text-gray-400" />
                               </div>
-                              <div>
-                                <p className="font-medium">{athlete.name}</p>
-                                <p className="text-sm text-gray-500">
-                                  {new Date(athlete.dob).toLocaleDateString(
-                                    "vi-VN"
-                                  )}
+                              <div className="flex-1">
+                                <p className="font-medium">
+                                  {athlete.person.name}
                                 </p>
+                                <div className="text-sm text-gray-500 space-y-1">
+                                  <p>{athlete.role.name}</p>
+                                  <p>{athlete.organization.name}</p>
+                                  <p>{athlete.person.gender}</p>
+                                </div>
                               </div>
                             </CardContent>
                           </Card>

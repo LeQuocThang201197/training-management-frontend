@@ -39,6 +39,16 @@ interface Organization {
   name: string;
 }
 
+interface Participant {
+  id: number;
+  person: Person;
+  role: Role;
+  organization: Organization;
+  startDate: string;
+  endDate: string;
+  note: string;
+}
+
 interface AddParticipantDialogProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
@@ -52,6 +62,7 @@ interface AddParticipantDialogProps {
     endDate: string;
     note: string;
   }) => void;
+  editData?: Participant | null;
 }
 
 export function AddParticipantDialog({
@@ -60,6 +71,7 @@ export function AddParticipantDialog({
   concentrationStartDate,
   concentrationEndDate,
   onSubmit,
+  editData,
 }: AddParticipantDialogProps) {
   const [searchTerm, setSearchTerm] = useState("");
   const [searchResults, setSearchResults] = useState<Person[]>([]);
@@ -188,11 +200,29 @@ export function AddParticipantDialog({
     resetForm(); // Reset form sau khi submit
   };
 
+  // Cập nhật formData khi có editData
+  useEffect(() => {
+    if (editData) {
+      setFormData({
+        personId: editData.person.id.toString(),
+        roleId: editData.role.id.toString(),
+        organizationId: editData.organization.id.toString(),
+        startDate: editData.startDate,
+        endDate: editData.endDate,
+        note: editData.note || "",
+      });
+      setSearchTerm(editData.person.name);
+      setOrganizationSearchTerm(editData.organization.name);
+    }
+  }, [editData]);
+
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl">
         <DialogHeader>
-          <DialogTitle>Thêm thành viên</DialogTitle>
+          <DialogTitle>
+            {editData ? "Chỉnh sửa thành viên" : "Thêm thành viên"}
+          </DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           {/* Tìm kiếm người */}
@@ -340,7 +370,7 @@ export function AddParticipantDialog({
             >
               Hủy
             </Button>
-            <Button type="submit">Thêm</Button>
+            <Button type="submit">{editData ? "Cập nhật" : "Thêm"}</Button>
           </div>
         </form>
       </DialogContent>

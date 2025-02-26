@@ -31,6 +31,16 @@ import { cn } from "@/lib/utils";
 import { Team } from "@/types/index";
 import { ConcentrationDialog } from "@/components/dialogs/ConcentrationDialog";
 import { AddParticipantDialog } from "@/components/dialogs/AddParticipantDialog";
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogCancel,
+  AlertDialogAction,
+} from "@/components/ui/alert-dialog";
 
 interface Paper {
   id: number;
@@ -42,22 +52,31 @@ interface Paper {
   publisher: string;
 }
 
+interface Person {
+  id: number;
+  name: string;
+  gender: string;
+  code: string;
+}
+
+interface Role {
+  id: number;
+  name: string;
+  type: string;
+  typeLabel: string;
+}
+
 interface Participant {
   id: number;
-  person: {
-    id: number;
-    name: string;
-    gender: string;
-  };
-  role: {
-    id: number;
-    name: string;
-    type: string;
-  };
+  person: Person;
+  role: Role;
   organization: {
     id: number;
     name: string;
   };
+  startDate: string;
+  endDate: string;
+  note: string;
 }
 
 interface ConcentrationDetail extends Concentration {
@@ -101,6 +120,10 @@ export function ConcentrationDetailPage() {
     useState(false);
   const [participants, setParticipants] = useState<Participant[]>([]);
   const [loadingParticipants, setLoadingParticipants] = useState(true);
+  const [participantToDelete, setParticipantToDelete] =
+    useState<Participant | null>(null);
+  const [editingParticipant, setEditingParticipant] =
+    useState<Participant | null>(null);
 
   useEffect(() => {
     const fetchDetail = async () => {
@@ -455,6 +478,75 @@ export function ConcentrationDetailPage() {
     }
   };
 
+  const handleDeleteParticipant = async () => {
+    try {
+      const response = await fetch(
+        `${API_URL}/concentrations/${id}/participants/${participantToDelete?.id}`,
+        {
+          method: "DELETE",
+          credentials: "include",
+        }
+      );
+
+      if (!response.ok) throw new Error("Không thể xóa thành viên");
+
+      const data = await response.json();
+      if (data.success) {
+        setParticipants((prev) =>
+          prev.filter((p) => p.id !== participantToDelete?.id)
+        );
+        setDetail((prev) =>
+          prev
+            ? {
+                ...prev,
+                participantsCount: prev.participantsCount - 1,
+              }
+            : null
+        );
+        setParticipantToDelete(null);
+      }
+    } catch (err) {
+      console.error("Delete participant error:", err);
+      alert("Có lỗi xảy ra khi xóa thành viên");
+    }
+  };
+
+  const handleEditParticipant = async (formData: {
+    personId: string;
+    roleId: string;
+    organizationId: string;
+    startDate: string;
+    endDate: string;
+    note: string;
+  }) => {
+    try {
+      const response = await fetch(
+        `${API_URL}/concentrations/${id}/participants/${editingParticipant?.id}`,
+        {
+          method: "PUT",
+          credentials: "include",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(formData),
+        }
+      );
+
+      if (!response.ok) throw new Error("Không thể cập nhật thành viên");
+
+      const data = await response.json();
+      if (data.success) {
+        setParticipants((prev) =>
+          prev.map((p) => (p.id === editingParticipant?.id ? data.data : p))
+        );
+        setEditingParticipant(null);
+      }
+    } catch (err) {
+      console.error("Edit participant error:", err);
+      alert("Có lỗi xảy ra khi cập nhật thành viên");
+    }
+  };
+
   if (loading) {
     return <div>Đang tải...</div>;
   }
@@ -602,9 +694,31 @@ export function ConcentrationDetailPage() {
                                   <GenderIcon gender={coach.person.gender} />
                                 </div>
                                 <div className="flex-1">
-                                  <p className="font-medium">
-                                    {coach.person.name}
-                                  </p>
+                                  <div className="flex justify-between items-start">
+                                    <p className="font-medium">
+                                      {coach.person.name}
+                                    </p>
+                                    <div className="flex gap-2">
+                                      <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        onClick={() =>
+                                          setEditingParticipant(coach)
+                                        }
+                                      >
+                                        <Pencil className="h-4 w-4" />
+                                      </Button>
+                                      <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        onClick={() =>
+                                          setParticipantToDelete(coach)
+                                        }
+                                      >
+                                        <Trash2 className="h-4 w-4" />
+                                      </Button>
+                                    </div>
+                                  </div>
                                   <div className="text-sm text-gray-500 space-y-1">
                                     <p>{coach.role.name}</p>
                                     <p>{coach.organization.name}</p>
@@ -632,9 +746,31 @@ export function ConcentrationDetailPage() {
                                   <GenderIcon gender={athlete.person.gender} />
                                 </div>
                                 <div className="flex-1">
-                                  <p className="font-medium">
-                                    {athlete.person.name}
-                                  </p>
+                                  <div className="flex justify-between items-start">
+                                    <p className="font-medium">
+                                      {athlete.person.name}
+                                    </p>
+                                    <div className="flex gap-2">
+                                      <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        onClick={() =>
+                                          setEditingParticipant(athlete)
+                                        }
+                                      >
+                                        <Pencil className="h-4 w-4" />
+                                      </Button>
+                                      <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        onClick={() =>
+                                          setParticipantToDelete(athlete)
+                                        }
+                                      >
+                                        <Trash2 className="h-4 w-4" />
+                                      </Button>
+                                    </div>
+                                  </div>
                                   <div className="text-sm text-gray-500 space-y-1">
                                     <p>{athlete.role.name}</p>
                                     <p>{athlete.organization.name}</p>
@@ -662,9 +798,31 @@ export function ConcentrationDetailPage() {
                                   <GenderIcon gender={other.person.gender} />
                                 </div>
                                 <div className="flex-1">
-                                  <p className="font-medium">
-                                    {other.person.name}
-                                  </p>
+                                  <div className="flex justify-between items-start">
+                                    <p className="font-medium">
+                                      {other.person.name}
+                                    </p>
+                                    <div className="flex gap-2">
+                                      <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        onClick={() =>
+                                          setEditingParticipant(other)
+                                        }
+                                      >
+                                        <Pencil className="h-4 w-4" />
+                                      </Button>
+                                      <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        onClick={() =>
+                                          setParticipantToDelete(other)
+                                        }
+                                      >
+                                        <Trash2 className="h-4 w-4" />
+                                      </Button>
+                                    </div>
+                                  </div>
                                   <div className="text-sm text-gray-500 space-y-1">
                                     <p>{other.role.name}</p>
                                     <p>{other.organization.name}</p>
@@ -959,6 +1117,41 @@ export function ConcentrationDetailPage() {
         isTeamDropdownOpen={isTeamDropdownOpen}
         setIsTeamDropdownOpen={setIsTeamDropdownOpen}
         mode="edit"
+      />
+
+      <AlertDialog
+        open={!!participantToDelete}
+        onOpenChange={(open) => !open && setParticipantToDelete(null)}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Bạn có chắc chắn muốn xóa?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Thành viên "{participantToDelete?.person.name}" sẽ bị xóa khỏi đợt
+              tập trung này.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="sm:space-x-4">
+            <AlertDialogCancel className="w-full sm:w-32 bg-gray-100 hover:bg-gray-200 border-none text-gray-900">
+              Không
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteParticipant}
+              className="w-full sm:w-32 bg-red-500 hover:bg-red-600 text-white border-none"
+            >
+              Có, xóa
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AddParticipantDialog
+        isOpen={!!editingParticipant}
+        onOpenChange={(open) => !open && setEditingParticipant(null)}
+        concentrationStartDate={detail.startDate}
+        concentrationEndDate={detail.endDate}
+        onSubmit={handleEditParticipant}
+        editData={editingParticipant}
       />
     </div>
   );

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { API_URL } from "@/config/api";
 import { Button } from "@/components/ui/button";
 import {
@@ -160,9 +160,32 @@ export function AddParticipantDialog({
     return () => clearTimeout(timeoutId);
   }, [searchTerm]);
 
+  // Chuyển resetForm thành useCallback để tránh re-render không cần thiết
+  const resetForm = useCallback(() => {
+    setFormData({
+      personId: "",
+      roleId: "",
+      organizationId: "",
+      startDate: concentrationStartDate,
+      endDate: concentrationEndDate,
+      note: "",
+    });
+    setSearchTerm("");
+    setOrganizationSearchTerm("");
+  }, [concentrationStartDate, concentrationEndDate]);
+
+  // Cập nhật dependency array
+  useEffect(() => {
+    if (!isOpen) {
+      resetForm();
+    }
+  }, [isOpen, resetForm]);
+
+  // Cập nhật hàm handleSubmit
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     onSubmit(formData);
+    resetForm(); // Reset form sau khi submit
   };
 
   return (

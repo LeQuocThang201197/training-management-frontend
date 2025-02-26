@@ -15,6 +15,8 @@ import {
   Pencil,
   Trash2,
   Link2Off,
+  Mars,
+  Venus,
 } from "lucide-react";
 import { Concentration } from "@/types/concentration";
 import { Button } from "@/components/ui/button";
@@ -63,6 +65,12 @@ interface ConcentrationDetail extends Concentration {
   participantsCount: number;
   papers: Paper[];
 }
+
+const GenderIcon = ({ gender }: { gender: string }) => {
+  if (gender === "Nam") return <Mars className="h-6 w-6 text-blue-400" />;
+  if (gender === "Nữ") return <Venus className="h-6 w-6 text-pink-400" />;
+  return <User className="h-6 w-6 text-gray-400" />;
+};
 
 export function ConcentrationDetailPage() {
   const { id } = useParams();
@@ -581,60 +589,94 @@ export function ConcentrationDetailPage() {
               ) : participants.length > 0 ? (
                 <div className="space-y-6">
                   {/* Phần HLV */}
-                  <div>
-                    <h3 className="font-medium mb-3">Huấn luyện viên</h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                      {participants
-                        .filter((p) => p.role.type === "COACH")
-                        .map((coach) => (
-                          <Card key={coach.id}>
-                            <CardContent className="flex items-center p-4">
-                              <div className="w-12 h-12 rounded-full bg-gray-200 mr-4 flex items-center justify-center">
-                                <User className="h-6 w-6 text-gray-400" />
-                              </div>
-                              <div className="flex-1">
-                                <p className="font-medium">
-                                  {coach.person.name}
-                                </p>
-                                <div className="text-sm text-gray-500 space-y-1">
-                                  <p>{coach.role.name}</p>
-                                  <p>{coach.organization.name}</p>
-                                  <p>{coach.person.gender}</p>
+                  {participants.some((p) => p.role.type === "COACH") && (
+                    <div>
+                      <h3 className="font-medium mb-3">Huấn luyện viên</h3>
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {participants
+                          .filter((p) => p.role.type === "COACH")
+                          .map((coach) => (
+                            <Card key={coach.id}>
+                              <CardContent className="flex items-center p-4">
+                                <div className="w-12 h-12 rounded-full bg-gray-100 mr-4 flex items-center justify-center">
+                                  <GenderIcon gender={coach.person.gender} />
                                 </div>
-                              </div>
-                            </CardContent>
-                          </Card>
-                        ))}
+                                <div className="flex-1">
+                                  <p className="font-medium">
+                                    {coach.person.name}
+                                  </p>
+                                  <div className="text-sm text-gray-500 space-y-1">
+                                    <p>{coach.role.name}</p>
+                                    <p>{coach.organization.name}</p>
+                                    <p>{coach.person.gender}</p>
+                                  </div>
+                                </div>
+                              </CardContent>
+                            </Card>
+                          ))}
+                      </div>
                     </div>
-                  </div>
+                  )}
 
                   {/* Phần VĐV */}
-                  <div>
-                    <h3 className="font-medium mb-3">Vận động viên</h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                      {participants
-                        .filter((p) => p.role.type === "ATHLETE")
-                        .map((athlete) => (
-                          <Card key={athlete.id}>
-                            <CardContent className="flex items-center p-4">
-                              <div className="w-12 h-12 rounded-full bg-gray-200 mr-4 flex items-center justify-center">
-                                <User className="h-6 w-6 text-gray-400" />
-                              </div>
-                              <div className="flex-1">
-                                <p className="font-medium">
-                                  {athlete.person.name}
-                                </p>
-                                <div className="text-sm text-gray-500 space-y-1">
-                                  <p>{athlete.role.name}</p>
-                                  <p>{athlete.organization.name}</p>
-                                  <p>{athlete.person.gender}</p>
+                  {participants.some((p) => p.role.type === "ATHLETE") && (
+                    <div>
+                      <h3 className="font-medium mb-3">Vận động viên</h3>
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {participants
+                          .filter((p) => p.role.type === "ATHLETE")
+                          .map((athlete) => (
+                            <Card key={athlete.id}>
+                              <CardContent className="flex items-center p-4">
+                                <div className="w-12 h-12 rounded-full bg-gray-100 mr-4 flex items-center justify-center">
+                                  <GenderIcon gender={athlete.person.gender} />
                                 </div>
-                              </div>
-                            </CardContent>
-                          </Card>
-                        ))}
+                                <div className="flex-1">
+                                  <p className="font-medium">
+                                    {athlete.person.name}
+                                  </p>
+                                  <div className="text-sm text-gray-500 space-y-1">
+                                    <p>{athlete.role.name}</p>
+                                    <p>{athlete.organization.name}</p>
+                                    <p>{athlete.person.gender}</p>
+                                  </div>
+                                </div>
+                              </CardContent>
+                            </Card>
+                          ))}
+                      </div>
                     </div>
-                  </div>
+                  )}
+
+                  {/* Phần Khác */}
+                  {participants.some((p) => p.role.type === "OTHER") && (
+                    <div>
+                      <h3 className="font-medium mb-3">Khác</h3>
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {participants
+                          .filter((p) => p.role.type === "OTHER")
+                          .map((other) => (
+                            <Card key={other.id}>
+                              <CardContent className="flex items-center p-4">
+                                <div className="w-12 h-12 rounded-full bg-gray-100 mr-4 flex items-center justify-center">
+                                  <GenderIcon gender={other.person.gender} />
+                                </div>
+                                <div className="flex-1">
+                                  <p className="font-medium">
+                                    {other.person.name}
+                                  </p>
+                                  <div className="text-sm text-gray-500 space-y-1">
+                                    <p>{other.role.name}</p>
+                                    <p>{other.organization.name}</p>
+                                    <p>{other.person.gender}</p>
+                                  </div>
+                                </div>
+                              </CardContent>
+                            </Card>
+                          ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               ) : (
                 <div className="text-center py-8 text-gray-500">

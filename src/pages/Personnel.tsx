@@ -75,7 +75,10 @@ export function PersonnelPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [isSearching, setIsSearching] = useState(false);
-  const itemsPerPage = 10;
+  const [pagination, setPagination] = useState({
+    total: 0,
+    limit: 10,
+  });
   const [searchResults, setSearchResults] = useState<Person[]>([]);
 
   const fetchPersonnel = useCallback(
@@ -87,7 +90,7 @@ export function PersonnelPage() {
           ? `${API_URL}/persons/search?q=${encodeURIComponent(
               search
             )}${sortQuery}`
-          : `${API_URL}/persons?page=${page}&limit=${itemsPerPage}${sortQuery}`;
+          : `${API_URL}/persons?page=${page}&limit=${pagination.limit}${sortQuery}`;
 
         const response = await fetch(url, {
           credentials: "include",
@@ -102,6 +105,10 @@ export function PersonnelPage() {
           } else {
             setPersonnel(data.data);
             setTotalPages(data.pagination.totalPages);
+            setPagination({
+              total: data.pagination.total,
+              limit: data.pagination.limit,
+            });
           }
         }
       } catch (err) {
@@ -111,7 +118,7 @@ export function PersonnelPage() {
         setIsSearching(false);
       }
     },
-    [sortField, sortDirection]
+    [sortField, sortDirection, pagination.limit]
   );
 
   useEffect(() => {
@@ -392,8 +399,7 @@ export function PersonnelPage() {
       {!searchTerm && (
         <div className="mt-4 flex items-center justify-between">
           <div className="text-sm text-gray-500">
-            Hiển thị {personnel.length} trên tổng số {totalPages * itemsPerPage}{" "}
-            nhân sự
+            Hiển thị {personnel.length} trên tổng số {pagination.total} nhân sự
           </div>
           <div className="flex gap-2">
             <Button

@@ -137,6 +137,10 @@ export function PersonnelPage() {
     setIsDialogOpen(true);
   };
 
+  const getBirthYear = (birthday: string) => {
+    return new Date(birthday).getFullYear();
+  };
+
   const filteredPersonnel = personnel.filter(
     (person) =>
       person.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -196,13 +200,13 @@ export function PersonnelPage() {
         </Dialog>
       </div>
 
-      <div className="relative mb-6">
-        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500" />
+      <div className="flex items-center gap-3 mb-6">
+        <Search className="h-5 w-5 text-gray-500" />
         <Input
-          placeholder="Tìm kiếm nhân sự..."
-          className="pl-10"
+          placeholder="Tìm kiếm theo tên..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
+          className="max-w-sm"
         />
       </div>
 
@@ -216,30 +220,25 @@ export function PersonnelPage() {
             <TableHeader>
               <TableRow>
                 <TableHead>Họ và tên</TableHead>
-                <TableHead>Email</TableHead>
-                <TableHead>Số CCCD/CMND</TableHead>
-                <TableHead>Thao tác</TableHead>
+                <TableHead>Giới tính</TableHead>
+                <TableHead>Năm sinh</TableHead>
+                <TableHead className="text-right">Thao tác</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {filteredPersonnel.map((person) => (
                 <TableRow key={person.id}>
                   <TableCell className="font-medium">{person.name}</TableCell>
-                  <TableCell>{person.email}</TableCell>
-                  <TableCell>{person.identity_number}</TableCell>
-                  <TableCell>
-                    <div className="flex gap-2">
-                      <Button variant="ghost" size="sm">
-                        Chi tiết
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleEdit(person)}
-                      >
-                        Chỉnh sửa
-                      </Button>
-                    </div>
+                  <TableCell>{person.gender}</TableCell>
+                  <TableCell>{getBirthYear(person.birthday)}</TableCell>
+                  <TableCell className="text-right">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleEdit(person)}
+                    >
+                      Chỉnh sửa
+                    </Button>
                   </TableCell>
                 </TableRow>
               ))}

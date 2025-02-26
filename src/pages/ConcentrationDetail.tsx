@@ -722,7 +722,15 @@ export function ConcentrationDetailPage() {
                                   <div className="text-sm text-gray-500 space-y-1">
                                     <p>{coach.role.name}</p>
                                     <p>{coach.organization.name}</p>
-                                    <p>{coach.person.gender}</p>
+                                    <p>
+                                      {new Date(
+                                        coach.startDate
+                                      ).toLocaleDateString("vi-VN")}{" "}
+                                      -{" "}
+                                      {new Date(
+                                        coach.endDate
+                                      ).toLocaleDateString("vi-VN")}
+                                    </p>
                                   </div>
                                 </div>
                               </CardContent>
@@ -774,7 +782,15 @@ export function ConcentrationDetailPage() {
                                   <div className="text-sm text-gray-500 space-y-1">
                                     <p>{athlete.role.name}</p>
                                     <p>{athlete.organization.name}</p>
-                                    <p>{athlete.person.gender}</p>
+                                    <p>
+                                      {new Date(
+                                        athlete.startDate
+                                      ).toLocaleDateString("vi-VN")}{" "}
+                                      -{" "}
+                                      {new Date(
+                                        athlete.endDate
+                                      ).toLocaleDateString("vi-VN")}
+                                    </p>
                                   </div>
                                 </div>
                               </CardContent>
@@ -826,7 +842,15 @@ export function ConcentrationDetailPage() {
                                   <div className="text-sm text-gray-500 space-y-1">
                                     <p>{other.role.name}</p>
                                     <p>{other.organization.name}</p>
-                                    <p>{other.person.gender}</p>
+                                    <p>
+                                      {new Date(
+                                        other.startDate
+                                      ).toLocaleDateString("vi-VN")}{" "}
+                                      -{" "}
+                                      {new Date(
+                                        other.endDate
+                                      ).toLocaleDateString("vi-VN")}
+                                    </p>
                                   </div>
                                 </div>
                               </CardContent>

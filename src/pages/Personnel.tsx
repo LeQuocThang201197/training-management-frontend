@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Search, PlusCircle } from "lucide-react";
+import { Search, PlusCircle, ArrowUpDown } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -19,6 +19,13 @@ import {
 } from "@/components/ui/dialog";
 import { API_URL } from "@/config/api";
 import { PersonForm } from "@/components/dialogs/AddPersonDialog";
+import { cn } from "@/lib/utils";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 interface Person {
   id: number;
@@ -52,6 +59,8 @@ export function PersonnelPage() {
     email: "",
   });
   const [editingPerson, setEditingPerson] = useState<Person | null>(null);
+  const [sortField, setSortField] = useState<"name" | "birthday">("name");
+  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
 
   useEffect(() => {
     const fetchPersonnel = async () => {
@@ -148,6 +157,27 @@ export function PersonnelPage() {
       person.identity_number.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  const sortPersonnel = (a: Person, b: Person) => {
+    if (sortField === "name") {
+      return sortDirection === "asc"
+        ? a.name.localeCompare(b.name)
+        : b.name.localeCompare(a.name);
+    } else {
+      return sortDirection === "asc"
+        ? new Date(a.birthday).getTime() - new Date(b.birthday).getTime()
+        : new Date(b.birthday).getTime() - new Date(a.birthday).getTime();
+    }
+  };
+
+  const toggleSort = (field: "name" | "birthday") => {
+    if (sortField === field) {
+      setSortDirection((prev) => (prev === "asc" ? "desc" : "asc"));
+    } else {
+      setSortField(field);
+      setSortDirection("asc");
+    }
+  };
+
   return (
     <div className="container mx-auto p-6 bg-white rounded-lg shadow">
       <div className="flex items-center justify-between mb-6">
@@ -219,14 +249,64 @@ export function PersonnelPage() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Họ và tên</TableHead>
+                <TableHead>
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger>
+                        <div
+                          className="flex items-center gap-2 cursor-pointer text-blue-600 hover:text-blue-800"
+                          onClick={() => toggleSort("name")}
+                        >
+                          Họ và tên
+                          <ArrowUpDown
+                            className={cn(
+                              "h-4 w-4",
+                              sortField === "name"
+                                ? "opacity-100"
+                                : "opacity-40",
+                              sortDirection === "desc" && "transform rotate-180"
+                            )}
+                          />
+                        </div>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>Nhấn để sắp xếp theo tên</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                </TableHead>
                 <TableHead>Giới tính</TableHead>
-                <TableHead>Năm sinh</TableHead>
+                <TableHead>
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger>
+                        <div
+                          className="flex items-center gap-2 cursor-pointer text-blue-600 hover:text-blue-800"
+                          onClick={() => toggleSort("birthday")}
+                        >
+                          Năm sinh
+                          <ArrowUpDown
+                            className={cn(
+                              "h-4 w-4",
+                              sortField === "birthday"
+                                ? "opacity-100"
+                                : "opacity-40",
+                              sortDirection === "desc" && "transform rotate-180"
+                            )}
+                          />
+                        </div>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>Nhấn để sắp xếp theo năm sinh</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                </TableHead>
                 <TableHead className="text-right">Thao tác</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredPersonnel.map((person) => (
+              {filteredPersonnel.sort(sortPersonnel).map((person) => (
                 <TableRow key={person.id}>
                   <TableCell className="font-medium">{person.name}</TableCell>
                   <TableCell>{person.gender}</TableCell>

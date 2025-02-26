@@ -18,7 +18,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { API_URL } from "@/config/api";
-import { PersonForm } from "@/components/forms/PersonForm";
+import { PersonForm } from "@/components/dialogs/AddPersonDialog";
 
 interface Person {
   id: number;
@@ -147,7 +147,7 @@ export function PersonnelPage() {
   return (
     <div className="container mx-auto p-6 bg-white rounded-lg shadow">
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold">Quản lý Nhân sự</h1>
+        <h1 className="text-2xl font-bold">Quản lý nhân sự</h1>
         <Dialog
           open={isDialogOpen}
           onOpenChange={(open) => {

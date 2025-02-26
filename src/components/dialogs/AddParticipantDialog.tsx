@@ -92,6 +92,9 @@ export function AddParticipantDialog({
   const [isOrganizationDropdownOpen, setIsOrganizationDropdownOpen] =
     useState(false);
 
+  // Thêm state cho lỗi
+  const [errors, setErrors] = useState<Record<string, string>>({});
+
   // Thêm hàm lọc đơn vị
   const filteredOrganizations = organizations.filter((org) =>
     org.name.toLowerCase().includes(organizationSearchTerm.toLowerCase().trim())
@@ -193,11 +196,27 @@ export function AddParticipantDialog({
     }
   }, [isOpen, resetForm]);
 
+  // Thêm hàm validate
+  const validateForm = () => {
+    const newErrors: Record<string, string> = {};
+
+    if (!formData.personId) newErrors.personId = "Vui lòng chọn người tham gia";
+    if (!formData.roleId) newErrors.roleId = "Vui lòng chọn vai trò";
+    if (!formData.organizationId)
+      newErrors.organizationId = "Vui lòng chọn đơn vị";
+    if (!formData.startDate) newErrors.startDate = "Vui lòng chọn ngày bắt đầu";
+    if (!formData.endDate) newErrors.endDate = "Vui lòng chọn ngày kết thúc";
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
   // Cập nhật hàm handleSubmit
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!validateForm()) return;
     onSubmit(formData);
-    resetForm(); // Reset form sau khi submit
+    resetForm();
   };
 
   // Cập nhật formData khi có editData
@@ -227,7 +246,9 @@ export function AddParticipantDialog({
         <form onSubmit={handleSubmit} className="space-y-4">
           {/* Tìm kiếm người */}
           <div className="space-y-2">
-            <Label>Tìm kiếm người</Label>
+            <Label>
+              Tìm kiếm người <span className="text-red-500">*</span>
+            </Label>
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500" />
               <Input
@@ -261,11 +282,16 @@ export function AddParticipantDialog({
                 ))}
               </div>
             )}
+            {errors.personId && (
+              <p className="text-sm text-red-500">{errors.personId}</p>
+            )}
           </div>
 
           {/* Chọn vai trò */}
           <div className="space-y-2">
-            <Label>Vai trò</Label>
+            <Label>
+              Vai trò <span className="text-red-500">*</span>
+            </Label>
             <Select
               value={formData.roleId}
               onValueChange={(value) =>
@@ -283,11 +309,16 @@ export function AddParticipantDialog({
                 ))}
               </SelectContent>
             </Select>
+            {errors.roleId && (
+              <p className="text-sm text-red-500">{errors.roleId}</p>
+            )}
           </div>
 
           {/* Chọn đơn vị */}
           <div className="space-y-2">
-            <Label>Đơn vị</Label>
+            <Label>
+              Đơn vị <span className="text-red-500">*</span>
+            </Label>
             <div className="relative">
               <Input
                 placeholder="Tìm kiếm đơn vị..."
@@ -324,30 +355,46 @@ export function AddParticipantDialog({
                   </div>
                 )}
             </div>
+            {errors.organizationId && (
+              <p className="text-sm text-red-500">{errors.organizationId}</p>
+            )}
           </div>
 
-          {/* Ngày bắt đầu */}
-          <div className="space-y-2">
-            <Label>Ngày bắt đầu</Label>
-            <Input
-              type="date"
-              value={format(new Date(formData.startDate), "yyyy-MM-dd")}
-              onChange={(e) =>
-                setFormData((prev) => ({ ...prev, startDate: e.target.value }))
-              }
-            />
-          </div>
-
-          {/* Ngày kết thúc */}
-          <div className="space-y-2">
-            <Label>Ngày kết thúc</Label>
-            <Input
-              type="date"
-              value={format(new Date(formData.endDate), "yyyy-MM-dd")}
-              onChange={(e) =>
-                setFormData((prev) => ({ ...prev, endDate: e.target.value }))
-              }
-            />
+          {/* Thời gian tham gia */}
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label>
+                Ngày bắt đầu <span className="text-red-500">*</span>
+              </Label>
+              <Input
+                type="date"
+                value={format(new Date(formData.startDate), "yyyy-MM-dd")}
+                onChange={(e) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    startDate: e.target.value,
+                  }))
+                }
+              />
+              {errors.startDate && (
+                <p className="text-sm text-red-500">{errors.startDate}</p>
+              )}
+            </div>
+            <div className="space-y-2">
+              <Label>
+                Ngày kết thúc <span className="text-red-500">*</span>
+              </Label>
+              <Input
+                type="date"
+                value={format(new Date(formData.endDate), "yyyy-MM-dd")}
+                onChange={(e) =>
+                  setFormData((prev) => ({ ...prev, endDate: e.target.value }))
+                }
+              />
+              {errors.endDate && (
+                <p className="text-sm text-red-500">{errors.endDate}</p>
+              )}
+            </div>
           </div>
 
           {/* Ghi chú */}

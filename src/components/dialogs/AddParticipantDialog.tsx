@@ -21,34 +21,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Search } from "lucide-react";
 
 import { cn } from "@/lib/utils";
-
-interface Person {
-  id: number;
-  name: string;
-  code: string;
-}
-
-interface Role {
-  id: number;
-  name: string;
-  type: string;
-  typeLabel: string;
-}
-
-interface Organization {
-  id: number;
-  name: string;
-}
-
-interface Participant {
-  id: number;
-  person: Person;
-  role: Role;
-  organization: Organization;
-  startDate: string;
-  endDate: string;
-  note: string;
-}
+import { Person, Role, Organization, Participant } from "@/types/participant";
 
 interface AddParticipantDialogProps {
   isOpen: boolean;
@@ -60,6 +33,7 @@ interface AddParticipantDialogProps {
     note: string;
   }) => void;
   editData?: Participant | null;
+  existingParticipants: Participant[];
 }
 
 export function AddParticipantDialog({
@@ -67,6 +41,7 @@ export function AddParticipantDialog({
   onOpenChange,
   onSubmit,
   editData,
+  existingParticipants,
 }: AddParticipantDialogProps) {
   const [searchTerm, setSearchTerm] = useState("");
   const [searchResults, setSearchResults] = useState<Person[]>([]);
@@ -215,6 +190,13 @@ export function AddParticipantDialog({
     }
   }, [editData]);
 
+  // Thêm hàm kiểm tra người đã tồn tại
+  const isPersonAlreadyAdded = (personId: string) => {
+    return existingParticipants.some(
+      (p) => p.person.id.toString() === personId && p.id !== editData?.id
+    );
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl">
@@ -238,7 +220,7 @@ export function AddParticipantDialog({
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500" />
               <Input
                 className="pl-10"
-                placeholder="Nhập tên hoặc mã số để tìm..."
+                placeholder="Nhập tên để tìm..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
@@ -248,23 +230,44 @@ export function AddParticipantDialog({
             )}
             {searchResults.length > 0 && (
               <div className="border rounded-md max-h-40 overflow-y-auto">
-                {searchResults.map((person) => (
-                  <div
-                    key={person.id}
-                    className="p-2 hover:bg-gray-100 cursor-pointer"
-                    onClick={() => {
-                      setFormData((prev) => ({
-                        ...prev,
-                        personId: person.id.toString(),
-                      }));
-                      setSearchTerm(person.name);
-                      setSearchResults([]);
-                    }}
-                  >
-                    <div className="font-medium">{person.name}</div>
-                    <div className="text-sm text-gray-500">{person.code}</div>
-                  </div>
-                ))}
+                {searchResults.map((person) => {
+                  const isExisting = isPersonAlreadyAdded(person.id.toString());
+                  return (
+                    <div
+                      key={person.id}
+                      className={cn(
+                        "p-2 hover:bg-gray-100",
+                        isExisting
+                          ? "cursor-not-allowed opacity-50"
+                          : "cursor-pointer"
+                      )}
+                      onClick={() => {
+                        if (!isExisting) {
+                          setFormData((prev) => ({
+                            ...prev,
+                            personId: person.id.toString(),
+                          }));
+                          setSearchTerm(person.name);
+                          setSearchResults([]);
+                        }
+                      }}
+                    >
+                      <div className="flex justify-between items-center">
+                        <div>
+                          <div className="font-medium">{person.name}</div>
+                          <div className="text-sm text-gray-500">
+                            {person.code}
+                          </div>
+                        </div>
+                        {isExisting && (
+                          <div className="text-sm text-red-500">
+                            Đã tham gia đợt tập trung
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             )}
             {errors.personId && (

@@ -40,6 +40,7 @@ import {
   AlertDialogAction,
 } from "@/components/ui/alert-dialog";
 import { ParticipantCard } from "@/components/cards/ParticipantCard";
+import { Participant } from "@/types/participant";
 
 interface Paper {
   id: number;
@@ -49,34 +50,6 @@ interface Paper {
   type: string;
   content: string;
   publisher: string;
-}
-
-interface Person {
-  id: number;
-  name: string;
-  gender: string;
-  code: string;
-  birthday: string;
-}
-
-interface Role {
-  id: number;
-  name: string;
-  type: string;
-  typeLabel: string;
-}
-
-interface Participant {
-  id: number;
-  person: Person;
-  role: Role;
-  organization: {
-    id: number;
-    name: string;
-  };
-  startDate: string;
-  endDate: string;
-  note: string;
 }
 
 interface ConcentrationDetail extends Concentration {
@@ -430,8 +403,6 @@ export function ConcentrationDetailPage() {
     personId: string;
     roleId: string;
     organizationId: string;
-    startDate: string;
-    endDate: string;
     note: string;
   }) => {
     try {
@@ -440,9 +411,7 @@ export function ConcentrationDetailPage() {
         {
           method: "POST",
           credentials: "include",
-          headers: {
-            "Content-Type": "application/json",
-          },
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify(formData),
         }
       );
@@ -509,8 +478,6 @@ export function ConcentrationDetailPage() {
     personId: string;
     roleId: string;
     organizationId: string;
-    startDate: string;
-    endDate: string;
     note: string;
   }) => {
     try {
@@ -741,9 +708,8 @@ export function ConcentrationDetailPage() {
           <AddParticipantDialog
             isOpen={isAddParticipantDialogOpen}
             onOpenChange={setIsAddParticipantDialogOpen}
-            concentrationStartDate={detail.startDate}
-            concentrationEndDate={detail.endDate}
             onSubmit={handleAddParticipant}
+            existingParticipants={participants}
           />
         </TabsContent>
 
@@ -1043,10 +1009,9 @@ export function ConcentrationDetailPage() {
       <AddParticipantDialog
         isOpen={!!editingParticipant}
         onOpenChange={(open) => !open && setEditingParticipant(null)}
-        concentrationStartDate={detail.startDate}
-        concentrationEndDate={detail.endDate}
         onSubmit={handleEditParticipant}
         editData={editingParticipant}
+        existingParticipants={participants}
       />
     </div>
   );

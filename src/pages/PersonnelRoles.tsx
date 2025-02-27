@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { API_URL } from "@/config/api";
 import { Input } from "@/components/ui/input";
 import { Search, Plus, ChevronLeft, ChevronRight } from "lucide-react";
-import { HoverCard } from "@/components/HoverCard";
+import { HoverCard } from "@/components/cards/HoverCard";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,

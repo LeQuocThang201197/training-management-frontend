@@ -7,34 +7,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-
-interface Person {
-  id: number;
-  name: string;
-  gender: string;
-  code: string;
-  birthday: string;
-}
-
-interface Role {
-  id: number;
-  name: string;
-  type: string;
-  typeLabel: string;
-}
-
-interface Organization {
-  id: number;
-  name: string;
-}
-
-interface Participant {
-  id: number;
-  person: Person;
-  role: Role;
-  organization: Organization;
-  note: string;
-}
+import { Participant } from "@/types/participant";
 
 interface ParticipantCardProps {
   participant: Participant;
@@ -48,8 +21,10 @@ const GenderIcon = ({ gender }: { gender: string }) => {
   return <User className="h-6 w-6 text-gray-400" />;
 };
 
-const getBirthYear = (birthday: string) => {
-  return new Date(birthday).getFullYear();
+const getBirthYear = (birthday: string | null) => {
+  if (!birthday) return "N/A";
+  const year = new Date(birthday).getFullYear();
+  return isNaN(year) ? "N/A" : year;
 };
 
 export function ParticipantCard({

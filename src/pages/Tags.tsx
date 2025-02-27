@@ -35,7 +35,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { HoverCard } from "@/components/HoverCard";
+import { HoverCard } from "@/components/cards/HoverCard";
 
 interface Tag {
   id: string;

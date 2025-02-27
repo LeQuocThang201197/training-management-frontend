@@ -35,7 +35,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { HoverCard } from "@/components/HoverCard";
+import { HoverCard } from "@/components/cards/HoverCard";
 
 interface Sport {
   id: number;

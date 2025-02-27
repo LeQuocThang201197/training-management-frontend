@@ -26,7 +26,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
-import { Team } from "@/types/index";
+import { ParticipantStats, Team } from "@/types/index";
 import { ConcentrationDialog } from "@/components/dialogs/ConcentrationDialog";
 import { AddParticipantDialog } from "@/components/dialogs/AddParticipantDialog";
 import {
@@ -508,6 +508,24 @@ export function ConcentrationDetailPage() {
     }
   };
 
+  const formatParticipantStats = (stats: ParticipantStats): string => {
+    const parts = [];
+
+    if (stats.SPECIALIST > 0) {
+      parts.push(`${stats.SPECIALIST} CG`);
+    }
+
+    if (stats.COACH > 0) {
+      parts.push(`${stats.COACH} HLV`);
+    }
+
+    if (stats.ATHLETE > 0) {
+      parts.push(`${stats.ATHLETE} VĐV`);
+    }
+
+    return parts.join(" - ");
+  };
+
   if (loading) {
     return <div>Đang tải...</div>;
   }
@@ -540,7 +558,6 @@ export function ConcentrationDetailPage() {
             {detail.team.type === "Trẻ"
               ? detail.team.type.toLowerCase() + " "
               : ""}
-            đợt {detail.sequence_number} năm {detail.related_year}
           </h1>
           <div className="flex gap-2">
             <Button
@@ -575,6 +592,17 @@ export function ConcentrationDetailPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <Card>
             <CardContent className="flex items-center p-4">
+              <User className="h-5 w-5 mr-3 text-blue-500" />
+              <div>
+                <p className="text-sm text-gray-500">Đợt</p>
+                <p className="font-medium">
+                  {detail.sequence_number}/{detail.related_year}
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="flex items-center p-4">
               <Clock className="h-5 w-5 mr-3 text-green-500" />
               <div>
                 <p className="text-sm text-gray-500">Thời gian</p>
@@ -596,19 +624,12 @@ export function ConcentrationDetailPage() {
           </Card>
           <Card>
             <CardContent className="flex items-center p-4">
-              <User className="h-5 w-5 mr-3 text-blue-500" />
-              <div>
-                <p className="text-sm text-gray-500">Số HLV</p>
-                <p className="font-medium">0</p>
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="flex items-center p-4">
               <Users className="h-5 w-5 mr-3 text-purple-500" />
               <div>
-                <p className="text-sm text-gray-500">Số VĐV</p>
-                <p className="font-medium">{detail.participantsCount}</p>
+                <p className="text-sm text-gray-500">Số lượng thành viên</p>
+                <p className="font-medium">
+                  {formatParticipantStats(detail.participantStats)}
+                </p>
               </div>
             </CardContent>
           </Card>

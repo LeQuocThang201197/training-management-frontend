@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { API_URL } from "@/config/api";
 import { Button } from "@/components/ui/button";
 import {
@@ -6,6 +6,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import {
@@ -18,7 +19,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Search } from "lucide-react";
-import { format } from "date-fns";
+
 import { cn } from "@/lib/utils";
 
 interface Person {
@@ -52,14 +53,10 @@ interface Participant {
 interface AddParticipantDialogProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
-  concentrationStartDate: string;
-  concentrationEndDate: string;
-  onSubmit: (data: {
+  onSubmit: (formData: {
     personId: string;
     roleId: string;
     organizationId: string;
-    startDate: string;
-    endDate: string;
     note: string;
   }) => void;
   editData?: Participant | null;
@@ -68,8 +65,6 @@ interface AddParticipantDialogProps {
 export function AddParticipantDialog({
   isOpen,
   onOpenChange,
-  concentrationStartDate,
-  concentrationEndDate,
   onSubmit,
   editData,
 }: AddParticipantDialogProps) {
@@ -82,8 +77,6 @@ export function AddParticipantDialog({
     personId: "",
     roleId: "",
     organizationId: "",
-    startDate: concentrationStartDate,
-    endDate: concentrationEndDate,
     note: "",
   });
 
@@ -175,28 +168,19 @@ export function AddParticipantDialog({
     return () => clearTimeout(timeoutId);
   }, [searchTerm]);
 
-  // Chuyển resetForm thành useCallback để tránh re-render không cần thiết
-  const resetForm = useCallback(() => {
+  // Cập nhật resetForm
+  const resetForm = () => {
     setFormData({
       personId: "",
       roleId: "",
       organizationId: "",
-      startDate: concentrationStartDate,
-      endDate: concentrationEndDate,
       note: "",
     });
     setSearchTerm("");
     setOrganizationSearchTerm("");
-  }, [concentrationStartDate, concentrationEndDate]);
+  };
 
-  // Cập nhật dependency array
-  useEffect(() => {
-    if (!isOpen) {
-      resetForm();
-    }
-  }, [isOpen, resetForm]);
-
-  // Thêm hàm validate
+  // Cập nhật validateForm
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
 
@@ -204,8 +188,6 @@ export function AddParticipantDialog({
     if (!formData.roleId) newErrors.roleId = "Vui lòng chọn vai trò";
     if (!formData.organizationId)
       newErrors.organizationId = "Vui lòng chọn đơn vị";
-    if (!formData.startDate) newErrors.startDate = "Vui lòng chọn ngày bắt đầu";
-    if (!formData.endDate) newErrors.endDate = "Vui lòng chọn ngày kết thúc";
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -219,15 +201,13 @@ export function AddParticipantDialog({
     resetForm();
   };
 
-  // Cập nhật formData khi có editData
+  // Cập nhật useEffect cho editData
   useEffect(() => {
     if (editData) {
       setFormData({
         personId: editData.person.id.toString(),
         roleId: editData.role.id.toString(),
         organizationId: editData.organization.id.toString(),
-        startDate: editData.startDate,
-        endDate: editData.endDate,
         note: editData.note || "",
       });
       setSearchTerm(editData.person.name);
@@ -242,6 +222,11 @@ export function AddParticipantDialog({
           <DialogTitle>
             {editData ? "Chỉnh sửa thành viên" : "Thêm thành viên"}
           </DialogTitle>
+          <DialogDescription>
+            {editData
+              ? "Cập nhật thông tin thành viên trong đợt tập trung."
+              : "Thêm thành viên mới vào đợt tập trung."}
+          </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           {/* Tìm kiếm người */}
@@ -358,43 +343,6 @@ export function AddParticipantDialog({
             {errors.organizationId && (
               <p className="text-sm text-red-500">{errors.organizationId}</p>
             )}
-          </div>
-
-          {/* Thời gian tham gia */}
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label>
-                Ngày bắt đầu <span className="text-red-500">*</span>
-              </Label>
-              <Input
-                type="date"
-                value={format(new Date(formData.startDate), "yyyy-MM-dd")}
-                onChange={(e) =>
-                  setFormData((prev) => ({
-                    ...prev,
-                    startDate: e.target.value,
-                  }))
-                }
-              />
-              {errors.startDate && (
-                <p className="text-sm text-red-500">{errors.startDate}</p>
-              )}
-            </div>
-            <div className="space-y-2">
-              <Label>
-                Ngày kết thúc <span className="text-red-500">*</span>
-              </Label>
-              <Input
-                type="date"
-                value={format(new Date(formData.endDate), "yyyy-MM-dd")}
-                onChange={(e) =>
-                  setFormData((prev) => ({ ...prev, endDate: e.target.value }))
-                }
-              />
-              {errors.endDate && (
-                <p className="text-sm text-red-500">{errors.endDate}</p>
-              )}
-            </div>
           </div>
 
           {/* Ghi chú */}

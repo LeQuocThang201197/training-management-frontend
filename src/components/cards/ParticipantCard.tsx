@@ -33,8 +33,6 @@ interface Participant {
   person: Person;
   role: Role;
   organization: Organization;
-  startDate: string;
-  endDate: string;
   note: string;
 }
 
@@ -109,10 +107,6 @@ export function ParticipantCard({
             <p>{participant.role.name}</p>
             <p>{participant.organization.name}</p>
             <p>{getBirthYear(participant.person.birthday)}</p>
-            <p>
-              {new Date(participant.startDate).toLocaleDateString("vi-VN")} -{" "}
-              {new Date(participant.endDate).toLocaleDateString("vi-VN")}
-            </p>
           </div>
         </div>
       </CardContent>

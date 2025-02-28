@@ -197,6 +197,13 @@ export function AddParticipantDialog({
     );
   };
 
+  // Thêm hàm format năm sinh
+  const getBirthYear = (birthday: string | null) => {
+    if (!birthday) return "";
+    const year = new Date(birthday).getFullYear();
+    return isNaN(year) ? "" : year;
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl">
@@ -256,7 +263,7 @@ export function AddParticipantDialog({
                         <div>
                           <div className="font-medium">{person.name}</div>
                           <div className="text-sm text-gray-500">
-                            {person.code}
+                            {person.gender} - {getBirthYear(person.birthday)}
                           </div>
                         </div>
                         {isExisting && (

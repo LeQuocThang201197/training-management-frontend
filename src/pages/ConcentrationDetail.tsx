@@ -420,19 +420,16 @@ export function ConcentrationDetailPage() {
 
       const data = await response.json();
       if (data.success) {
-        // Cập nhật danh sách participants thay vì detail
         setParticipants((prev) => [...prev, data.data]);
-
-        // Cập nhật số lượng trong detail
+        // Cập nhật participantStats từ response
         setDetail((prev) =>
           prev
             ? {
                 ...prev,
-                participantsCount: prev.participantsCount + 1,
+                participantStats: data.participantStats,
               }
             : null
         );
-
         setIsAddParticipantDialogOpen(false);
       }
     } catch (err) {
@@ -462,7 +459,7 @@ export function ConcentrationDetailPage() {
           prev
             ? {
                 ...prev,
-                participantsCount: prev.participantsCount - 1,
+                participantStats: data.participantStats,
               }
             : null
         );
@@ -499,6 +496,14 @@ export function ConcentrationDetailPage() {
       if (data.success) {
         setParticipants((prev) =>
           prev.map((p) => (p.id === editingParticipant?.id ? data.data : p))
+        );
+        setDetail((prev) =>
+          prev
+            ? {
+                ...prev,
+                participantStats: data.participantStats,
+              }
+            : null
         );
         setEditingParticipant(null);
       }

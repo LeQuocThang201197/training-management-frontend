@@ -15,6 +15,7 @@ import {
   Pencil,
   Trash2,
   Link2Off,
+  Search,
 } from "lucide-react";
 import { Concentration } from "@/types/concentration";
 import { Button } from "@/components/ui/button";
@@ -41,6 +42,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { ParticipantCard } from "@/components/cards/ParticipantCard";
 import { Participant } from "@/types/participant";
+import { Input } from "@/components/ui/input";
 
 interface Paper {
   id: number;
@@ -91,6 +93,7 @@ export function ConcentrationDetailPage() {
     useState<Participant | null>(null);
   const [editingParticipant, setEditingParticipant] =
     useState<Participant | null>(null);
+  const [participantSearchTerm, setParticipantSearchTerm] = useState("");
 
   useEffect(() => {
     const fetchDetail = async () => {
@@ -531,6 +534,12 @@ export function ConcentrationDetailPage() {
     return parts.join(" - ");
   };
 
+  const filteredParticipants = participants.filter((p) =>
+    p.person.name
+      .toLowerCase()
+      .includes(participantSearchTerm.toLowerCase().trim())
+  );
+
   if (loading) {
     return <div>Đang tải...</div>;
   }
@@ -661,18 +670,29 @@ export function ConcentrationDetailPage() {
               </div>
             </CardHeader>
             <CardContent>
+              <div className="relative mb-6">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500" />
+                <Input
+                  placeholder="Tìm kiếm theo tên..."
+                  className="pl-10"
+                  value={participantSearchTerm}
+                  onChange={(e) => setParticipantSearchTerm(e.target.value)}
+                />
+              </div>
+
               {loadingParticipants ? (
                 <div className="flex justify-center py-8">
                   <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
                 </div>
-              ) : participants.length > 0 ? (
+              ) : filteredParticipants.length > 0 ? (
                 <div className="space-y-6">
-                  {/* Phần CG */}
-                  {participants.some((p) => p.role.type === "SPECIALIST") && (
+                  {filteredParticipants.some(
+                    (p) => p.role.type === "SPECIALIST"
+                  ) && (
                     <div>
                       <h3 className="font-medium mb-3">Chuyên gia</h3>
                       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        {participants
+                        {filteredParticipants
                           .filter((p) => p.role.type === "SPECIALIST")
                           .map((specialist) => (
                             <ParticipantCard
@@ -686,12 +706,13 @@ export function ConcentrationDetailPage() {
                     </div>
                   )}
 
-                  {/* Phần HLV */}
-                  {participants.some((p) => p.role.type === "COACH") && (
+                  {filteredParticipants.some(
+                    (p) => p.role.type === "COACH"
+                  ) && (
                     <div>
                       <h3 className="font-medium mb-3">Huấn luyện viên</h3>
                       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        {participants
+                        {filteredParticipants
                           .filter((p) => p.role.type === "COACH")
                           .map((coach) => (
                             <ParticipantCard
@@ -705,12 +726,13 @@ export function ConcentrationDetailPage() {
                     </div>
                   )}
 
-                  {/* Phần VĐV */}
-                  {participants.some((p) => p.role.type === "ATHLETE") && (
+                  {filteredParticipants.some(
+                    (p) => p.role.type === "ATHLETE"
+                  ) && (
                     <div>
                       <h3 className="font-medium mb-3">Vận động viên</h3>
                       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        {participants
+                        {filteredParticipants
                           .filter((p) => p.role.type === "ATHLETE")
                           .map((athlete) => (
                             <ParticipantCard
@@ -724,12 +746,13 @@ export function ConcentrationDetailPage() {
                     </div>
                   )}
 
-                  {/* Phần Khác */}
-                  {participants.some((p) => p.role.type === "OTHER") && (
+                  {filteredParticipants.some(
+                    (p) => p.role.type === "OTHER"
+                  ) && (
                     <div>
                       <h3 className="font-medium mb-3">Khác</h3>
                       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        {participants
+                        {filteredParticipants
                           .filter((p) => p.role.type === "OTHER")
                           .map((other) => (
                             <ParticipantCard
@@ -745,7 +768,9 @@ export function ConcentrationDetailPage() {
                 </div>
               ) : (
                 <div className="text-center py-8 text-gray-500">
-                  Chưa có thành viên nào trong đợt tập trung
+                  {participants.length === 0
+                    ? "Chưa có thành viên nào trong đợt tập trung"
+                    : "Không tìm thấy thành viên nào"}
                 </div>
               )}
             </CardContent>

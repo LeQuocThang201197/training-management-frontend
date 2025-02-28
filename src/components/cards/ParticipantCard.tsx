@@ -79,7 +79,7 @@ export function ParticipantCard({
   const absenceStatus = getAbsenceStatus(participant.currentAbsence);
 
   return (
-    <Card>
+    <Card className="group">
       <CardContent className="flex items-center p-4">
         <div className="w-12 h-12 rounded-full bg-gray-100 mr-4 flex items-center justify-center">
           <GenderIcon gender={participant.person.gender} />
@@ -102,7 +102,7 @@ export function ParticipantCard({
               )}
             </div>
             {(onEdit || onDelete) && (
-              <div className="flex gap-2">
+              <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                 <Button
                   variant="ghost"
                   size="icon"

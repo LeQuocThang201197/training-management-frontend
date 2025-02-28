@@ -667,6 +667,25 @@ export function ConcentrationDetailPage() {
                 </div>
               ) : participants.length > 0 ? (
                 <div className="space-y-6">
+                  {/* Phần CG */}
+                  {participants.some((p) => p.role.type === "SPECIALIST") && (
+                    <div>
+                      <h3 className="font-medium mb-3">Chuyên gia</h3>
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {participants
+                          .filter((p) => p.role.type === "SPECIALIST")
+                          .map((specialist) => (
+                            <ParticipantCard
+                              key={specialist.id}
+                              participant={specialist}
+                              onEdit={setEditingParticipant}
+                              onDelete={setParticipantToDelete}
+                            />
+                          ))}
+                      </div>
+                    </div>
+                  )}
+
                   {/* Phần HLV */}
                   {participants.some((p) => p.role.type === "COACH") && (
                     <div>

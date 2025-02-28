@@ -540,6 +540,11 @@ export function ConcentrationDetailPage() {
       .includes(participantSearchTerm.toLowerCase().trim())
   );
 
+  // Thêm hàm sắp xếp
+  const sortedLinkedPapers = [...linkedPapers].sort(
+    (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
+  );
+
   if (loading) {
     return <div>Đang tải...</div>;
   }
@@ -882,13 +887,13 @@ export function ConcentrationDetailPage() {
               </div>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
-                {loadingLinkedPapers ? (
-                  <div className="flex justify-center py-8">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900" />
-                  </div>
-                ) : linkedPapers.length > 0 ? (
-                  linkedPapers.map((paper) => (
+              {loadingLinkedPapers ? (
+                <div className="flex justify-center py-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900" />
+                </div>
+              ) : sortedLinkedPapers.length > 0 ? (
+                <div className="space-y-4">
+                  {sortedLinkedPapers.map((paper) => (
                     <Card key={paper.id}>
                       <CardContent className="p-4">
                         <div className="flex items-start justify-between">
@@ -933,13 +938,13 @@ export function ConcentrationDetailPage() {
                         </div>
                       </CardContent>
                     </Card>
-                  ))
-                ) : (
-                  <p className="text-gray-500 text-center py-4">
-                    Chưa có giấy tờ nào được liên kết
-                  </p>
-                )}
-              </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-gray-500 text-center py-4">
+                  Chưa có giấy tờ nào được liên kết
+                </p>
+              )}
             </CardContent>
           </Card>
         </TabsContent>

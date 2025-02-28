@@ -393,13 +393,6 @@ Huấn luyện Thể thao quốc gia thành phố Hồ Chí Minh năm 2025"
                   <option value="decision">Quyết định</option>
                 </select>
               </div>
-              <div className="w-64">
-                <select className="w-full p-2 border rounded-md">
-                  <option value="">Tất cả trạng thái</option>
-                  <option value="published">Đã phát hành</option>
-                  <option value="draft">Nháp</option>
-                </select>
-              </div>
             </div>
 
             <div className="rounded-md border bg-white">

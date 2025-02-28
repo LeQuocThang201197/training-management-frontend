@@ -18,6 +18,19 @@ export interface Organization {
   name: string;
 }
 
+export type AbsenceType = "NOT_JOIN" | "REMOVED" | "MISSION" | "LEAVE";
+
+export interface AbsenceRecord {
+  id: number;
+  participantId: number;
+  startDate: string;
+  endDate: string | null;
+  type: AbsenceType;
+  note: string;
+  missionId?: number;
+  createdAt: string;
+}
+
 export interface Participant {
   id: number;
   person: Person;
@@ -26,4 +39,7 @@ export interface Participant {
   startDate: string;
   endDate: string;
   note: string;
+  absenceRecords?: AbsenceRecord[];
+  isCurrentlyAbsent?: boolean;
+  currentAbsence?: AbsenceRecord;
 }

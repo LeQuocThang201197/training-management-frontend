@@ -1,13 +1,27 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Pencil, Trash2, User, Mars, Venus, FileText } from "lucide-react";
+import {
+  Pencil,
+  Trash2,
+  User,
+  Mars,
+  Venus,
+  FileText,
+  AlertCircle,
+  Clock,
+  History,
+  UserMinus,
+} from "lucide-react";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { Participant } from "@/types/participant";
+import { Participant, AbsenceRecord } from "@/types/participant";
+import { useState } from "react";
+import { AbsenceHistoryDialog } from "../dialogs/AbsenceHistoryDialog";
+import { ManageAbsenceDialog } from "../dialogs/ManageAbsenceDialog";
 
 interface ParticipantCardProps {
   participant: Participant;
@@ -32,6 +46,38 @@ export function ParticipantCard({
   onEdit,
   onDelete,
 }: ParticipantCardProps) {
+  const [showHistory, setShowHistory] = useState(false);
+  const [showManageAbsence, setShowManageAbsence] = useState(false);
+
+  const getAbsenceStatus = (absence?: AbsenceRecord) => {
+    if (!absence) return null;
+
+    switch (absence.type) {
+      case "REMOVED":
+        return {
+          icon: <AlertCircle className="h-5 w-5 text-red-500" />,
+          text: "Đã rời khỏi đợt tập trung",
+          date: `từ ${new Date(absence.startDate).toLocaleDateString("vi-VN")}`,
+        };
+      case "MISSION":
+        return {
+          icon: <Clock className="h-5 w-5 text-blue-500" />,
+          text: "Đang tham gia đợt tập huấn/thi đấu khác",
+          date: `từ ${new Date(absence.startDate).toLocaleDateString("vi-VN")}`,
+        };
+      case "LEAVE":
+        return {
+          icon: <Clock className="h-5 w-5 text-yellow-500" />,
+          text: "Đang nghỉ phép",
+          date: `${new Date(absence.startDate).toLocaleDateString(
+            "vi-VN"
+          )} - ${new Date(absence.endDate!).toLocaleDateString("vi-VN")}`,
+        };
+    }
+  };
+
+  const absenceStatus = getAbsenceStatus(participant.currentAbsence);
+
   return (
     <Card>
       <CardContent className="flex items-center p-4">
@@ -57,6 +103,14 @@ export function ParticipantCard({
             </div>
             {(onEdit || onDelete) && (
               <div className="flex gap-2">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setShowManageAbsence(true)}
+                  className="text-gray-600"
+                >
+                  <UserMinus className="h-4 w-4" />
+                </Button>
                 {onEdit && (
                   <Button
                     variant="ghost"
@@ -83,8 +137,48 @@ export function ParticipantCard({
             <p>{participant.organization.name}</p>
             <p>{getBirthYear(participant.person.birthday)}</p>
           </div>
+          {participant.isCurrentlyAbsent && absenceStatus && (
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger>
+                  <div className="flex items-center gap-2">
+                    {absenceStatus.icon}
+                    <div className="text-sm">
+                      <p className="font-medium">{absenceStatus.text}</p>
+                      <p className="text-gray-500">{absenceStatus.date}</p>
+                    </div>
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Nhấn để xem lịch sử vắng mặt</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          )}
+          {(participant.absenceRecords || []).length > 0 && (
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setShowHistory(true)}
+              className="text-gray-600"
+            >
+              <History className="h-4 w-4" />
+            </Button>
+          )}
         </div>
       </CardContent>
+
+      <AbsenceHistoryDialog
+        isOpen={showHistory}
+        onOpenChange={setShowHistory}
+        absenceRecords={participant.absenceRecords || []}
+      />
+
+      <ManageAbsenceDialog
+        isOpen={showManageAbsence}
+        onOpenChange={setShowManageAbsence}
+        participant={participant}
+      />
     </Card>
   );
 }

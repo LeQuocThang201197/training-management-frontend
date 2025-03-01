@@ -117,30 +117,33 @@ export function ConcentrationDetailPage() {
     fetchDetail();
   }, [id]);
 
-  useEffect(() => {
-    const fetchParticipants = async () => {
-      try {
-        const response = await fetch(
-          `${API_URL}/concentrations/${id}/participants`,
-          {
-            credentials: "include",
-          }
-        );
-        if (!response.ok)
-          throw new Error("Không thể tải danh sách người tham gia");
-
-        const data = await response.json();
-        if (data.success) {
-          setParticipants(data.data);
+  const fetchParticipants = async () => {
+    try {
+      setLoadingParticipants(true);
+      const response = await fetch(
+        `${API_URL}/concentrations/${id}/participants`,
+        {
+          credentials: "include",
         }
-      } catch (err) {
-        console.error("Fetch participants error:", err);
-      } finally {
-        setLoadingParticipants(false);
-      }
-    };
+      );
 
-    fetchParticipants();
+      if (!response.ok) throw new Error("Không thể tải danh sách thành viên");
+
+      const data = await response.json();
+      if (data.success) {
+        setParticipants(data.data);
+      }
+    } catch (err) {
+      console.error("Fetch participants error:", err);
+    } finally {
+      setLoadingParticipants(false);
+    }
+  };
+
+  useEffect(() => {
+    if (id) {
+      fetchParticipants();
+    }
   }, [id]);
 
   const handleUpdateNote = async () => {
@@ -705,6 +708,7 @@ export function ConcentrationDetailPage() {
                               participant={specialist}
                               onEdit={setEditingParticipant}
                               onDelete={setParticipantToDelete}
+                              onAbsenceChange={fetchParticipants}
                             />
                           ))}
                       </div>
@@ -725,6 +729,7 @@ export function ConcentrationDetailPage() {
                               participant={coach}
                               onEdit={setEditingParticipant}
                               onDelete={setParticipantToDelete}
+                              onAbsenceChange={fetchParticipants}
                             />
                           ))}
                       </div>
@@ -745,6 +750,7 @@ export function ConcentrationDetailPage() {
                               participant={athlete}
                               onEdit={setEditingParticipant}
                               onDelete={setParticipantToDelete}
+                              onAbsenceChange={fetchParticipants}
                             />
                           ))}
                       </div>
@@ -765,6 +771,7 @@ export function ConcentrationDetailPage() {
                               participant={other}
                               onEdit={setEditingParticipant}
                               onDelete={setParticipantToDelete}
+                              onAbsenceChange={fetchParticipants}
                             />
                           ))}
                       </div>

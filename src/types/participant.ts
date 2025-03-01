@@ -18,7 +18,7 @@ export interface Organization {
   name: string;
 }
 
-export type AbsenceType = "NOT_JOIN" | "REMOVED" | "MISSION" | "LEAVE";
+export type AbsenceType = "INACTIVE" | "LEAVE";
 
 export interface AbsenceRecord {
   id: number;
@@ -27,7 +27,6 @@ export interface AbsenceRecord {
   endDate: string | null;
   type: AbsenceType;
   note: string;
-  missionId?: number;
   createdAt: string;
 }
 

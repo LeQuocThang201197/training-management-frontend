@@ -27,6 +27,7 @@ interface ParticipantCardProps {
   participant: Participant;
   onEdit?: (participant: Participant) => void;
   onDelete?: (participant: Participant) => void;
+  onAbsenceChange?: () => void;
 }
 
 const GenderIcon = ({ gender }: { gender: string }) => {
@@ -45,6 +46,7 @@ export function ParticipantCard({
   participant,
   onEdit,
   onDelete,
+  onAbsenceChange,
 }: ParticipantCardProps) {
   const [showHistory, setShowHistory] = useState(false);
   const [showManageAbsence, setShowManageAbsence] = useState(false);
@@ -53,16 +55,10 @@ export function ParticipantCard({
     if (!absence) return null;
 
     switch (absence.type) {
-      case "REMOVED":
+      case "INACTIVE":
         return {
           icon: <AlertCircle className="h-5 w-5 text-red-500" />,
-          text: "Đã rời khỏi đợt tập trung",
-          date: `từ ${new Date(absence.startDate).toLocaleDateString("vi-VN")}`,
-        };
-      case "MISSION":
-        return {
-          icon: <Clock className="h-5 w-5 text-blue-500" />,
-          text: "Đang tham gia đợt tập huấn/thi đấu khác",
+          text: "Không tham gia đợt tập trung",
           date: `từ ${new Date(absence.startDate).toLocaleDateString("vi-VN")}`,
         };
       case "LEAVE":
@@ -178,6 +174,7 @@ export function ParticipantCard({
         isOpen={showManageAbsence}
         onOpenChange={setShowManageAbsence}
         participant={participant}
+        onSuccess={onAbsenceChange}
       />
     </Card>
   );

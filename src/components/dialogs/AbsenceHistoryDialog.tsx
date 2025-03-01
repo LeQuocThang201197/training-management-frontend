@@ -34,17 +34,15 @@ export function AbsenceHistoryDialog({
               key={record.id}
               className="flex items-start gap-3 p-3 border rounded-lg"
             >
-              {record.type === "REMOVED" ? (
+              {record.type === "INACTIVE" ? (
                 <AlertCircle className="h-5 w-5 text-red-500 mt-1" />
               ) : (
-                <Clock className="h-5 w-5 text-blue-500 mt-1" />
+                <Clock className="h-5 w-5 text-yellow-500 mt-1" />
               )}
               <div>
                 <div className="font-medium">
-                  {record.type === "REMOVED"
-                    ? "Rời khỏi đợt tập trung"
-                    : record.type === "MISSION"
-                    ? "Tham gia đợt tập huấn/thi đấu khác"
+                  {record.type === "INACTIVE"
+                    ? "Không tham gia đợt tập trung"
                     : "Nghỉ phép"}
                 </div>
                 <div className="text-sm text-gray-500">

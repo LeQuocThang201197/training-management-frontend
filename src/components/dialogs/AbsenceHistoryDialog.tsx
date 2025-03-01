@@ -5,7 +5,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { AbsenceRecord, Participant } from "@/types/participant";
-import { AlertCircle, Clock, Pencil, Trash2 } from "lucide-react";
+import { LogOut, Clock, Pencil, Trash2, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { ManageAbsenceDialog } from "./ManageAbsenceDialog";
@@ -42,6 +42,7 @@ export function AbsenceHistoryDialog({
   const [absenceToDelete, setAbsenceToDelete] = useState<AbsenceRecord | null>(
     null
   );
+  const [showManageAbsence, setShowManageAbsence] = useState(false);
 
   const sortedRecords = [...absences].sort(
     (a, b) => new Date(b.startDate).getTime() - new Date(a.startDate).getTime()
@@ -72,9 +73,19 @@ export function AbsenceHistoryDialog({
       <Dialog open={isOpen} onOpenChange={onOpenChange}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>
-              Lịch sử vắng mặt - {participant.person.name}
-            </DialogTitle>
+            <div className="flex justify-between items-center">
+              <DialogTitle>
+                Lịch sử vắng mặt - {participant.person.name}
+              </DialogTitle>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowManageAbsence(true)}
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                Thêm vắng mặt
+              </Button>
+            </div>
           </DialogHeader>
           <div className="space-y-4">
             {sortedRecords.length > 0 ? (
@@ -84,7 +95,7 @@ export function AbsenceHistoryDialog({
                   className="flex items-start gap-3 p-3 border rounded-lg group"
                 >
                   {record.type === "INACTIVE" ? (
-                    <AlertCircle className="h-5 w-5 text-red-500 mt-1" />
+                    <LogOut className="h-5 w-5 text-red-500 mt-1" />
                   ) : (
                     <Clock className="h-5 w-5 text-yellow-500 mt-1" />
                   )}
@@ -133,6 +144,17 @@ export function AbsenceHistoryDialog({
           </div>
         </DialogContent>
       </Dialog>
+
+      <ManageAbsenceDialog
+        isOpen={showManageAbsence}
+        onOpenChange={(open) => !open && setShowManageAbsence(false)}
+        participant={participant}
+        absence={null}
+        onSuccess={() => {
+          onAbsenceChange?.();
+          setShowManageAbsence(false);
+        }}
+      />
 
       <ManageAbsenceDialog
         isOpen={!!editingAbsence}

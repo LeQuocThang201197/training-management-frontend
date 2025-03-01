@@ -16,6 +16,7 @@ import {
   Trash2,
   Link2Off,
   Search,
+  AlertCircle,
 } from "lucide-react";
 import { Concentration } from "@/types/concentration";
 import { Button } from "@/components/ui/button";
@@ -43,6 +44,7 @@ import {
 import { ParticipantCard } from "@/components/cards/ParticipantCard";
 import { Participant } from "@/types/participant";
 import { Input } from "@/components/ui/input";
+import { AbsenceRecord } from "@/types/participant";
 
 interface Paper {
   id: number;
@@ -94,6 +96,8 @@ export function ConcentrationDetailPage() {
   const [editingParticipant, setEditingParticipant] =
     useState<Participant | null>(null);
   const [participantSearchTerm, setParticipantSearchTerm] = useState("");
+  const [absences, setAbsences] = useState<AbsenceRecord[]>([]);
+  const [loadingAbsences, setLoadingAbsences] = useState(false);
 
   useEffect(() => {
     const fetchDetail = async () => {
@@ -117,7 +121,7 @@ export function ConcentrationDetailPage() {
     fetchDetail();
   }, [id]);
 
-  const fetchParticipants = async () => {
+  const fetchParticipants = useCallback(async () => {
     try {
       setLoadingParticipants(true);
       const response = await fetch(
@@ -138,13 +142,13 @@ export function ConcentrationDetailPage() {
     } finally {
       setLoadingParticipants(false);
     }
-  };
+  }, [id]);
 
   useEffect(() => {
     if (id) {
       fetchParticipants();
     }
-  }, [id]);
+  }, [id, fetchParticipants]);
 
   const handleUpdateNote = async () => {
     try {
@@ -548,6 +552,32 @@ export function ConcentrationDetailPage() {
     (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
   );
 
+  const fetchAbsences = useCallback(async () => {
+    try {
+      setLoadingAbsences(true);
+      const response = await fetch(`${API_URL}/concentrations/${id}/absences`, {
+        credentials: "include",
+      });
+
+      if (!response.ok) throw new Error("Không thể tải thông tin vắng mặt");
+
+      const data = await response.json();
+      if (data.success) {
+        setAbsences(data.data);
+      }
+    } catch (err) {
+      console.error("Fetch absences error:", err);
+    } finally {
+      setLoadingAbsences(false);
+    }
+  }, [id]);
+
+  useEffect(() => {
+    if (id) {
+      fetchAbsences();
+    }
+  }, [id, fetchAbsences]);
+
   if (loading) {
     return <div>Đang tải...</div>;
   }
@@ -662,6 +692,7 @@ export function ConcentrationDetailPage() {
       <Tabs defaultValue="athletes" className="space-y-4">
         <TabsList>
           <TabsTrigger value="athletes">Danh sách đội</TabsTrigger>
+          <TabsTrigger value="absences">Vắng mặt</TabsTrigger>
           <TabsTrigger value="papers">Giấy tờ</TabsTrigger>
           <TabsTrigger value="notes">Ghi chú</TabsTrigger>
         </TabsList>
@@ -688,7 +719,7 @@ export function ConcentrationDetailPage() {
                 />
               </div>
 
-              {loadingParticipants ? (
+              {loadingParticipants || loadingAbsences ? (
                 <div className="flex justify-center py-8">
                   <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
                 </div>
@@ -708,7 +739,15 @@ export function ConcentrationDetailPage() {
                               participant={specialist}
                               onEdit={setEditingParticipant}
                               onDelete={setParticipantToDelete}
-                              onAbsenceChange={fetchParticipants}
+                              onAbsenceChange={fetchAbsences}
+                              absences={absences.filter((a) => {
+                                console.log(
+                                  "Filtering absences for:",
+                                  specialist.person.name,
+                                  a.participation.id === specialist.id
+                                );
+                                return a.participation.id === specialist.id;
+                              })}
                             />
                           ))}
                       </div>
@@ -729,7 +768,15 @@ export function ConcentrationDetailPage() {
                               participant={coach}
                               onEdit={setEditingParticipant}
                               onDelete={setParticipantToDelete}
-                              onAbsenceChange={fetchParticipants}
+                              onAbsenceChange={fetchAbsences}
+                              absences={absences.filter((a) => {
+                                console.log(
+                                  "Filtering absences for:",
+                                  coach.person.name,
+                                  a.participation.id === coach.id
+                                );
+                                return a.participation.id === coach.id;
+                              })}
                             />
                           ))}
                       </div>
@@ -750,7 +797,15 @@ export function ConcentrationDetailPage() {
                               participant={athlete}
                               onEdit={setEditingParticipant}
                               onDelete={setParticipantToDelete}
-                              onAbsenceChange={fetchParticipants}
+                              onAbsenceChange={fetchAbsences}
+                              absences={absences.filter((a) => {
+                                console.log(
+                                  "Filtering absences for:",
+                                  athlete.person.name,
+                                  a.participation.id === athlete.id
+                                );
+                                return a.participation.id === athlete.id;
+                              })}
                             />
                           ))}
                       </div>
@@ -771,7 +826,15 @@ export function ConcentrationDetailPage() {
                               participant={other}
                               onEdit={setEditingParticipant}
                               onDelete={setParticipantToDelete}
-                              onAbsenceChange={fetchParticipants}
+                              onAbsenceChange={fetchAbsences}
+                              absences={absences.filter((a) => {
+                                console.log(
+                                  "Filtering absences for:",
+                                  other.person.name,
+                                  a.participation.id === other.id
+                                );
+                                return a.participation.id === other.id;
+                              })}
                             />
                           ))}
                       </div>
@@ -793,6 +856,78 @@ export function ConcentrationDetailPage() {
             onSubmit={handleAddParticipant}
             existingParticipants={participants}
           />
+        </TabsContent>
+
+        <TabsContent value="absences">
+          <Card>
+            <CardHeader>
+              <CardTitle>Danh sách vắng mặt</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {loadingAbsences ? (
+                <div className="flex justify-center py-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                </div>
+              ) : absences.length > 0 ? (
+                <div className="space-y-4">
+                  {absences.map((absence) => (
+                    <div key={absence.id} className="border rounded-lg p-4">
+                      <div className="flex items-start gap-4">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-2">
+                            <h3 className="font-medium">
+                              {absence.participation.person.name}
+                            </h3>
+                            <span className="text-sm text-gray-500">
+                              ({absence.participation.role.name} -{" "}
+                              {absence.participation.organization.name})
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-2 text-sm">
+                            {absence.type === "INACTIVE" ? (
+                              <AlertCircle className="h-4 w-4 text-red-500" />
+                            ) : (
+                              <Clock className="h-4 w-4 text-yellow-500" />
+                            )}
+                            <span>
+                              {absence.type === "INACTIVE"
+                                ? "Không tham gia đợt tập trung"
+                                : "Nghỉ phép"}
+                            </span>
+                          </div>
+                          <div className="text-sm text-gray-500 mt-1">
+                            {new Date(absence.startDate).toLocaleDateString(
+                              "vi-VN"
+                            )}{" "}
+                            -{" "}
+                            {absence.endDate &&
+                              new Date(absence.endDate).toLocaleDateString(
+                                "vi-VN"
+                              )}
+                          </div>
+                          {absence.note && (
+                            <div className="text-sm text-gray-600 mt-1">
+                              {absence.note}
+                            </div>
+                          )}
+                          <div className="text-xs text-gray-400 mt-2">
+                            Người tạo: {absence.creator.name} -{" "}
+                            {new Date(absence.createdAt).toLocaleDateString(
+                              "vi-VN"
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8 text-gray-500">
+                  Chưa có thông tin vắng mặt
+                </div>
+              )}
+            </CardContent>
+          </Card>
         </TabsContent>
 
         <TabsContent value="papers">

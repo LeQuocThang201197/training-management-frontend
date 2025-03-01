@@ -24,10 +24,26 @@ export interface AbsenceRecord {
   id: number;
   participantId: number;
   startDate: string;
-  endDate: string | null;
+  endDate: string;
   type: AbsenceType;
   note: string;
   createdAt: string;
+  creator: {
+    id: number;
+    name: string;
+  };
+  participation: {
+    id: number;
+    person: {
+      name: string;
+    };
+    role: {
+      name: string;
+    };
+    organization: {
+      name: string;
+    };
+  };
 }
 
 export interface Participant {

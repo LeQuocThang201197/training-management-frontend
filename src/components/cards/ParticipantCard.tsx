@@ -7,7 +7,7 @@ import {
   Mars,
   Venus,
   FileText,
-  AlertCircle,
+  LogOut,
   Clock,
   History,
   UserMinus,
@@ -19,15 +19,17 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { Participant, AbsenceRecord } from "@/types/participant";
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { AbsenceHistoryDialog } from "../dialogs/AbsenceHistoryDialog";
 import { ManageAbsenceDialog } from "../dialogs/ManageAbsenceDialog";
+import { cn } from "@/lib/utils";
 
 interface ParticipantCardProps {
   participant: Participant;
   onEdit?: (participant: Participant) => void;
   onDelete?: (participant: Participant) => void;
   onAbsenceChange?: () => void;
+  absences: AbsenceRecord[];
 }
 
 const GenderIcon = ({ gender }: { gender: string }) => {
@@ -47,35 +49,31 @@ export function ParticipantCard({
   onEdit,
   onDelete,
   onAbsenceChange,
+  absences,
 }: ParticipantCardProps) {
   const [showHistory, setShowHistory] = useState(false);
   const [showManageAbsence, setShowManageAbsence] = useState(false);
 
-  const getAbsenceStatus = (absence?: AbsenceRecord) => {
-    if (!absence) return null;
+  const getCurrentAbsence = useCallback(() => {
+    const now = new Date().setHours(0, 0, 0, 0); // Set thời gian hiện tại về đầu ngày
 
-    switch (absence.type) {
-      case "INACTIVE":
-        return {
-          icon: <AlertCircle className="h-5 w-5 text-red-500" />,
-          text: "Không tham gia đợt tập trung",
-          date: `từ ${new Date(absence.startDate).toLocaleDateString("vi-VN")}`,
-        };
-      case "LEAVE":
-        return {
-          icon: <Clock className="h-5 w-5 text-yellow-500" />,
-          text: "Đang nghỉ phép",
-          date: `${new Date(absence.startDate).toLocaleDateString(
-            "vi-VN"
-          )} - ${new Date(absence.endDate!).toLocaleDateString("vi-VN")}`,
-        };
-    }
-  };
+    return absences.find((absence) => {
+      const startDate = new Date(absence.startDate).getTime();
+      const endDate = new Date(absence.endDate).getTime();
 
-  const absenceStatus = getAbsenceStatus(participant.currentAbsence);
+      return startDate <= now && endDate >= now;
+    });
+  }, [absences]);
+
+  const currentAbsence = getCurrentAbsence();
 
   return (
-    <Card className="group">
+    <Card
+      className={cn(
+        "group relative",
+        currentAbsence && "opacity-75 bg-gray-50"
+      )}
+    >
       <CardContent className="flex items-center p-4">
         <div className="w-12 h-12 rounded-full bg-gray-100 mr-4 flex items-center justify-center">
           <GenderIcon gender={participant.person.gender} />
@@ -99,6 +97,14 @@ export function ParticipantCard({
             </div>
             {(onEdit || onDelete) && (
               <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setShowHistory(true)}
+                  className="text-gray-600"
+                >
+                  <History className="h-4 w-4" />
+                </Button>
                 <Button
                   variant="ghost"
                   size="icon"
@@ -133,33 +139,38 @@ export function ParticipantCard({
             <p>{participant.organization.name}</p>
             <p>{getBirthYear(participant.person.birthday)}</p>
           </div>
-          {participant.isCurrentlyAbsent && absenceStatus && (
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger>
-                  <div className="flex items-center gap-2">
-                    {absenceStatus.icon}
-                    <div className="text-sm">
-                      <p className="font-medium">{absenceStatus.text}</p>
-                      <p className="text-gray-500">{absenceStatus.date}</p>
+          {currentAbsence && (
+            <div className="absolute top-2 right-2 z-10">
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger>
+                    <div className="flex items-center gap-1 text-sm">
+                      {currentAbsence.type === "INACTIVE" ? (
+                        <LogOut className="h-4 w-4 text-red-500" />
+                      ) : (
+                        <Clock className="h-4 w-4 text-yellow-500" />
+                      )}
                     </div>
-                  </div>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>Nhấn để xem lịch sử vắng mặt</p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-          )}
-          {(participant.absenceRecords || []).length > 0 && (
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setShowHistory(true)}
-              className="text-gray-600"
-            >
-              <History className="h-4 w-4" />
-            </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>
+                      {currentAbsence.type === "INACTIVE"
+                        ? "Không tham gia đợt tập trung"
+                        : "Đang nghỉ phép"}
+                    </p>
+                    <p className="text-xs text-gray-500">
+                      {new Date(currentAbsence.startDate).toLocaleDateString(
+                        "vi-VN"
+                      )}
+                      {currentAbsence.endDate &&
+                        ` - ${new Date(
+                          currentAbsence.endDate
+                        ).toLocaleDateString("vi-VN")}`}
+                    </p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            </div>
           )}
         </div>
       </CardContent>
@@ -167,7 +178,8 @@ export function ParticipantCard({
       <AbsenceHistoryDialog
         isOpen={showHistory}
         onOpenChange={setShowHistory}
-        absenceRecords={participant.absenceRecords || []}
+        participant={participant}
+        absences={absences}
       />
 
       <ManageAbsenceDialog

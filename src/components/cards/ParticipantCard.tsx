@@ -180,6 +180,7 @@ export function ParticipantCard({
         onOpenChange={setShowHistory}
         participant={participant}
         absences={absences}
+        onAbsenceChange={onAbsenceChange}
       />
 
       <ManageAbsenceDialog

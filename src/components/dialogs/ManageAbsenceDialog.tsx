@@ -8,7 +8,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Participant } from "@/types/participant";
+import { Participant, AbsenceRecord } from "@/types/participant";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { API_URL } from "@/config/api";
 
@@ -16,6 +16,7 @@ interface ManageAbsenceDialogProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
   participant: Participant;
+  absence?: AbsenceRecord | null;
   onSuccess?: () => void;
 }
 
@@ -23,12 +24,15 @@ export function ManageAbsenceDialog({
   isOpen,
   onOpenChange,
   participant,
+  absence,
   onSuccess,
 }: ManageAbsenceDialogProps) {
-  const [type, setType] = useState<"INACTIVE" | "LEAVE">("LEAVE");
-  const [startDate, setStartDate] = useState("");
-  const [endDate, setEndDate] = useState("");
-  const [note, setNote] = useState("");
+  const [type, setType] = useState<"INACTIVE" | "LEAVE">(
+    absence?.type || "LEAVE"
+  );
+  const [startDate, setStartDate] = useState(absence?.startDate || "");
+  const [endDate, setEndDate] = useState(absence?.endDate || "");
+  const [note, setNote] = useState(absence?.note || "");
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async () => {

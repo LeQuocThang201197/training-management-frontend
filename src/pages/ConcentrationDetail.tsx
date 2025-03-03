@@ -61,6 +61,13 @@ interface ConcentrationDetail extends Concentration {
   papers: Paper[];
 }
 
+interface ParticipantFormData {
+  personId: string;
+  roleId: string;
+  organizationId: string;
+  note: string;
+}
+
 export function ConcentrationDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -408,12 +415,7 @@ export function ConcentrationDetailPage() {
     fetchTeams();
   }, []);
 
-  const handleAddParticipant = async (formData: {
-    personId: string;
-    roleId: string;
-    organizationId: string;
-    note: string;
-  }) => {
+  const handleAddParticipant = async (formData: ParticipantFormData) => {
     try {
       const response = await fetch(
         `${API_URL}/concentrations/${id}/participants`,
@@ -430,20 +432,11 @@ export function ConcentrationDetailPage() {
       const data = await response.json();
       if (data.success) {
         setParticipants((prev) => [...prev, data.data]);
-        // Cập nhật participantStats từ response
-        setDetail((prev) =>
-          prev
-            ? {
-                ...prev,
-                participantStats: data.participantStats,
-              }
-            : null
-        );
+        fetchParticipantStats(); // Fetch stats mới
         setIsAddParticipantDialogOpen(false);
       }
     } catch (err) {
       console.error("Add participant error:", err);
-      alert("Có lỗi xảy ra khi thêm thành viên");
     }
   };
 
@@ -464,14 +457,7 @@ export function ConcentrationDetailPage() {
         setParticipants((prev) =>
           prev.filter((p) => p.id !== participantToDelete?.id)
         );
-        setDetail((prev) =>
-          prev
-            ? {
-                ...prev,
-                participantStats: data.participantStats,
-              }
-            : null
-        );
+        fetchParticipantStats();
         setParticipantToDelete(null);
       }
     } catch (err) {
@@ -480,12 +466,7 @@ export function ConcentrationDetailPage() {
     }
   };
 
-  const handleEditParticipant = async (formData: {
-    personId: string;
-    roleId: string;
-    organizationId: string;
-    note: string;
-  }) => {
+  const handleEditParticipant = async (formData: ParticipantFormData) => {
     try {
       const response = await fetch(
         `${API_URL}/concentrations/${id}/participants/${editingParticipant?.id}`,
@@ -506,14 +487,7 @@ export function ConcentrationDetailPage() {
         setParticipants((prev) =>
           prev.map((p) => (p.id === editingParticipant?.id ? data.data : p))
         );
-        setDetail((prev) =>
-          prev
-            ? {
-                ...prev,
-                participantStats: data.participantStats,
-              }
-            : null
-        );
+        fetchParticipantStats();
         setEditingParticipant(null);
       }
     } catch (err) {
@@ -617,6 +591,34 @@ export function ConcentrationDetailPage() {
   }, [participants, absences]);
 
   const participantStats = calculateParticipantStats();
+
+  const fetchParticipantStats = useCallback(async () => {
+    try {
+      const response = await fetch(
+        `${API_URL}/concentrations/${id}/participant-stats`,
+        {
+          credentials: "include",
+        }
+      );
+
+      if (!response.ok)
+        throw new Error("Không thể tải thông tin số lượng thành viên");
+
+      const data = await response.json();
+      if (data.success) {
+        setDetail((prev) =>
+          prev ? { ...prev, participantStats: data.data } : null
+        );
+      }
+    } catch (err) {
+      console.error("Fetch participant stats error:", err);
+    }
+  }, [id]);
+
+  const handleAbsenceChange = useCallback(() => {
+    fetchAbsences();
+    fetchParticipantStats();
+  }, [fetchAbsences, fetchParticipantStats]);
 
   if (loading) {
     return <div>Đang tải...</div>;
@@ -779,7 +781,7 @@ export function ConcentrationDetailPage() {
                               participant={specialist}
                               onEdit={setEditingParticipant}
                               onDelete={setParticipantToDelete}
-                              onAbsenceChange={fetchAbsences}
+                              onAbsenceChange={handleAbsenceChange}
                               absences={absences.filter((a) => {
                                 console.log(
                                   "Filtering absences for:",
@@ -808,7 +810,7 @@ export function ConcentrationDetailPage() {
                               participant={coach}
                               onEdit={setEditingParticipant}
                               onDelete={setParticipantToDelete}
-                              onAbsenceChange={fetchAbsences}
+                              onAbsenceChange={handleAbsenceChange}
                               absences={absences.filter((a) => {
                                 console.log(
                                   "Filtering absences for:",
@@ -837,7 +839,7 @@ export function ConcentrationDetailPage() {
                               participant={athlete}
                               onEdit={setEditingParticipant}
                               onDelete={setParticipantToDelete}
-                              onAbsenceChange={fetchAbsences}
+                              onAbsenceChange={handleAbsenceChange}
                               absences={absences.filter((a) => {
                                 console.log(
                                   "Filtering absences for:",
@@ -866,7 +868,7 @@ export function ConcentrationDetailPage() {
                               participant={other}
                               onEdit={setEditingParticipant}
                               onDelete={setParticipantToDelete}
-                              onAbsenceChange={fetchAbsences}
+                              onAbsenceChange={handleAbsenceChange}
                               absences={absences.filter((a) => {
                                 console.log(
                                   "Filtering absences for:",

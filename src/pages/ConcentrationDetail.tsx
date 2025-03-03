@@ -58,7 +58,6 @@ interface Paper {
 
 interface ConcentrationDetail extends Concentration {
   participants: Participant[];
-  participantsCount: number;
   papers: Paper[];
 }
 
@@ -578,6 +577,47 @@ export function ConcentrationDetailPage() {
     }
   }, [id, fetchAbsences]);
 
+  const calculateParticipantStats = useCallback(() => {
+    const stats: ParticipantStats = {
+      SPECIALIST: 0,
+      COACH: 0,
+      ATHLETE: 0,
+      OTHER: 0,
+    };
+
+    participants.forEach((p) => {
+      // Kiểm tra xem người này có đang trong trạng thái không tham gia không
+      const isInactive = absences.some(
+        (a) =>
+          a.participation.id === p.id &&
+          a.type === "INACTIVE" &&
+          new Date(a.startDate).getTime() <= new Date().setHours(0, 0, 0, 0) &&
+          new Date(a.endDate).getTime() >= new Date().setHours(0, 0, 0, 0)
+      );
+
+      // Chỉ tính vào thống kê nếu đang tham gia
+      if (!isInactive) {
+        switch (p.role.type) {
+          case "SPECIALIST":
+            stats.SPECIALIST++;
+            break;
+          case "COACH":
+            stats.COACH++;
+            break;
+          case "ATHLETE":
+            stats.ATHLETE++;
+            break;
+          default:
+            stats.OTHER++;
+        }
+      }
+    });
+
+    return stats;
+  }, [participants, absences]);
+
+  const participantStats = calculateParticipantStats();
+
   if (loading) {
     return <div>Đang tải...</div>;
   }
@@ -680,7 +720,7 @@ export function ConcentrationDetailPage() {
               <div>
                 <p className="text-sm text-gray-500">Số lượng thành viên</p>
                 <p className="font-medium">
-                  {formatParticipantStats(detail.participantStats)}
+                  {formatParticipantStats(participantStats)}
                 </p>
               </div>
             </CardContent>

@@ -74,11 +74,11 @@ export function AbsenceHistoryDialog({
     <>
       <Dialog open={isOpen} onOpenChange={onOpenChange}>
         <DialogContent>
-          <DialogHeader>
-            <div className="flex justify-between items-center pr-4">
-              <DialogTitle>
-                Lịch sử vắng mặt - {participant.person.name}
-              </DialogTitle>
+          <DialogHeader className="space-y-4">
+            <DialogTitle>
+              Lịch sử vắng mặt - {participant.person.name}
+            </DialogTitle>
+            <div className="flex justify-end">
               <Button
                 variant="outline"
                 size="sm"

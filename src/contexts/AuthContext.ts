@@ -7,10 +7,10 @@ interface AuthContextType extends AuthState {
   logout: () => void;
   hasPermission: (permission: Permission) => boolean;
   register: (userData: {
-    fullName: string;
+    name: string;
     email: string;
     password: string;
-  }) => Promise<void>;
+  }) => Promise<{ success: boolean }>;
 }
 
 export const AuthContext = createContext<AuthContextType | undefined>(

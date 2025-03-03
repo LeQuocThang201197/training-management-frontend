@@ -26,7 +26,7 @@ import {
 
 const formSchema = z
   .object({
-    fullName: z.string().min(2, "Họ tên phải có ít nhất 2 ký tự"),
+    name: z.string().min(2, "Họ tên phải có ít nhất 2 ký tự"),
     email: z.string().email("Email không hợp lệ"),
     password: z.string().min(6, "Mật khẩu phải có ít nhất 6 ký tự"),
     confirmPassword: z.string(),
@@ -42,7 +42,7 @@ export function RegisterPage() {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      fullName: "",
+      name: "",
       email: "",
       password: "",
       confirmPassword: "",
@@ -56,7 +56,7 @@ export function RegisterPage() {
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     try {
       const userData = {
-        fullName: values.fullName,
+        name: values.name,
         email: values.email,
         password: values.password,
       };
@@ -66,7 +66,7 @@ export function RegisterPage() {
       const response = await register(userData);
       console.log("Registration response:", response);
 
-      if (response && response.success) {
+      if (response.success) {
         navigate("/login");
       } else {
         setError("Đăng ký không thành công. Vui lòng thử lại.");
@@ -91,7 +91,7 @@ export function RegisterPage() {
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
               <FormField
                 control={form.control}
-                name="fullName"
+                name="name"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Họ tên</FormLabel>

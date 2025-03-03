@@ -16,7 +16,7 @@ import {
   Trash2,
   Link2Off,
   Search,
-  AlertCircle,
+  LogOut,
 } from "lucide-react";
 import { Concentration } from "@/types/concentration";
 import { Button } from "@/components/ui/button";
@@ -907,7 +907,7 @@ export function ConcentrationDetailPage() {
                           </div>
                           <div className="flex items-center gap-2 text-sm">
                             {absence.type === "INACTIVE" ? (
-                              <AlertCircle className="h-4 w-4 text-red-500" />
+                              <LogOut className="h-4 w-4 text-red-500" />
                             ) : (
                               <Clock className="h-4 w-4 text-yellow-500" />
                             )}

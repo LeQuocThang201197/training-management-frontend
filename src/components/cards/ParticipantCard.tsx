@@ -67,8 +67,12 @@ export function ParticipantCard({
   return (
     <Card
       className={cn(
-        "group relative",
-        currentAbsence && "opacity-75 bg-gray-50"
+        "group relative hover:shadow-md transition-all",
+        currentAbsence?.type === "INACTIVE"
+          ? "bg-gray-100" // Người không tham gia
+          : currentAbsence?.type === "LEAVE"
+          ? "bg-yellow-50" // Người đang nghỉ phép
+          : "bg-green-50" // Người đang tham gia
       )}
     >
       <CardContent className="flex items-center p-4">

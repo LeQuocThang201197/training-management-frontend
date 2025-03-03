@@ -36,22 +36,14 @@ export function ManageAbsenceDialog({
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async () => {
-    if (!startDate) {
-      alert("Vui lòng chọn ngày bắt đầu");
-      return;
-    }
-
-    if (!endDate) {
-      alert("Vui lòng chọn ngày kết thúc");
-      return;
-    }
-
     try {
       setLoading(true);
       const response = await fetch(
-        `${API_URL}/absences/participations/${participant.id}/absences`,
+        `${API_URL}/absences/participations/${participant.id}/absences${
+          absence ? `/${absence.id}` : ""
+        }`,
         {
-          method: "POST",
+          method: absence ? "PUT" : "POST",
           credentials: "include",
           headers: {
             "Content-Type": "application/json",
@@ -67,14 +59,11 @@ export function ManageAbsenceDialog({
 
       if (!response.ok) throw new Error("Có lỗi xảy ra");
 
-      const data = await response.json();
-      if (data.success) {
-        onOpenChange(false);
-        onSuccess?.();
-      }
+      onSuccess?.();
+      onOpenChange(false);
     } catch (err) {
       console.error(err);
-      alert("Có lỗi xảy ra khi thêm vắng mặt");
+      alert(`Có lỗi xảy ra khi ${absence ? "cập nhật" : "thêm"} vắng mặt`);
     } finally {
       setLoading(false);
     }

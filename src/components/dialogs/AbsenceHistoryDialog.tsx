@@ -51,7 +51,9 @@ export function AbsenceHistoryDialog({
   const handleDeleteAbsence = async () => {
     try {
       const response = await fetch(
-        `${API_URL}/absences/${absenceToDelete!.id}`,
+        `${API_URL}/absences/participations/${participant.id}/absences/${
+          absenceToDelete!.id
+        }`,
         {
           method: "DELETE",
           credentials: "include",
@@ -73,7 +75,7 @@ export function AbsenceHistoryDialog({
       <Dialog open={isOpen} onOpenChange={onOpenChange}>
         <DialogContent>
           <DialogHeader>
-            <div className="flex justify-between items-center">
+            <div className="flex justify-between items-center pr-4">
               <DialogTitle>
                 Lịch sử vắng mặt - {participant.person.name}
               </DialogTitle>

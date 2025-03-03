@@ -3,6 +3,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
 } from "@/components/ui/dialog";
 import { AbsenceRecord, Participant } from "@/types/participant";
 import { LogOut, Clock, Pencil, Trash2, Plus } from "lucide-react";
@@ -78,6 +79,9 @@ export function AbsenceHistoryDialog({
             <DialogTitle>
               Lịch sử vắng mặt - {participant.person.name}
             </DialogTitle>
+            <DialogDescription>
+              Danh sách các lần vắng mặt của thành viên trong đợt tập trung
+            </DialogDescription>
             <div className="flex justify-end">
               <Button
                 variant="outline"
@@ -124,7 +128,9 @@ export function AbsenceHistoryDialog({
                     <Button
                       variant="ghost"
                       size="icon"
-                      onClick={() => setEditingAbsence(record)}
+                      onClick={() => {
+                        setEditingAbsence(record);
+                      }}
                     >
                       <Pencil className="h-4 w-4" />
                     </Button>

@@ -783,11 +783,6 @@ export function ConcentrationDetailPage() {
                               onDelete={setParticipantToDelete}
                               onAbsenceChange={handleAbsenceChange}
                               absences={absences.filter((a) => {
-                                console.log(
-                                  "Filtering absences for:",
-                                  specialist.person.name,
-                                  a.participation.id === specialist.id
-                                );
                                 return a.participation.id === specialist.id;
                               })}
                             />
@@ -812,11 +807,6 @@ export function ConcentrationDetailPage() {
                               onDelete={setParticipantToDelete}
                               onAbsenceChange={handleAbsenceChange}
                               absences={absences.filter((a) => {
-                                console.log(
-                                  "Filtering absences for:",
-                                  coach.person.name,
-                                  a.participation.id === coach.id
-                                );
                                 return a.participation.id === coach.id;
                               })}
                             />
@@ -841,11 +831,6 @@ export function ConcentrationDetailPage() {
                               onDelete={setParticipantToDelete}
                               onAbsenceChange={handleAbsenceChange}
                               absences={absences.filter((a) => {
-                                console.log(
-                                  "Filtering absences for:",
-                                  athlete.person.name,
-                                  a.participation.id === athlete.id
-                                );
                                 return a.participation.id === athlete.id;
                               })}
                             />
@@ -870,11 +855,6 @@ export function ConcentrationDetailPage() {
                               onDelete={setParticipantToDelete}
                               onAbsenceChange={handleAbsenceChange}
                               absences={absences.filter((a) => {
-                                console.log(
-                                  "Filtering absences for:",
-                                  other.person.name,
-                                  a.participation.id === other.id
-                                );
                                 return a.participation.id === other.id;
                               })}
                             />

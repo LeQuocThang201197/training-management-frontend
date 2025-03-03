@@ -1,9 +1,10 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -27,13 +28,25 @@ export function ManageAbsenceDialog({
   absence,
   onSuccess,
 }: ManageAbsenceDialogProps) {
-  const [type, setType] = useState<"INACTIVE" | "LEAVE">(
-    absence?.type || "LEAVE"
-  );
-  const [startDate, setStartDate] = useState(absence?.startDate || "");
-  const [endDate, setEndDate] = useState(absence?.endDate || "");
-  const [note, setNote] = useState(absence?.note || "");
+  const [type, setType] = useState<"INACTIVE" | "LEAVE">("LEAVE");
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
+  const [note, setNote] = useState("");
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (absence) {
+      setType(absence.type);
+      setStartDate(new Date(absence.startDate).toISOString().split("T")[0]);
+      setEndDate(new Date(absence.endDate).toISOString().split("T")[0]);
+      setNote(absence.note || "");
+    } else {
+      setType("LEAVE");
+      setStartDate("");
+      setEndDate("");
+      setNote("");
+    }
+  }, [absence]);
 
   const handleSubmit = async () => {
     try {
@@ -76,6 +89,10 @@ export function ManageAbsenceDialog({
           <DialogTitle>
             Quản lý vắng mặt - {participant.person.name}
           </DialogTitle>
+          <DialogDescription>
+            {absence ? "Chỉnh sửa thông tin" : "Thêm mới"} vắng mặt cho thành
+            viên
+          </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4">

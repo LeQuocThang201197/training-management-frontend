@@ -58,8 +58,8 @@ const sortOptions: SortOption[] = [
 ];
 
 interface DocumentFormData {
-  number: number;
-  code: string;
+  number: number | null;
+  code: string | null;
   publisher: string;
   type: string;
   content: string;
@@ -101,8 +101,8 @@ export function DocumentsPage() {
   const [searchTerm, setSearchTerm] = useState("");
 
   const [formData, setFormData] = useState<DocumentFormData>({
-    number: 0,
-    code: "",
+    number: null,
+    code: null,
     publisher: "",
     type: "",
     content: "",
@@ -132,8 +132,8 @@ export function DocumentsPage() {
         setDocuments((prev) => [...prev, data.data]);
         setIsDialogOpen(false);
         setFormData({
-          number: 0,
-          code: "",
+          number: null,
+          code: null,
           date: "",
           type: "",
           related_year: new Date().getFullYear(),
@@ -227,14 +227,18 @@ export function DocumentsPage() {
                           <Input
                             id="number"
                             type="number"
-                            value={formData.number}
+                            value={
+                              formData.number === null ? "" : formData.number
+                            }
                             onChange={(e) =>
                               setFormData((prev) => ({
                                 ...prev,
-                                number: parseInt(e.target.value),
+                                number:
+                                  e.target.value === ""
+                                    ? null
+                                    : parseInt(e.target.value),
                               }))
                             }
-                            required
                           />
                         </div>
 
@@ -242,15 +246,14 @@ export function DocumentsPage() {
                           <Label htmlFor="code">Ký hiệu</Label>
                           <Input
                             id="code"
-                            value={formData.code}
+                            value={formData.code === null ? "" : formData.code}
                             onChange={(e) =>
                               setFormData((prev) => ({
                                 ...prev,
-                                code: e.target.value,
+                                code: e.target.value || null,
                               }))
                             }
                             placeholder="VD: QĐ-TCTDTT"
-                            required
                           />
                         </div>
 
@@ -410,8 +413,10 @@ Huấn luyện Thể thao quốc gia thành phố Hồ Chí Minh năm 2025"
                 <TableBody>
                   {documents.map((doc) => (
                     <TableRow key={doc.id}>
-                      <TableCell className="font-medium">
-                        {doc.number} /{doc.code}
+                      <TableCell>
+                        {[doc.number, doc.code]
+                          .filter((val) => val !== null && val !== "")
+                          .join(" / ")}
                       </TableCell>
                       <TableCell>{doc.type}</TableCell>
                       <TableCell>{doc.content}</TableCell>

@@ -17,6 +17,7 @@ import {
   Link2Off,
   Search,
   LogOut,
+  PlusCircle,
 } from "lucide-react";
 import { Concentration } from "@/types/concentration";
 import { Button } from "@/components/ui/button";
@@ -68,6 +69,22 @@ interface ParticipantFormData {
   note: string;
 }
 
+interface Event {
+  id: number;
+  title: string;
+  startDate: string;
+  endDate: string;
+  location: string;
+  participantCount?: number;
+  result?: string;
+}
+
+const formatDateRange = (start: string, end: string) => {
+  return `${new Date(start).toLocaleDateString("vi-VN")} - ${new Date(
+    end
+  ).toLocaleDateString("vi-VN")}`;
+};
+
 export function ConcentrationDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -104,6 +121,8 @@ export function ConcentrationDetailPage() {
   const [participantSearchTerm, setParticipantSearchTerm] = useState("");
   const [absences, setAbsences] = useState<AbsenceRecord[]>([]);
   const [loadingAbsences, setLoadingAbsences] = useState(false);
+  const [trainingEvents, setTrainingEvents] = useState<Event[]>([]);
+  const [competitionEvents, setCompetitionEvents] = useState<Event[]>([]);
 
   useEffect(() => {
     const fetchDetail = async () => {
@@ -620,6 +639,45 @@ export function ConcentrationDetailPage() {
     fetchParticipantStats();
   }, [fetchAbsences, fetchParticipantStats]);
 
+  const fetchTrainingEvents = useCallback(async () => {
+    try {
+      const response = await fetch(`${API_URL}/training-events`, {
+        credentials: "include",
+      });
+      if (!response.ok) throw new Error("Không thể tải danh sách đợt tập huấn");
+
+      const data = await response.json();
+      if (data.success) {
+        setTrainingEvents(data.data);
+      }
+    } catch (err) {
+      console.error("Fetch training events error:", err);
+    }
+  }, []);
+
+  const fetchCompetitionEvents = useCallback(async () => {
+    try {
+      const response = await fetch(`${API_URL}/competition-events`, {
+        credentials: "include",
+      });
+      if (!response.ok) throw new Error("Không thể tải danh sách đợt thi đấu");
+
+      const data = await response.json();
+      if (data.success) {
+        setCompetitionEvents(data.data);
+      }
+    } catch (err) {
+      console.error("Fetch competition events error:", err);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (id) {
+      fetchTrainingEvents();
+      fetchCompetitionEvents();
+    }
+  }, [id, fetchTrainingEvents, fetchCompetitionEvents]);
+
   if (loading) {
     return <div>Đang tải...</div>;
   }
@@ -657,6 +715,7 @@ export function ConcentrationDetailPage() {
             <Button
               variant="outline"
               size="sm"
+              className="gap-2"
               onClick={() => {
                 if (detail) {
                   setEditFormData({
@@ -674,12 +733,17 @@ export function ConcentrationDetailPage() {
                 }
               }}
             >
-              <Pencil className="h-4 w-4 mr-2" />
-              Chỉnh sửa
+              <Pencil className="h-4 w-4" />
+              <span>Chỉnh sửa</span>
             </Button>
-            <Button variant="destructive" size="sm" onClick={handleDelete}>
-              <Trash2 className="h-4 w-4 mr-2" />
-              Xóa
+            <Button
+              variant="destructive"
+              size="sm"
+              className="gap-2"
+              onClick={handleDelete}
+            >
+              <Trash2 className="h-4 w-4" />
+              <span>Xóa</span>
             </Button>
           </div>
         </div>
@@ -744,9 +808,14 @@ export function ConcentrationDetailPage() {
             <CardHeader>
               <div className="flex items-center justify-between">
                 <CardTitle>Danh sách đội</CardTitle>
-                <Button onClick={() => setIsAddParticipantDialogOpen(true)}>
-                  <Plus className="h-4 w-4 mr-2" />
-                  Thêm thành viên
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="gap-2"
+                  onClick={() => setIsAddParticipantDialogOpen(true)}
+                >
+                  <Plus className="h-4 w-4" />
+                  <span>Thêm thành viên</span>
                 </Button>
               </div>
             </CardHeader>
@@ -882,7 +951,7 @@ export function ConcentrationDetailPage() {
 
         <TabsContent value="absences">
           <Card>
-            <CardHeader>
+            <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle>Danh sách vắng mặt</CardTitle>
             </CardHeader>
             <CardContent>
@@ -963,9 +1032,9 @@ export function ConcentrationDetailPage() {
                   }}
                 >
                   <DialogTrigger asChild>
-                    <Button variant="outline" size="sm">
-                      <Link2 className="h-4 w-4 mr-2" />
-                      Gán giấy tờ
+                    <Button variant="outline" size="sm" className="gap-2">
+                      <Link2 className="h-4 w-4" />
+                      <span>Gán giấy tờ</span>
                     </Button>
                   </DialogTrigger>
                   <DialogContent className="max-w-3xl">
@@ -1135,10 +1204,11 @@ export function ConcentrationDetailPage() {
                         <Button
                           variant="outline"
                           size="sm"
+                          className="gap-2"
                           onClick={handleEditNote}
                         >
-                          <Pencil className="h-4 w-4 mr-2" />
-                          Sửa ghi chú
+                          <Pencil className="h-4 w-4" />
+                          <span>Sửa ghi chú</span>
                         </Button>
                       </DialogTrigger>
                       <DialogContent>
@@ -1166,8 +1236,8 @@ export function ConcentrationDetailPage() {
                       className="text-red-500 hover:text-red-600"
                       onClick={handleDeleteNote}
                     >
-                      <Trash2 className="h-4 w-4 mr-2" />
-                      Xóa ghi chú
+                      <Trash2 className="h-4 w-4" />
+                      <span>Xóa ghi chú</span>
                     </Button>
                   </>
                 ) : (
@@ -1176,9 +1246,9 @@ export function ConcentrationDetailPage() {
                     onOpenChange={setIsNoteDialogOpen}
                   >
                     <DialogTrigger asChild>
-                      <Button size="sm">
-                        <Plus className="h-4 w-4 mr-2" />
-                        Tạo ghi chú
+                      <Button size="sm" className="gap-2">
+                        <Plus className="h-4 w-4" />
+                        <span>Tạo ghi chú</span>
                       </Button>
                     </DialogTrigger>
                     <DialogContent>
@@ -1259,6 +1329,88 @@ export function ConcentrationDetailPage() {
         editData={editingParticipant}
         existingParticipants={participants}
       />
+
+      <div className="space-y-6 mt-10">
+        <h3 className="text-lg font-medium">Các đợt tập huấn & thi đấu</h3>
+
+        <div className="grid md:grid-cols-2 gap-4">
+          {/* Đợt tập huấn */}
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between">
+              <CardTitle className="text-base">Đợt tập huấn</CardTitle>
+              <Button variant="outline" size="sm" className="gap-2">
+                <PlusCircle className="h-4 w-4" />
+                <span>Thêm tập huấn</span>
+              </Button>
+            </CardHeader>
+            <CardContent>
+              {trainingEvents.length > 0 ? (
+                <div className="space-y-3">
+                  {trainingEvents.map((event) => (
+                    <div
+                      key={event.id}
+                      className="p-3 border rounded-lg hover:bg-gray-50"
+                    >
+                      <div className="font-medium">{event.title}</div>
+                      <div className="text-sm text-gray-600 mt-1">
+                        {formatDateRange(event.startDate, event.endDate)}
+                      </div>
+                      <div className="text-sm text-gray-500">
+                        Địa điểm: {event.location}
+                      </div>
+                      <div className="text-sm text-gray-500">
+                        {event.participantCount} người tham gia
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-6 text-gray-500">
+                  Chưa có đợt tập huấn nào
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Đợt thi đấu */}
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between">
+              <CardTitle className="text-base">Đợt thi đấu</CardTitle>
+              <Button variant="outline" size="sm" className="gap-2">
+                <PlusCircle className="h-4 w-4" />
+                <span>Thêm thi đấu</span>
+              </Button>
+            </CardHeader>
+            <CardContent>
+              {competitionEvents.length > 0 ? (
+                <div className="space-y-3">
+                  {competitionEvents.map((event) => (
+                    <div
+                      key={event.id}
+                      className="p-3 border rounded-lg hover:bg-gray-50"
+                    >
+                      <div className="font-medium">{event.title}</div>
+                      <div className="text-sm text-gray-600 mt-1">
+                        {formatDateRange(event.startDate, event.endDate)}
+                      </div>
+                      <div className="text-sm text-gray-500">
+                        Địa điểm: {event.location}
+                      </div>
+                      <div className="text-sm text-gray-500">
+                        Kết quả: {event.result || "Chưa cập nhật"}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-6 text-gray-500">
+                  Chưa có đợt thi đấu nào
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+      </div>
     </div>
   );
 }

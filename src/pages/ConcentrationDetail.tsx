@@ -1146,7 +1146,15 @@ export function ConcentrationDetailPage() {
                             <FileText className="h-5 w-5 text-gray-500 mt-1" />
                             <div>
                               <p className="font-medium">
-                                {paper.type} - Số: {paper.number}/{paper.code}
+                                {paper.type}{" "}
+                                {paper.number && paper.code && (
+                                  <>
+                                    - Số: {paper.number}/{paper.code}
+                                  </>
+                                )}
+                              </p>
+                              <p className="text-sm text-gray-500">
+                                {paper.publisher}
                               </p>
                               <p className="text-sm text-gray-500">
                                 {new Date(paper.date).toLocaleDateString(
@@ -1337,7 +1345,7 @@ export function ConcentrationDetailPage() {
           {/* Đợt tập huấn */}
           <Card>
             <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle className="text-base">Đợt tập huấn</CardTitle>
+              <CardTitle className="text-base">Tập huấn</CardTitle>
               <Button variant="outline" size="sm" className="gap-2">
                 <PlusCircle className="h-4 w-4" />
                 <span>Thêm tập huấn</span>
@@ -1375,7 +1383,7 @@ export function ConcentrationDetailPage() {
           {/* Đợt thi đấu */}
           <Card>
             <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle className="text-base">Đợt thi đấu</CardTitle>
+              <CardTitle className="text-base">Thi đấu</CardTitle>
               <Button variant="outline" size="sm" className="gap-2">
                 <PlusCircle className="h-4 w-4" />
                 <span>Thêm thi đấu</span>

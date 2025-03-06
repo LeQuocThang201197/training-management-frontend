@@ -998,8 +998,15 @@ export function ConcentrationDetailPage() {
                                       <FileText className="h-5 w-5 text-gray-500 mt-1" />
                                       <div>
                                         <p className="font-medium">
-                                          {paper.type} - Số: {paper.number}/
-                                          {paper.code}
+                                          {paper.type}{" "}
+                                          {paper.number && paper.code && (
+                                            <>
+                                              - Số: {paper.number}/{paper.code}
+                                            </>
+                                          )}
+                                        </p>
+                                        <p className="text-sm text-gray-600 mt-1">
+                                          {paper.publisher}
                                         </p>
                                         <p className="text-sm text-gray-500">
                                           {new Date(

@@ -180,6 +180,11 @@ export function PersonnelPage() {
           email: "",
         });
         setEditingPerson(null);
+        if (searchTerm) {
+          fetchPersonnel(1, searchTerm);
+        } else {
+          fetchPersonnel(currentPage);
+        }
       }
     } catch (err) {
       console.error("Save person error:", err);

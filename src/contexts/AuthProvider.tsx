@@ -65,7 +65,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const formattedUser = {
       id: String(data.data.user.id),
       email: data.data.user.email,
-      fullName: data.data.user.name,
+      name: data.data.user.name,
       role: data.data.user.role,
       permissions: [],
     };
@@ -97,25 +97,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const hasPermission = (permission: Permission) => {
     if (!authState.user) {
-      console.log("No user found");
       return false;
     }
 
     const userRole = authState.user.role.key as Role;
-    console.log("User role:", userRole);
-    console.log("Available permissions:", RolePermissions[userRole]);
-
     const permissions = RolePermissions[userRole] || [];
-    const hasPermission = permissions.includes(permission);
-
-    console.log("Checking permission:", permission);
-    console.log("Has permission:", hasPermission);
-
-    return hasPermission;
+    return permissions.includes(permission);
   };
 
   const register = async (userData: {
-    fullName: string;
+    name: string;
     email: string;
     password: string;
   }) => {

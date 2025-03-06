@@ -8,7 +8,7 @@ export interface User {
     value: string;
     type: string;
   };
-  permissions: string[];
+  permissions: Permission[];
 }
 
 export interface AuthState {

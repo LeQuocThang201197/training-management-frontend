@@ -263,7 +263,7 @@ export function AddParticipantDialog({
                         <div>
                           <div className="font-medium">{person.name}</div>
                           <div className="text-sm text-gray-500">
-                            {person.gender} - {getBirthYear(person.birthday)}
+                            {person.gender} {getBirthYear(person.birthday)}
                           </div>
                         </div>
                         {isExisting && (

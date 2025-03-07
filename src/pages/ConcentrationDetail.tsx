@@ -46,6 +46,9 @@ import { ParticipantCard } from "@/components/cards/ParticipantCard";
 import { Participant } from "@/types/participant";
 import { Input } from "@/components/ui/input";
 import { AbsenceRecord } from "@/types/participant";
+import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Textarea } from "@/components/ui/textarea";
 
 interface Paper {
   id: number;
@@ -77,6 +80,15 @@ interface Event {
   location: string;
   participantCount?: number;
   result?: string;
+}
+
+interface TrainingFormData {
+  location: string;
+  isForeign: boolean;
+  startDate: string;
+  endDate: string;
+  concentration_id: string;
+  note?: string;
 }
 
 const formatDateRange = (start: string, end: string) => {
@@ -123,6 +135,15 @@ export function ConcentrationDetailPage() {
   const [loadingAbsences, setLoadingAbsences] = useState(false);
   const [trainingEvents, setTrainingEvents] = useState<Event[]>([]);
   const [competitionEvents, setCompetitionEvents] = useState<Event[]>([]);
+  const [isAddTrainingDialogOpen, setIsAddTrainingDialogOpen] = useState(false);
+  const [trainingFormData, setTrainingFormData] = useState<TrainingFormData>({
+    location: "",
+    isForeign: false,
+    startDate: "",
+    endDate: "",
+    concentration_id: id || "",
+    note: "",
+  });
 
   useEffect(() => {
     const fetchDetail = async () => {
@@ -641,7 +662,7 @@ export function ConcentrationDetailPage() {
 
   const fetchTrainingEvents = useCallback(async () => {
     try {
-      const response = await fetch(`${API_URL}/training-events`, {
+      const response = await fetch(`${API_URL}/trainings/concentration/${id}`, {
         credentials: "include",
       });
       if (!response.ok) throw new Error("Không thể tải danh sách đợt tập huấn");
@@ -653,13 +674,16 @@ export function ConcentrationDetailPage() {
     } catch (err) {
       console.error("Fetch training events error:", err);
     }
-  }, []);
+  }, [id]);
 
   const fetchCompetitionEvents = useCallback(async () => {
     try {
-      const response = await fetch(`${API_URL}/competition-events`, {
-        credentials: "include",
-      });
+      const response = await fetch(
+        `${API_URL}/competitions/concentration/${id}`,
+        {
+          credentials: "include",
+        }
+      );
       if (!response.ok) throw new Error("Không thể tải danh sách đợt thi đấu");
 
       const data = await response.json();
@@ -669,7 +693,7 @@ export function ConcentrationDetailPage() {
     } catch (err) {
       console.error("Fetch competition events error:", err);
     }
-  }, []);
+  }, [id]);
 
   useEffect(() => {
     if (id) {
@@ -677,6 +701,38 @@ export function ConcentrationDetailPage() {
       fetchCompetitionEvents();
     }
   }, [id, fetchTrainingEvents, fetchCompetitionEvents]);
+
+  const handleAddTraining = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      const response = await fetch(`${API_URL}/trainings`, {
+        method: "POST",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(trainingFormData),
+      });
+
+      if (!response.ok) throw new Error("Không thể tạo đợt tập huấn");
+
+      const data = await response.json();
+      if (data.success) {
+        setTrainingEvents((prev) => [...prev, data.data]);
+        setIsAddTrainingDialogOpen(false);
+        setTrainingFormData({
+          location: "",
+          isForeign: false,
+          startDate: "",
+          endDate: "",
+          concentration_id: id || "",
+          note: "",
+        });
+      }
+    } catch (err) {
+      console.error("Add training error:", err);
+    }
+  };
 
   if (loading) {
     return <div>Đang tải...</div>;
@@ -832,7 +888,7 @@ export function ConcentrationDetailPage() {
 
               {loadingParticipants || loadingAbsences ? (
                 <div className="flex justify-center py-8">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                  <div className="animate-spin rounded-full h-8 w-8 border-primary"></div>
                 </div>
               ) : filteredParticipants.length > 0 ? (
                 <div className="space-y-6">
@@ -1044,7 +1100,7 @@ export function ConcentrationDetailPage() {
                     <div className="max-h-[60vh] overflow-y-auto">
                       {loadingPapers ? (
                         <div className="flex justify-center py-8">
-                          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900" />
+                          <div className="animate-spin rounded-full h-8 w-8 border-gray-900" />
                         </div>
                       ) : (
                         <div className="space-y-4">
@@ -1107,21 +1163,6 @@ export function ConcentrationDetailPage() {
                         Liên kết {selectedPaperIds.length} giấy tờ
                       </Button>
                     </div>
-                  </DialogContent>
-                </Dialog>
-
-                <Dialog>
-                  <DialogTrigger asChild>
-                    {/* <Button size="sm">
-                      <Plus className="h-4 w-4 mr-2" />
-                      Thêm giấy tờ
-                    </Button> */}
-                  </DialogTrigger>
-                  <DialogContent>
-                    <DialogHeader>
-                      <DialogTitle>Chọn giấy tờ</DialogTitle>
-                    </DialogHeader>
-                    {/* Thêm nội dung dialog sau */}
                   </DialogContent>
                 </Dialog>
               </div>
@@ -1346,10 +1387,113 @@ export function ConcentrationDetailPage() {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle className="text-base">Tập huấn</CardTitle>
-              <Button variant="outline" size="sm" className="gap-2">
-                <PlusCircle className="h-4 w-4" />
-                <span>Thêm tập huấn</span>
-              </Button>
+              <Dialog
+                open={isAddTrainingDialogOpen}
+                onOpenChange={setIsAddTrainingDialogOpen}
+              >
+                <DialogTrigger asChild>
+                  <Button variant="outline" size="sm" className="gap-2">
+                    <PlusCircle className="h-4 w-4" />
+                    <span>Thêm tập huấn</span>
+                  </Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Thêm đợt tập huấn mới</DialogTitle>
+                  </DialogHeader>
+                  <form onSubmit={handleAddTraining} className="space-y-4">
+                    <div className="space-y-2">
+                      <Label>
+                        Địa điểm <span className="text-red-500">*</span>
+                      </Label>
+                      <Input
+                        value={trainingFormData.location}
+                        onChange={(e) =>
+                          setTrainingFormData({
+                            ...trainingFormData,
+                            location: e.target.value,
+                          })
+                        }
+                        required
+                      />
+                    </div>
+
+                    <div className="flex items-center space-x-2">
+                      <Checkbox
+                        id="isForeign"
+                        checked={trainingFormData.isForeign}
+                        onCheckedChange={(checked) =>
+                          setTrainingFormData({
+                            ...trainingFormData,
+                            isForeign: checked as boolean,
+                          })
+                        }
+                      />
+                      <Label htmlFor="isForeign">Tập huấn nước ngoài</Label>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label>
+                          Ngày bắt đầu <span className="text-red-500">*</span>
+                        </Label>
+                        <Input
+                          type="date"
+                          value={trainingFormData.startDate}
+                          onChange={(e) =>
+                            setTrainingFormData({
+                              ...trainingFormData,
+                              startDate: e.target.value,
+                            })
+                          }
+                          required
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>
+                          Ngày kết thúc <span className="text-red-500">*</span>
+                        </Label>
+                        <Input
+                          type="date"
+                          value={trainingFormData.endDate}
+                          onChange={(e) =>
+                            setTrainingFormData({
+                              ...trainingFormData,
+                              endDate: e.target.value,
+                            })
+                          }
+                          required
+                        />
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label>Ghi chú</Label>
+                      <Textarea
+                        value={trainingFormData.note}
+                        onChange={(e) =>
+                          setTrainingFormData({
+                            ...trainingFormData,
+                            note: e.target.value,
+                          })
+                        }
+                        placeholder="Nhập ghi chú nếu có..."
+                      />
+                    </div>
+
+                    <div className="flex justify-end gap-2">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => setIsAddTrainingDialogOpen(false)}
+                      >
+                        Hủy
+                      </Button>
+                      <Button type="submit">Thêm</Button>
+                    </div>
+                  </form>
+                </DialogContent>
+              </Dialog>
             </CardHeader>
             <CardContent>
               {trainingEvents.length > 0 ? (

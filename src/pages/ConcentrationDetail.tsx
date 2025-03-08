@@ -18,6 +18,8 @@ import {
   Search,
   LogOut,
   PlusCircle,
+  Calendar,
+  MoreVertical,
 } from "lucide-react";
 import { Concentration } from "@/types/concentration";
 import { Button } from "@/components/ui/button";
@@ -49,6 +51,12 @@ import { AbsenceRecord } from "@/types/participant";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 interface Paper {
   id: number;
@@ -72,14 +80,14 @@ interface ParticipantFormData {
   note: string;
 }
 
-interface Event {
+interface Training {
   id: number;
-  title: string;
+  location: string;
+  isForeign: boolean;
   startDate: string;
   endDate: string;
-  location: string;
-  participantCount?: number;
-  result?: string;
+  note?: string;
+  participantCount: number;
 }
 
 interface TrainingFormData {
@@ -89,6 +97,17 @@ interface TrainingFormData {
   endDate: string;
   concentration_id: string;
   note?: string;
+}
+
+interface Competition {
+  id: number;
+  title: string;
+  name: string;
+  location: string;
+  startDate: string;
+  endDate: string;
+  note?: string;
+  result?: string;
 }
 
 const formatDateRange = (start: string, end: string) => {
@@ -133,8 +152,8 @@ export function ConcentrationDetailPage() {
   const [participantSearchTerm, setParticipantSearchTerm] = useState("");
   const [absences, setAbsences] = useState<AbsenceRecord[]>([]);
   const [loadingAbsences, setLoadingAbsences] = useState(false);
-  const [trainingEvents, setTrainingEvents] = useState<Event[]>([]);
-  const [competitionEvents, setCompetitionEvents] = useState<Event[]>([]);
+  const [trainingEvents, setTrainingEvents] = useState<Training[]>([]);
+  const [competitionEvents, setCompetitionEvents] = useState<Competition[]>([]);
   const [isAddTrainingDialogOpen, setIsAddTrainingDialogOpen] = useState(false);
   const [trainingFormData, setTrainingFormData] = useState<TrainingFormData>({
     location: "",
@@ -144,6 +163,10 @@ export function ConcentrationDetailPage() {
     concentration_id: id || "",
     note: "",
   });
+  const [editingTraining, setEditingTraining] = useState<Training | null>(null);
+  const [trainingToDelete, setTrainingToDelete] = useState<Training | null>(
+    null
+  );
 
   useEffect(() => {
     const fetchDetail = async () => {
@@ -732,6 +755,93 @@ export function ConcentrationDetailPage() {
     } catch (err) {
       console.error("Add training error:", err);
     }
+  };
+
+  const handleDeleteTraining = async () => {
+    if (!trainingToDelete) return;
+    try {
+      const response = await fetch(
+        `${API_URL}/trainings/${trainingToDelete.id}`,
+        {
+          method: "DELETE",
+          credentials: "include",
+        }
+      );
+
+      if (!response.ok) throw new Error("Không thể xóa đợt tập huấn");
+
+      const data = await response.json();
+      if (data.success) {
+        setTrainingEvents((prev) =>
+          prev.filter((t) => t.id !== trainingToDelete.id)
+        );
+        setTrainingToDelete(null);
+      }
+    } catch (err) {
+      console.error("Delete training error:", err);
+    }
+  };
+
+  const handleEditTraining = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingTraining) return;
+    try {
+      const response = await fetch(
+        `${API_URL}/trainings/${editingTraining.id}`,
+        {
+          method: "PUT",
+          credentials: "include",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(trainingFormData),
+        }
+      );
+
+      if (!response.ok) throw new Error("Không thể cập nhật đợt tập huấn");
+
+      const data = await response.json();
+      if (data.success) {
+        setTrainingEvents((prev) =>
+          prev.map((t) => (t.id === editingTraining.id ? data.data : t))
+        );
+        setEditingTraining(null);
+        setTrainingFormData({
+          location: "",
+          isForeign: false,
+          startDate: "",
+          endDate: "",
+          concentration_id: id || "",
+          note: "",
+        });
+      }
+    } catch (err) {
+      console.error("Update training error:", err);
+    }
+  };
+
+  // Cập nhật hàm helper để xử lý chính xác thời gian
+  const getTrainingStatus = (startDate: string, endDate: string) => {
+    const today = new Date();
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    // Set thời gian kết thúc là cuối ngày (23:59:59)
+    end.setHours(23, 59, 59, 999);
+
+    if (today < start)
+      return {
+        label: "Chưa diễn ra",
+        color: "text-blue-700 bg-blue-50 border-blue-200",
+      };
+    if (today > end)
+      return {
+        label: "Đã kết thúc",
+        color: "text-gray-700 bg-gray-50 border-gray-200",
+      };
+    return {
+      label: "Đang diễn ra",
+      color: "text-emerald-700 bg-emerald-50 border-emerald-200",
+    };
   };
 
   if (loading) {
@@ -1501,17 +1611,83 @@ export function ConcentrationDetailPage() {
                   {trainingEvents.map((event) => (
                     <div
                       key={event.id}
-                      className="p-3 border rounded-lg hover:bg-gray-50"
+                      className="p-3 border rounded-lg hover:bg-gray-50 relative group"
                     >
-                      <div className="font-medium">{event.title}</div>
-                      <div className="text-sm text-gray-600 mt-1">
-                        {formatDateRange(event.startDate, event.endDate)}
+                      <div className="absolute right-2 top-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon">
+                              <MoreVertical className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem
+                              onClick={() => {
+                                setTrainingFormData({
+                                  location: event.location,
+                                  isForeign: event.isForeign,
+                                  startDate: event.startDate.split("T")[0],
+                                  endDate: event.endDate.split("T")[0],
+                                  concentration_id: id || "",
+                                  note: event.note || "",
+                                });
+                                setEditingTraining(event);
+                              }}
+                            >
+                              <Pencil className="h-4 w-4 mr-2" />
+                              Chỉnh sửa
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              className="text-red-500"
+                              onClick={() => setTrainingToDelete(event)}
+                            >
+                              <Trash2 className="h-4 w-4 mr-2" />
+                              Xóa
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
                       </div>
-                      <div className="text-sm text-gray-500">
-                        Địa điểm: {event.location}
-                      </div>
-                      <div className="text-sm text-gray-500">
-                        {event.participantCount} người tham gia
+                      <div className="space-y-2 text-sm text-gray-600">
+                        <div className="flex items-center justify-between">
+                          <div className="font-medium text-lg">
+                            {event.location}
+                            {(() => {
+                              const status = getTrainingStatus(
+                                event.startDate,
+                                event.endDate
+                              );
+                              return (
+                                <span
+                                  className={`ml-2 px-2 py-0.5 rounded-full text-xs font-medium border ${status.color}`}
+                                >
+                                  {status.label}
+                                </span>
+                              );
+                            })()}
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <div className="p-1.5 rounded-full bg-primary/10">
+                            <Calendar className="h-4 w-4 text-primary/70" />
+                          </div>
+                          <span>
+                            {formatDateRange(event.startDate, event.endDate)}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <div className="p-1.5 rounded-full bg-primary/10">
+                            <Users className="h-4 w-4 text-primary/70" />
+                          </div>
+                          <span>{event.participantCount} người tham gia</span>
+                        </div>
+                        {event.note && (
+                          <div className="flex items-center gap-3">
+                            <div className="p-1.5 rounded-full bg-primary/10">
+                              <FileText className="h-4 w-4 text-primary/70" />
+                            </div>
+                            <span>Ghi chú: {event.note}</span>
+                          </div>
+                        )}
                       </div>
                     </div>
                   ))}
@@ -1563,6 +1739,132 @@ export function ConcentrationDetailPage() {
           </Card>
         </div>
       </div>
+
+      <AlertDialog
+        open={!!trainingToDelete}
+        onOpenChange={(open) => !open && setTrainingToDelete(null)}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Bạn có chắc chắn muốn xóa?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Đợt tập huấn tại "{trainingToDelete?.location}" sẽ bị xóa vĩnh
+              viễn.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Không</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteTraining}
+              className="bg-red-500 hover:bg-red-600"
+            >
+              Có, xóa
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <Dialog
+        open={!!editingTraining}
+        onOpenChange={(open) => !open && setEditingTraining(null)}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Chỉnh sửa đợt tập huấn</DialogTitle>
+          </DialogHeader>
+          <form onSubmit={handleEditTraining} className="space-y-4">
+            <div className="space-y-2">
+              <Label>
+                Địa điểm <span className="text-red-500">*</span>
+              </Label>
+              <Input
+                value={trainingFormData.location}
+                onChange={(e) =>
+                  setTrainingFormData({
+                    ...trainingFormData,
+                    location: e.target.value,
+                  })
+                }
+                required
+              />
+            </div>
+
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="isForeign"
+                checked={trainingFormData.isForeign}
+                onCheckedChange={(checked) =>
+                  setTrainingFormData({
+                    ...trainingFormData,
+                    isForeign: checked as boolean,
+                  })
+                }
+              />
+              <Label htmlFor="isForeign">Tập huấn nước ngoài</Label>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>
+                  Ngày bắt đầu <span className="text-red-500">*</span>
+                </Label>
+                <Input
+                  type="date"
+                  value={trainingFormData.startDate}
+                  onChange={(e) =>
+                    setTrainingFormData({
+                      ...trainingFormData,
+                      startDate: e.target.value,
+                    })
+                  }
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>
+                  Ngày kết thúc <span className="text-red-500">*</span>
+                </Label>
+                <Input
+                  type="date"
+                  value={trainingFormData.endDate}
+                  onChange={(e) =>
+                    setTrainingFormData({
+                      ...trainingFormData,
+                      endDate: e.target.value,
+                    })
+                  }
+                  required
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Ghi chú</Label>
+              <Textarea
+                value={trainingFormData.note}
+                onChange={(e) =>
+                  setTrainingFormData({
+                    ...trainingFormData,
+                    note: e.target.value,
+                  })
+                }
+                placeholder="Nhập ghi chú nếu có..."
+              />
+            </div>
+
+            <div className="flex justify-end gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setEditingTraining(null)}
+              >
+                Hủy
+              </Button>
+              <Button type="submit">Cập nhật</Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

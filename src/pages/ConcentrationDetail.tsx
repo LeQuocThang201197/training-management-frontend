@@ -20,6 +20,8 @@ import {
   PlusCircle,
   Calendar,
   MoreVertical,
+  Plane,
+  Home,
 } from "lucide-react";
 import { Concentration } from "@/types/concentration";
 import { Button } from "@/components/ui/button";
@@ -48,15 +50,13 @@ import { ParticipantCard } from "@/components/cards/ParticipantCard";
 import { Participant } from "@/types/participant";
 import { Input } from "@/components/ui/input";
 import { AbsenceRecord } from "@/types/participant";
-import { Label } from "@/components/ui/label";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Textarea } from "@/components/ui/textarea";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { TrainingDialog } from "@/components/dialogs/TrainingDialog";
 
 interface Paper {
   id: number;
@@ -743,14 +743,7 @@ export function ConcentrationDetailPage() {
       if (data.success) {
         setTrainingEvents((prev) => [...prev, data.data]);
         setIsAddTrainingDialogOpen(false);
-        setTrainingFormData({
-          location: "",
-          isForeign: false,
-          startDate: "",
-          endDate: "",
-          concentration_id: id || "",
-          note: "",
-        });
+        resetTrainingFormData();
       }
     } catch (err) {
       console.error("Add training error:", err);
@@ -806,14 +799,7 @@ export function ConcentrationDetailPage() {
           prev.map((t) => (t.id === editingTraining.id ? data.data : t))
         );
         setEditingTraining(null);
-        setTrainingFormData({
-          location: "",
-          isForeign: false,
-          startDate: "",
-          endDate: "",
-          concentration_id: id || "",
-          note: "",
-        });
+        resetTrainingFormData();
       }
     } catch (err) {
       console.error("Update training error:", err);
@@ -842,6 +828,18 @@ export function ConcentrationDetailPage() {
       label: "Đang diễn ra",
       color: "text-emerald-700 bg-emerald-50 border-emerald-200",
     };
+  };
+
+  // Thêm hàm helper để reset form
+  const resetTrainingFormData = () => {
+    setTrainingFormData({
+      location: "",
+      isForeign: false,
+      startDate: "",
+      endDate: "",
+      concentration_id: id || "",
+      note: "",
+    });
   };
 
   if (loading) {
@@ -1497,114 +1495,32 @@ export function ConcentrationDetailPage() {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle className="text-base">Tập huấn</CardTitle>
-              <Dialog
-                open={isAddTrainingDialogOpen}
-                onOpenChange={setIsAddTrainingDialogOpen}
+              <Button
+                variant="outline"
+                size="sm"
+                className="gap-2"
+                onClick={() => setIsAddTrainingDialogOpen(true)}
               >
-                <DialogTrigger asChild>
-                  <Button variant="outline" size="sm" className="gap-2">
-                    <PlusCircle className="h-4 w-4" />
-                    <span>Thêm tập huấn</span>
-                  </Button>
-                </DialogTrigger>
-                <DialogContent>
-                  <DialogHeader>
-                    <DialogTitle>Thêm đợt tập huấn mới</DialogTitle>
-                  </DialogHeader>
-                  <form onSubmit={handleAddTraining} className="space-y-4">
-                    <div className="space-y-2">
-                      <Label>
-                        Địa điểm <span className="text-red-500">*</span>
-                      </Label>
-                      <Input
-                        value={trainingFormData.location}
-                        onChange={(e) =>
-                          setTrainingFormData({
-                            ...trainingFormData,
-                            location: e.target.value,
-                          })
-                        }
-                        required
-                      />
-                    </div>
-
-                    <div className="flex items-center space-x-2">
-                      <Checkbox
-                        id="isForeign"
-                        checked={trainingFormData.isForeign}
-                        onCheckedChange={(checked) =>
-                          setTrainingFormData({
-                            ...trainingFormData,
-                            isForeign: checked as boolean,
-                          })
-                        }
-                      />
-                      <Label htmlFor="isForeign">Tập huấn nước ngoài</Label>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label>
-                          Ngày bắt đầu <span className="text-red-500">*</span>
-                        </Label>
-                        <Input
-                          type="date"
-                          value={trainingFormData.startDate}
-                          onChange={(e) =>
-                            setTrainingFormData({
-                              ...trainingFormData,
-                              startDate: e.target.value,
-                            })
-                          }
-                          required
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label>
-                          Ngày kết thúc <span className="text-red-500">*</span>
-                        </Label>
-                        <Input
-                          type="date"
-                          value={trainingFormData.endDate}
-                          onChange={(e) =>
-                            setTrainingFormData({
-                              ...trainingFormData,
-                              endDate: e.target.value,
-                            })
-                          }
-                          required
-                        />
-                      </div>
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label>Ghi chú</Label>
-                      <Textarea
-                        value={trainingFormData.note}
-                        onChange={(e) =>
-                          setTrainingFormData({
-                            ...trainingFormData,
-                            note: e.target.value,
-                          })
-                        }
-                        placeholder="Nhập ghi chú nếu có..."
-                      />
-                    </div>
-
-                    <div className="flex justify-end gap-2">
-                      <Button
-                        type="button"
-                        variant="outline"
-                        onClick={() => setIsAddTrainingDialogOpen(false)}
-                      >
-                        Hủy
-                      </Button>
-                      <Button type="submit">Thêm</Button>
-                    </div>
-                  </form>
-                </DialogContent>
-              </Dialog>
+                <PlusCircle className="h-4 w-4" />
+                <span>Thêm tập huấn</span>
+              </Button>
             </CardHeader>
+            <TrainingDialog
+              isOpen={isAddTrainingDialogOpen || !!editingTraining}
+              onOpenChange={(open) => {
+                if (!open) {
+                  resetTrainingFormData();
+                  setIsAddTrainingDialogOpen(false);
+                  setEditingTraining(null);
+                }
+              }}
+              formData={trainingFormData}
+              setFormData={setTrainingFormData}
+              onSubmit={
+                editingTraining ? handleEditTraining : handleAddTraining
+              }
+              mode={editingTraining ? "edit" : "add"}
+            />
             <CardContent>
               {trainingEvents.length > 0 ? (
                 <div className="space-y-3">
@@ -1665,6 +1581,18 @@ export function ConcentrationDetailPage() {
                               );
                             })()}
                           </div>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <div className="p-1.5 rounded-full bg-primary/10">
+                            {event.isForeign ? (
+                              <Plane className="h-4 w-4 text-primary/70" />
+                            ) : (
+                              <Home className="h-4 w-4 text-primary/70" />
+                            )}
+                          </div>
+                          <span>
+                            {event.isForeign ? "Nước ngoài" : "Trong nước"}
+                          </span>
                         </div>
                         <div className="flex items-center gap-3">
                           <div className="p-1.5 rounded-full bg-primary/10">
@@ -1753,118 +1681,18 @@ export function ConcentrationDetailPage() {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Không</AlertDialogCancel>
+            <AlertDialogCancel className="w-full sm:w-32 bg-gray-100 hover:bg-gray-200 border-none text-gray-900">
+              Không
+            </AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDeleteTraining}
-              className="bg-red-500 hover:bg-red-600"
+              className="w-full sm:w-32 bg-red-500 hover:bg-red-600 text-white border-none"
             >
               Có, xóa
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-
-      <Dialog
-        open={!!editingTraining}
-        onOpenChange={(open) => !open && setEditingTraining(null)}
-      >
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Chỉnh sửa đợt tập huấn</DialogTitle>
-          </DialogHeader>
-          <form onSubmit={handleEditTraining} className="space-y-4">
-            <div className="space-y-2">
-              <Label>
-                Địa điểm <span className="text-red-500">*</span>
-              </Label>
-              <Input
-                value={trainingFormData.location}
-                onChange={(e) =>
-                  setTrainingFormData({
-                    ...trainingFormData,
-                    location: e.target.value,
-                  })
-                }
-                required
-              />
-            </div>
-
-            <div className="flex items-center space-x-2">
-              <Checkbox
-                id="isForeign"
-                checked={trainingFormData.isForeign}
-                onCheckedChange={(checked) =>
-                  setTrainingFormData({
-                    ...trainingFormData,
-                    isForeign: checked as boolean,
-                  })
-                }
-              />
-              <Label htmlFor="isForeign">Tập huấn nước ngoài</Label>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>
-                  Ngày bắt đầu <span className="text-red-500">*</span>
-                </Label>
-                <Input
-                  type="date"
-                  value={trainingFormData.startDate}
-                  onChange={(e) =>
-                    setTrainingFormData({
-                      ...trainingFormData,
-                      startDate: e.target.value,
-                    })
-                  }
-                  required
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>
-                  Ngày kết thúc <span className="text-red-500">*</span>
-                </Label>
-                <Input
-                  type="date"
-                  value={trainingFormData.endDate}
-                  onChange={(e) =>
-                    setTrainingFormData({
-                      ...trainingFormData,
-                      endDate: e.target.value,
-                    })
-                  }
-                  required
-                />
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <Label>Ghi chú</Label>
-              <Textarea
-                value={trainingFormData.note}
-                onChange={(e) =>
-                  setTrainingFormData({
-                    ...trainingFormData,
-                    note: e.target.value,
-                  })
-                }
-                placeholder="Nhập ghi chú nếu có..."
-              />
-            </div>
-
-            <div className="flex justify-end gap-2">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setEditingTraining(null)}
-              >
-                Hủy
-              </Button>
-              <Button type="submit">Cập nhật</Button>
-            </div>
-          </form>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }

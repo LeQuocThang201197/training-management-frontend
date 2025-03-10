@@ -48,6 +48,7 @@ export interface AbsenceRecord {
 
 export interface Participant {
   id: number;
+  participation_id: number;
   person: Person;
   role: Role;
   organization: Organization;

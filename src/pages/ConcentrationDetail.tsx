@@ -82,7 +82,12 @@ interface Training {
   startDate: string;
   endDate: string;
   note?: string;
-  participantCount: number;
+  participantStats?: {
+    ATHLETE: number;
+    COACH: number;
+    SPECIALIST: number;
+    OTHER: number;
+  };
 }
 
 interface TrainingFormData {
@@ -103,6 +108,32 @@ interface Competition {
   endDate: string;
   note?: string;
   result?: string;
+}
+
+interface TrainingParticipant {
+  participation_id: number;
+  participation: {
+    id: number;
+    person: {
+      name: string;
+    };
+    role: {
+      name: string;
+    };
+    organization: {
+      name: string;
+    };
+  };
+}
+
+interface TrainingParticipantResponse {
+  participants: TrainingParticipant[];
+  stats: {
+    ATHLETE: number;
+    COACH: number;
+    SPECIALIST: number;
+    OTHER: number;
+  };
 }
 
 const formatDateRange = (start: string, end: string) => {
@@ -166,6 +197,12 @@ export function ConcentrationDetailPage() {
     isAddTrainingParticipantDialogOpen,
     setIsAddTrainingParticipantDialogOpen,
   ] = useState(false);
+  const [managingTraining, setManagingTraining] = useState<Training | null>(
+    null
+  );
+  const [trainingParticipantIds, setTrainingParticipantIds] = useState<
+    number[]
+  >([]);
 
   useEffect(() => {
     const fetchDetail = async () => {
@@ -687,11 +724,38 @@ export function ConcentrationDetailPage() {
       const response = await fetch(`${API_URL}/trainings/concentration/${id}`, {
         credentials: "include",
       });
-      if (!response.ok) throw new Error("Không thể tải danh sách đợt tập huấn");
+
+      if (!response.ok) throw new Error("Không thể tải danh sách tập huấn");
 
       const data = await response.json();
       if (data.success) {
         setTrainingEvents(data.data);
+
+        // Fetch thông tin người tham gia cho mỗi training
+        data.data.forEach(async (training: Training) => {
+          const participantsResponse = await fetch(
+            `${API_URL}/trainings/${training.id}/participants`,
+            {
+              credentials: "include",
+            }
+          );
+
+          if (participantsResponse.ok) {
+            const participantsData = await participantsResponse.json();
+            if (participantsData.success) {
+              const responseData =
+                participantsData.data as TrainingParticipantResponse;
+
+              setTrainingEvents((prev) =>
+                prev.map((t) =>
+                  t.id === training.id
+                    ? { ...t, participantStats: responseData.stats }
+                    : t
+                )
+              );
+            }
+          }
+        });
       }
     } catch (err) {
       console.error("Fetch training events error:", err);
@@ -719,10 +783,11 @@ export function ConcentrationDetailPage() {
 
   useEffect(() => {
     if (id) {
+      fetchParticipants();
       fetchTrainingEvents();
       fetchCompetitionEvents();
     }
-  }, [id, fetchTrainingEvents, fetchCompetitionEvents]);
+  }, [id, fetchParticipants, fetchTrainingEvents, fetchCompetitionEvents]);
 
   const handleAddTraining = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -841,43 +906,75 @@ export function ConcentrationDetailPage() {
     });
   };
 
-  const handleAddTrainingParticipants = async (
-    selectedParticipantIds: number[]
+  const handleUpdateTrainingParticipants = async (
+    selectedParticipationIds: number[]
   ) => {
     try {
-      if (!editingTraining) return;
+      if (!managingTraining) return;
+
       const response = await fetch(
-        `${API_URL}/trainings/${editingTraining.id}/participants`,
+        `${API_URL}/trainings/${managingTraining.id}/participants`,
         {
-          method: "POST",
+          method: "PUT",
           credentials: "include",
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({ participantIds: selectedParticipantIds }),
+          body: JSON.stringify({ participationIds: selectedParticipationIds }),
         }
       );
 
-      if (!response.ok) throw new Error("Không thể thêm người vào tập huấn");
+      if (!response.ok)
+        throw new Error("Không thể cập nhật danh sách người tham gia");
 
       const data = await response.json();
       if (data.success) {
-        // Cập nhật lại danh sách người tham gia
         setTrainingEvents((prev) =>
           prev.map((t) =>
-            t.id === editingTraining.id
-              ? {
-                  ...t,
-                  participantCount:
-                    t.participantCount + selectedParticipantIds.length,
-                }
+            t.id === managingTraining.id
+              ? { ...t, participantCount: selectedParticipationIds.length }
               : t
           )
         );
         setIsAddTrainingParticipantDialogOpen(false);
+        setManagingTraining(null);
       }
     } catch (err) {
-      console.error("Add training participants error:", err);
+      console.error("Update training participants error:", err);
+    }
+  };
+
+  const fetchTrainingParticipants = async (trainingId: number) => {
+    try {
+      const response = await fetch(
+        `${API_URL}/trainings/${trainingId}/participants`,
+        {
+          credentials: "include",
+        }
+      );
+
+      if (!response.ok)
+        throw new Error("Không thể tải danh sách người tham gia");
+
+      const data = await response.json();
+      if (data.success) {
+        const responseData = data.data as TrainingParticipantResponse;
+
+        setTrainingParticipantIds(
+          responseData.participants.map((p) => p.participation_id)
+        );
+
+        // Cập nhật stats
+        setTrainingEvents((prev) =>
+          prev.map((t) =>
+            t.id === trainingId
+              ? { ...t, participantStats: responseData.stats }
+              : t
+          )
+        );
+      }
+    } catch (err) {
+      console.error("Fetch training participants error:", err);
     }
   };
 
@@ -1573,8 +1670,9 @@ export function ConcentrationDetailPage() {
                           variant="ghost"
                           size="icon"
                           className="h-8 w-8"
-                          onClick={() => {
-                            setEditingTraining(event);
+                          onClick={async () => {
+                            setManagingTraining(event);
+                            await fetchTrainingParticipants(event.id);
                             setIsAddTrainingParticipantDialogOpen(true);
                           }}
                         >
@@ -1650,7 +1748,29 @@ export function ConcentrationDetailPage() {
                           <div className="p-1.5 rounded-full bg-primary/10">
                             <Users className="h-4 w-4 text-primary/70" />
                           </div>
-                          <span>{event.participantCount} người tham gia</span>
+                          <div className="flex flex-wrap gap-2">
+                            {event.participantStats ? (
+                              <>
+                              {event.participantStats.SPECIALIST > 0 && (
+                                <span className="text-sm">
+                                  {event.participantStats.SPECIALIST} CG
+                                </span>
+                              )}
+                                {event.participantStats.COACH > 0 && (
+                                  <span className="text-sm">
+                                    {event.participantStats.COACH} HLV
+                                  </span>
+                                )}
+                                {event.participantStats.ATHLETE > 0 && (
+                                  <span className="text-sm">
+                                    {event.participantStats.ATHLETE} VĐV
+                                  </span>
+                                )}
+                              </>
+                            ) : (
+                              <span>Chưa có người tham gia</span>
+                            )}
+                          </div>
                         </div>
                         {event.note && (
                           <div className="flex items-center gap-3">
@@ -1740,10 +1860,16 @@ export function ConcentrationDetailPage() {
 
       <AddTrainingParticipantDialog
         isOpen={isAddTrainingParticipantDialogOpen}
-        onOpenChange={setIsAddTrainingParticipantDialogOpen}
+        onOpenChange={(open) => {
+          if (!open) {
+            setManagingTraining(null);
+            setTrainingParticipantIds([]);
+          }
+          setIsAddTrainingParticipantDialogOpen(open);
+        }}
         participants={participants}
-        onSubmit={handleAddTrainingParticipants}
-        existingParticipantIds={[]}
+        onSubmit={handleUpdateTrainingParticipants}
+        trainingParticipantIds={trainingParticipantIds}
       />
     </div>
   );

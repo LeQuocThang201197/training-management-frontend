@@ -19,9 +19,9 @@ import {
   LogOut,
   PlusCircle,
   Calendar,
-  MoreVertical,
   Plane,
   Home,
+  UserPlus,
 } from "lucide-react";
 import { Concentration } from "@/types/concentration";
 import { Button } from "@/components/ui/button";
@@ -50,13 +50,8 @@ import { ParticipantCard } from "@/components/cards/ParticipantCard";
 import { Participant } from "@/types/participant";
 import { Input } from "@/components/ui/input";
 import { AbsenceRecord } from "@/types/participant";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { TrainingDialog } from "@/components/dialogs/TrainingDialog";
+import { AddTrainingParticipantDialog } from "@/components/dialogs/AddTrainingParticipantDialog";
 
 interface Paper {
   id: number;
@@ -167,6 +162,10 @@ export function ConcentrationDetailPage() {
   const [trainingToDelete, setTrainingToDelete] = useState<Training | null>(
     null
   );
+  const [
+    isAddTrainingParticipantDialogOpen,
+    setIsAddTrainingParticipantDialogOpen,
+  ] = useState(false);
 
   useEffect(() => {
     const fetchDetail = async () => {
@@ -840,6 +839,46 @@ export function ConcentrationDetailPage() {
       concentration_id: id || "",
       note: "",
     });
+  };
+
+  const handleAddTrainingParticipants = async (
+    selectedParticipantIds: number[]
+  ) => {
+    try {
+      if (!editingTraining) return;
+      const response = await fetch(
+        `${API_URL}/trainings/${editingTraining.id}/participants`,
+        {
+          method: "POST",
+          credentials: "include",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ participantIds: selectedParticipantIds }),
+        }
+      );
+
+      if (!response.ok) throw new Error("Không thể thêm người vào tập huấn");
+
+      const data = await response.json();
+      if (data.success) {
+        // Cập nhật lại danh sách người tham gia
+        setTrainingEvents((prev) =>
+          prev.map((t) =>
+            t.id === editingTraining.id
+              ? {
+                  ...t,
+                  participantCount:
+                    t.participantCount + selectedParticipantIds.length,
+                }
+              : t
+          )
+        );
+        setIsAddTrainingParticipantDialogOpen(false);
+      }
+    } catch (err) {
+      console.error("Add training participants error:", err);
+    }
   };
 
   if (loading) {
@@ -1529,58 +1568,63 @@ export function ConcentrationDetailPage() {
                       key={event.id}
                       className="p-3 border rounded-lg hover:bg-gray-50 relative group"
                     >
-                      <div className="absolute right-2 top-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon">
-                              <MoreVertical className="h-4 w-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem
-                              onClick={() => {
-                                setTrainingFormData({
-                                  location: event.location,
-                                  isForeign: event.isForeign,
-                                  startDate: event.startDate.split("T")[0],
-                                  endDate: event.endDate.split("T")[0],
-                                  concentration_id: id || "",
-                                  note: event.note || "",
-                                });
-                                setEditingTraining(event);
-                              }}
-                            >
-                              <Pencil className="h-4 w-4 mr-2" />
-                              Chỉnh sửa
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                              className="text-red-500"
-                              onClick={() => setTrainingToDelete(event)}
-                            >
-                              <Trash2 className="h-4 w-4 mr-2" />
-                              Xóa
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
+                      <div className="absolute right-2 top-2 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8"
+                          onClick={() => {
+                            setEditingTraining(event);
+                            setIsAddTrainingParticipantDialogOpen(true);
+                          }}
+                        >
+                          <UserPlus className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8"
+                          onClick={() => {
+                            setTrainingFormData({
+                              location: event.location,
+                              isForeign: event.isForeign,
+                              startDate: event.startDate.split("T")[0],
+                              endDate: event.endDate.split("T")[0],
+                              concentration_id: id || "",
+                              note: event.note || "",
+                            });
+                            setEditingTraining(event);
+                          }}
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 text-red-500 hover:text-red-600"
+                          onClick={() => setTrainingToDelete(event)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
                       </div>
                       <div className="space-y-2 text-sm text-gray-600">
-                        <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2 pr-[120px]">
                           <div className="font-medium text-lg">
                             {event.location}
-                            {(() => {
-                              const status = getTrainingStatus(
-                                event.startDate,
-                                event.endDate
-                              );
-                              return (
-                                <span
-                                  className={`ml-2 px-2 py-0.5 rounded-full text-xs font-medium border ${status.color}`}
-                                >
-                                  {status.label}
-                                </span>
-                              );
-                            })()}
                           </div>
+                          {(() => {
+                            const status = getTrainingStatus(
+                              event.startDate,
+                              event.endDate
+                            );
+                            return (
+                              <span
+                                className={`px-2 py-0.5 rounded-full text-xs font-medium border ${status.color}`}
+                              >
+                                {status.label}
+                              </span>
+                            );
+                          })()}
                         </div>
                         <div className="flex items-center gap-3">
                           <div className="p-1.5 rounded-full bg-primary/10">
@@ -1693,6 +1737,14 @@ export function ConcentrationDetailPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <AddTrainingParticipantDialog
+        isOpen={isAddTrainingParticipantDialogOpen}
+        onOpenChange={setIsAddTrainingParticipantDialogOpen}
+        participants={participants}
+        onSubmit={handleAddTrainingParticipants}
+        existingParticipantIds={[]}
+      />
     </div>
   );
 }

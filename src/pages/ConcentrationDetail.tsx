@@ -906,38 +906,31 @@ export function ConcentrationDetailPage() {
     });
   };
 
-  const handleUpdateTrainingParticipants = async (
-    selectedParticipationIds: number[]
-  ) => {
-    try {
-      if (!managingTraining) return;
+  const handleUpdateTrainingParticipants = async (selectedIds: number[]) => {
+    if (!managingTraining) return;
 
+    try {
       const response = await fetch(
         `${API_URL}/trainings/${managingTraining.id}/participants`,
         {
           method: "PUT",
-          credentials: "include",
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({ participationIds: selectedParticipationIds }),
+          credentials: "include",
+          body: JSON.stringify({
+            participationIds: selectedIds,
+          }),
         }
       );
 
-      if (!response.ok)
-        throw new Error("Không thể cập nhật danh sách người tham gia");
+      if (!response.ok) throw new Error("Không thể cập nhật người tham gia");
 
       const data = await response.json();
       if (data.success) {
-        setTrainingEvents((prev) =>
-          prev.map((t) =>
-            t.id === managingTraining.id
-              ? { ...t, participantCount: selectedParticipationIds.length }
-              : t
-          )
-        );
+        // Fetch lại thông tin mới sau khi cập nhật thành công
+        await fetchTrainingParticipants(managingTraining.id);
         setIsAddTrainingParticipantDialogOpen(false);
-        setManagingTraining(null);
       }
     } catch (err) {
       console.error("Update training participants error:", err);

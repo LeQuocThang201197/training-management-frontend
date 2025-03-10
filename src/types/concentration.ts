@@ -28,4 +28,13 @@ export interface Concentration {
   team: Team;
   submitter: Submitter;
   participantStats: ParticipantStats;
+  trainings: {
+    id: number;
+    location: string;
+    isForeign: boolean;
+    startDate: string;
+    endDate: string;
+    note: string;
+    participantStats: ParticipantStats;
+  }[];
 }

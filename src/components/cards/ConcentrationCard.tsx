@@ -1,4 +1,4 @@
-import { Users, Calendar, MapPin } from "lucide-react";
+import { Users, Calendar, MapPin, Dumbbell, Trophy } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { Concentration } from "@/types/concentration";
@@ -61,7 +61,7 @@ export function ConcentrationCard({
             ? "bg-gray-300"
             : concentration.team.type === "Trẻ"
             ? "bg-blue-300"
-            : concentration.team.type === "Khuyết tật"
+            : concentration.team.type === "Người khuyết tật"
             ? "bg-purple-300"
             : "bg-emerald-300"
         )}
@@ -97,38 +97,59 @@ export function ConcentrationCard({
             <span className="font-normal"> ({concentration.team.gender})</span>
           )}
         </h3>
-        <div className="flex gap-4 text-sm text-gray-600">
-          <div className="flex items-center gap-1">
-            <Users className="h-4 w-4" />
-            <span>{concentration.participantStats?.SPECIALIST || 0} CG</span>
-          </div>
-          <div className="flex items-center gap-1">
-            <Users className="h-4 w-4" />
-            <span>{concentration.participantStats?.COACH || 0} HLV</span>
-          </div>
-          <div className="flex items-center gap-1">
-            <Users className="h-4 w-4" />
-            <span>{concentration.participantStats?.ATHLETE || 0} VĐV</span>
-          </div>
-        </div>
       </div>
 
-      <div className="space-y-2.5">
-        <div className="flex items-center gap-3 text-sm text-gray-600">
-          <div className="p-1.5 rounded-full bg-primary/10">
-            <Calendar className="h-4 w-4 text-primary/70" />
-          </div>
-          <span>
-            {new Date(concentration.startDate).toLocaleDateString("vi-VN")}
-            {" - "}
-            {new Date(concentration.endDate).toLocaleDateString("vi-VN")}
-          </span>
+      <div className="flex items-center gap-3">
+        <div className="p-1.5 rounded-full bg-primary/10">
+          <Calendar className="h-4 w-4 text-primary/70" />
         </div>
-        <div className="flex items-center gap-3 text-sm text-gray-600">
+        <span>
+          {new Date(concentration.startDate).toLocaleDateString("vi-VN")} -{" "}
+          {new Date(concentration.endDate).toLocaleDateString("vi-VN")}
+        </span>
+      </div>
+
+      <div className="space-y-2 text-sm text-gray-600">
+        <div className="flex items-center gap-3">
           <div className="p-1.5 rounded-full bg-primary/10">
             <MapPin className="h-4 w-4 text-primary/70" />
           </div>
           <span>{concentration.location}</span>
+        </div>
+
+        <div className="flex items-center gap-3">
+          <div className="p-1.5 rounded-full bg-primary/10">
+            <Users className="h-4 w-4 text-primary/70" />
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {concentration.participantStats.SPECIALIST > 0 && (
+              <span>{concentration.participantStats.SPECIALIST} CG</span>
+            )}
+            {concentration.participantStats.COACH > 0 && (
+              <span>{concentration.participantStats.COACH} HLV</span>
+            )}
+            {concentration.participantStats.ATHLETE > 0 && (
+              <span>{concentration.participantStats.ATHLETE} VĐV</span>
+            )}
+            {Object.values(concentration.participantStats).every(
+              (v) => v === 0
+            ) && <span>Chưa có người tham gia</span>}
+          </div>
+        </div>
+
+        <div className="flex items-center gap-6">
+          <div className="flex items-center gap-3">
+            <div className="p-1.5 rounded-full bg-blue-50">
+              <Dumbbell className="h-4 w-4 text-blue-500" />
+            </div>
+            <span>{concentration.trainings?.length || 0} đợt tập huấn</span>
+          </div>
+          <div className="flex items-center gap-3">
+            <div className="p-1.5 rounded-full bg-orange-50">
+              <Trophy className="h-4 w-4 text-orange-500" />
+            </div>
+            <span>0 đợt thi đấu</span>
+          </div>
         </div>
       </div>
     </div>

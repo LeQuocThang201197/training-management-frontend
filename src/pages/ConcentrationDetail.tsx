@@ -21,7 +21,7 @@ import {
   Calendar,
   Plane,
   Home,
-  UserPlus,
+  Contact,
 } from "lucide-react";
 import { Concentration } from "@/types/concentration";
 import { Button } from "@/components/ui/button";
@@ -1676,7 +1676,7 @@ export function ConcentrationDetailPage() {
                             setIsAddTrainingParticipantDialogOpen(true);
                           }}
                         >
-                          <UserPlus className="h-4 w-4" />
+                          <Contact className="h-4 w-4" />
                         </Button>
                         <Button
                           variant="ghost"
@@ -1751,11 +1751,11 @@ export function ConcentrationDetailPage() {
                           <div className="flex flex-wrap gap-2">
                             {event.participantStats ? (
                               <>
-                              {event.participantStats.SPECIALIST > 0 && (
-                                <span className="text-sm">
-                                  {event.participantStats.SPECIALIST} CG
-                                </span>
-                              )}
+                                {event.participantStats.SPECIALIST > 0 && (
+                                  <span className="text-sm">
+                                    {event.participantStats.SPECIALIST} CG
+                                  </span>
+                                )}
                                 {event.participantStats.COACH > 0 && (
                                   <span className="text-sm">
                                     {event.participantStats.COACH} HLV

@@ -8,9 +8,15 @@ import { Button } from "@/components/ui/button";
 import { Participant } from "@/types/participant";
 import { useState, useEffect } from "react";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Search } from "lucide-react";
+import { Search, FileText } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 interface AddTrainingParticipantDialogProps {
   isOpen: boolean;
@@ -18,6 +24,8 @@ interface AddTrainingParticipantDialogProps {
   participants: Participant[];
   onSubmit: (selectedParticipationIds: number[]) => void;
   trainingParticipantIds?: number[];
+  participantNotes?: { [key: number]: string };
+  onNoteChange?: (participantId: number, note: string) => void;
 }
 
 export function AddTrainingParticipantDialog({
@@ -26,6 +34,8 @@ export function AddTrainingParticipantDialog({
   participants,
   onSubmit,
   trainingParticipantIds = [],
+  participantNotes = {},
+  onNoteChange,
 }: AddTrainingParticipantDialogProps) {
   const [selectedIds, setSelectedIds] = useState<number[]>(
     trainingParticipantIds
@@ -44,6 +54,13 @@ export function AddTrainingParticipantDialog({
   );
 
   const handleSubmit = () => {
+    // Xóa tất cả ghi chú của những người không được chọn
+    Object.keys(participantNotes).forEach((id) => {
+      if (!selectedIds.includes(Number(id)) && onNoteChange) {
+        onNoteChange(Number(id), "");
+      }
+    });
+
     onSubmit(selectedIds);
     setSearchTerm("");
   };
@@ -94,6 +111,37 @@ export function AddTrainingParticipantDialog({
                     {participant.role.name} - {participant.organization.name}
                   </div>
                 </div>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <button
+                        className="p-1.5 hover:bg-gray-100 rounded-full"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          const note = prompt(
+                            "Nhập ghi chú:",
+                            participantNotes[participant.id] || ""
+                          );
+                          if (note !== null && onNoteChange) {
+                            onNoteChange(participant.id, note);
+                          }
+                        }}
+                      >
+                        <FileText
+                          className={cn(
+                            "h-4 w-4",
+                            participantNotes[participant.id]
+                              ? "text-blue-500"
+                              : "text-gray-400"
+                          )}
+                        />
+                      </button>
+                    </TooltipTrigger>
+                    <TooltipContent side="left">
+                      {participantNotes[participant.id] || "Thêm ghi chú"}
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
                 {trainingParticipantIds.includes(participant.id) && (
                   <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">
                     Đang tham gia

@@ -203,6 +203,9 @@ export function ConcentrationDetailPage() {
   const [trainingParticipantIds, setTrainingParticipantIds] = useState<
     number[]
   >([]);
+  const [participantNotes, setParticipantNotes] = useState<{
+    [key: number]: string;
+  }>({});
 
   useEffect(() => {
     const fetchDetail = async () => {
@@ -906,32 +909,53 @@ export function ConcentrationDetailPage() {
     });
   };
 
+  const handleNoteChange = (participantId: number, note: string) => {
+    setParticipantNotes((prev) => ({
+      ...prev,
+      [participantId]: note,
+    }));
+  };
+
   const handleUpdateTrainingParticipants = async (selectedIds: number[]) => {
     if (!managingTraining) return;
 
     try {
+      // Chỉ lấy notes của những người được chọn
+      const notes = Object.entries(participantNotes)
+        .filter(
+          ([id, note]) => selectedIds.includes(Number(id)) && note.trim() !== ""
+        )
+        .map(([id, note]) => ({
+          participation_id: Number(id),
+          note,
+        }));
+
       const response = await fetch(
         `${API_URL}/trainings/${managingTraining.id}/participants`,
         {
           method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-          },
+          headers: { "Content-Type": "application/json" },
           credentials: "include",
           body: JSON.stringify({
             participationIds: selectedIds,
+            ...(notes.length > 0 && { notes }),
           }),
         }
       );
 
       if (!response.ok) throw new Error("Không thể cập nhật người tham gia");
 
-      const data = await response.json();
-      if (data.success) {
-        // Fetch lại thông tin mới sau khi cập nhật thành công
-        await fetchTrainingParticipants(managingTraining.id);
-        setIsAddTrainingParticipantDialogOpen(false);
-      }
+      // Xóa notes của những người không được chọn
+      const updatedNotes: { [key: number]: string } = { ...participantNotes };
+      Object.keys(updatedNotes).forEach((id) => {
+        if (!selectedIds.includes(Number(id))) {
+          delete updatedNotes[Number(id)];
+        }
+      });
+      setParticipantNotes(updatedNotes);
+
+      await fetchTrainingParticipants(managingTraining.id);
+      setIsAddTrainingParticipantDialogOpen(false);
     } catch (err) {
       console.error("Update training participants error:", err);
     }
@@ -1863,6 +1887,8 @@ export function ConcentrationDetailPage() {
         participants={participants}
         onSubmit={handleUpdateTrainingParticipants}
         trainingParticipantIds={trainingParticipantIds}
+        participantNotes={participantNotes}
+        onNoteChange={handleNoteChange}
       />
     </div>
   );

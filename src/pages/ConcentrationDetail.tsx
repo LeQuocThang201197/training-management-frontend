@@ -1136,6 +1136,39 @@ export function ConcentrationDetailPage() {
     }
   };
 
+  // Thêm hàm xử lý chỉnh sửa competition
+  const handleEditCompetition = async (formData: CompetitionFormData) => {
+    if (!editingCompetition) return;
+
+    try {
+      const response = await fetch(
+        `${API_URL}/competitions/${editingCompetition.id}`,
+        {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({
+            ...formData,
+            concentration_id: id,
+          }),
+        }
+      );
+
+      if (!response.ok) throw new Error("Không thể cập nhật đợt thi đấu");
+
+      const data = await response.json();
+      if (data.success) {
+        setCompetitions((prev) =>
+          prev.map((c) => (c.id === editingCompetition.id ? data.data : c))
+        );
+        setIsCompetitionDialogOpen(false);
+        setEditingCompetition(null);
+      }
+    } catch (err) {
+      console.error("Edit competition error:", err);
+    }
+  };
+
   if (loading) {
     return <div>Đang tải...</div>;
   }
@@ -1958,7 +1991,10 @@ export function ConcentrationDetailPage() {
               <CardTitle className="text-base">Thi đấu</CardTitle>
               <Dialog
                 open={isCompetitionDialogOpen}
-                onOpenChange={setIsCompetitionDialogOpen}
+                onOpenChange={(open) => {
+                  setIsCompetitionDialogOpen(open);
+                  if (!open) setEditingCompetition(null);
+                }}
               >
                 <DialogTrigger asChild>
                   <Button variant="outline" size="sm" className="gap-2">
@@ -1968,8 +2004,15 @@ export function ConcentrationDetailPage() {
                 </DialogTrigger>
                 <CompetitionDialog
                   isOpen={isCompetitionDialogOpen}
-                  onOpenChange={setIsCompetitionDialogOpen}
-                  onSubmit={handleAddCompetition}
+                  onOpenChange={(open) => {
+                    setIsCompetitionDialogOpen(open);
+                    if (!open) setEditingCompetition(null);
+                  }}
+                  onSubmit={
+                    editingCompetition
+                      ? handleEditCompetition
+                      : handleAddCompetition
+                  }
                   concentrationId={id || ""}
                   competition={editingCompetition}
                 />

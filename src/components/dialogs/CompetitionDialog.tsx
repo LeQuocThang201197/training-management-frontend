@@ -27,7 +27,7 @@ interface CompetitionDialogProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
   onSubmit: (data: CompetitionFormData) => Promise<void>;
-  competition?: Competition;
+  competition?: Competition | null;
   concentrationId: string;
 }
 

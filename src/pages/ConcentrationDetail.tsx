@@ -54,6 +54,7 @@ import { TrainingDialog } from "@/components/dialogs/TrainingDialog";
 import { AddTrainingParticipantDialog } from "@/components/dialogs/AddTrainingParticipantDialog";
 import { Competition, CompetitionFormData } from "@/types/competition";
 import { CompetitionDialog } from "@/components/dialogs/CompetitionDialog";
+import { AddCompetitionParticipantDialog } from "@/components/dialogs/AddCompetitionParticipantDialog";
 
 interface Paper {
   id: number;
@@ -199,6 +200,19 @@ export function ConcentrationDetailPage() {
     [key: number]: string;
   }>({});
   const [isCompetitionDialogOpen, setIsCompetitionDialogOpen] = useState(false);
+  const [editingCompetition, setEditingCompetition] =
+    useState<Competition | null>(null);
+  const [competitionToDelete, setCompetitionToDelete] =
+    useState<Competition | null>(null);
+  const [
+    isAddCompetitionParticipantDialogOpen,
+    setIsAddCompetitionParticipantDialogOpen,
+  ] = useState(false);
+  const [managingCompetition, setManagingCompetition] =
+    useState<Competition | null>(null);
+  const [competitionParticipantIds, setCompetitionParticipantIds] = useState<
+    number[]
+  >([]);
 
   useEffect(() => {
     const fetchDetail = async () => {
@@ -1000,7 +1014,10 @@ export function ConcentrationDetailPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify(formData),
+        body: JSON.stringify({
+          ...formData,
+          concentration_id: id,
+        }),
       });
 
       if (!response.ok) throw new Error("Không thể tạo đợt thi đấu");
@@ -1012,6 +1029,110 @@ export function ConcentrationDetailPage() {
       }
     } catch (err) {
       console.error("Add competition error:", err);
+    }
+  };
+
+  const handleDeleteCompetition = async () => {
+    if (!competitionToDelete) return;
+    try {
+      const response = await fetch(
+        `${API_URL}/competitions/${competitionToDelete.id}`,
+        {
+          method: "DELETE",
+          credentials: "include",
+        }
+      );
+
+      if (!response.ok) throw new Error("Không thể xóa đợt thi đấu");
+
+      const data = await response.json();
+      if (data.success) {
+        setCompetitions((prev) =>
+          prev.filter((c) => c.id !== competitionToDelete.id)
+        );
+        setCompetitionToDelete(null);
+      }
+    } catch (err) {
+      console.error("Delete competition error:", err);
+    }
+  };
+
+  const handleUpdateCompetitionParticipants = async (selectedIds: number[]) => {
+    if (!managingCompetition) return;
+
+    try {
+      // Chỉ lấy notes của những người được chọn
+      const notes = Object.entries(participantNotes)
+        .filter(
+          ([id, note]) => selectedIds.includes(Number(id)) && note.trim() !== ""
+        )
+        .map(([id, note]) => ({
+          participation_id: Number(id),
+          note,
+        }));
+
+      const response = await fetch(
+        `${API_URL}/competitions/${managingCompetition.id}/participants`,
+        {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({
+            participationIds: selectedIds,
+            ...(notes.length > 0 && { notes }),
+          }),
+        }
+      );
+
+      if (!response.ok) throw new Error("Không thể cập nhật người tham gia");
+
+      // Xóa notes của những người không được chọn
+      const updatedNotes: { [key: number]: string } = { ...participantNotes };
+      Object.keys(updatedNotes).forEach((id) => {
+        if (!selectedIds.includes(Number(id))) {
+          delete updatedNotes[Number(id)];
+        }
+      });
+      setParticipantNotes(updatedNotes);
+
+      await fetchCompetitionParticipants(managingCompetition.id);
+      setIsAddCompetitionParticipantDialogOpen(false);
+    } catch (err) {
+      console.error("Update competition participants error:", err);
+    }
+  };
+
+  const fetchCompetitionParticipants = async (competitionId: number) => {
+    try {
+      const response = await fetch(
+        `${API_URL}/competitions/${competitionId}/participants`,
+        {
+          credentials: "include",
+        }
+      );
+
+      if (!response.ok)
+        throw new Error("Không thể tải danh sách người tham gia");
+
+      const data = await response.json();
+      if (data.success) {
+        const responseData = data.data as TrainingParticipantResponse;
+
+        setCompetitionParticipantIds(
+          responseData.participants.map((p) => p.participation_id)
+        );
+
+        // Cập nhật stats
+        setCompetitions((prev) =>
+          prev.map((c) =>
+            c.id === competitionId
+              ? { ...c, participantStats: responseData.stats }
+              : c
+          )
+        );
+      }
+    } catch (err) {
+      console.error("Fetch competition participants error:", err);
     }
   };
 
@@ -1789,23 +1910,25 @@ export function ConcentrationDetailPage() {
                             {event.participantStats ? (
                               <>
                                 {event.participantStats.SPECIALIST > 0 && (
-                                  <span className="text-sm">
+                                  <span className="text-xs">
                                     {event.participantStats.SPECIALIST} CG
                                   </span>
                                 )}
                                 {event.participantStats.COACH > 0 && (
-                                  <span className="text-sm">
+                                  <span className="text-xs">
                                     {event.participantStats.COACH} HLV
                                   </span>
                                 )}
                                 {event.participantStats.ATHLETE > 0 && (
-                                  <span className="text-sm">
+                                  <span className="text-xs">
                                     {event.participantStats.ATHLETE} VĐV
                                   </span>
                                 )}
                               </>
                             ) : (
-                              <span>Chưa có người tham gia</span>
+                              <span className="text-xs">
+                                Chưa có người tham gia
+                              </span>
                             )}
                           </div>
                         </div>
@@ -1848,10 +1971,11 @@ export function ConcentrationDetailPage() {
                   onOpenChange={setIsCompetitionDialogOpen}
                   onSubmit={handleAddCompetition}
                   concentrationId={id || ""}
+                  competition={editingCompetition}
                 />
               </Dialog>
             </CardHeader>
-            <CardContent>
+            <CardContent className="space-y-2 pb-3">
               {loadingCompetitions ? (
                 <div>Đang tải...</div>
               ) : (
@@ -1862,33 +1986,164 @@ export function ConcentrationDetailPage() {
                     </div>
                   ) : (
                     competitions.map((competition) => (
-                      <Card key={competition.id}>
-                        <CardHeader>
-                          <CardTitle>{competition.name}</CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                          <div className="space-y-4">
+                      <Card
+                        key={competition.id}
+                        className="shadow-sm rounded-md group hover:bg-gray-50"
+                      >
+                        <CardHeader className="pb-2 pt-3">
+                          <CardTitle className="flex items-center justify-between text-base">
                             <div className="flex items-center gap-2">
-                              <MapPin className="h-4 w-4 text-gray-500" />
-                              <span>{competition.location}</span>
-                            </div>
-                            <div className="flex items-center gap-2">
-                              <Calendar className="h-4 w-4 text-gray-500" />
-                              <span>
-                                {new Date(
-                                  competition.startDate
-                                ).toLocaleDateString("vi-VN")}{" "}
-                                -{" "}
-                                {new Date(
-                                  competition.endDate
-                                ).toLocaleDateString("vi-VN")}
+                              <span>{competition.name}</span>
+                              <span
+                                className={cn(
+                                  "text-xs px-2 py-1 rounded-full border",
+                                  getTrainingStatus(
+                                    competition.startDate,
+                                    competition.endDate
+                                  ).color
+                                )}
+                              >
+                                {
+                                  getTrainingStatus(
+                                    competition.startDate,
+                                    competition.endDate
+                                  ).label
+                                }
                               </span>
                             </div>
-                            {competition.note && (
-                              <div className="text-sm text-gray-600">
-                                {competition.note}
+                            <div className="flex items-center gap-2">
+                              <span
+                                className={cn(
+                                  "text-xs px-2 py-1 rounded-full border",
+                                  competition.is_confirmed
+                                    ? "text-emerald-700 bg-emerald-50 border-emerald-200"
+                                    : "text-yellow-700 bg-yellow-50 border-yellow-200"
+                                )}
+                              >
+                                {competition.is_confirmed
+                                  ? "Đã xác nhận"
+                                  : "Chờ xác nhận"}
+                              </span>
+                              <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-8 w-8"
+                                  onClick={() => {
+                                    setManagingCompetition(competition);
+                                    fetchCompetitionParticipants(
+                                      competition.id
+                                    );
+                                    setIsAddCompetitionParticipantDialogOpen(
+                                      true
+                                    );
+                                  }}
+                                >
+                                  <Users className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-8 w-8"
+                                  onClick={() => {
+                                    setEditingCompetition(competition);
+                                    setIsCompetitionDialogOpen(true);
+                                  }}
+                                >
+                                  <Pencil className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-8 w-8 text-red-500 hover:text-red-600"
+                                  onClick={() =>
+                                    setCompetitionToDelete(competition)
+                                  }
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
                               </div>
-                            )}
+                            </div>
+                          </CardTitle>
+                        </CardHeader>
+                        <CardContent className="space-y-2 pb-3">
+                          <div className="flex items-center gap-2">
+                            <div className="p-1.5 rounded-full bg-primary/10">
+                              {competition.isForeign ? (
+                                <Plane className="h-4 w-4 text-primary/70" />
+                              ) : (
+                                <Home className="h-4 w-4 text-primary/70" />
+                              )}
+                            </div>
+                            <span className="text-sm">
+                              {competition.location}
+                            </span>
+                            <span className="text-xs text-gray-500">
+                              (
+                              {competition.isForeign
+                                ? "Nước ngoài"
+                                : "Trong nước"}
+                              )
+                            </span>
+                          </div>
+
+                          <div className="flex items-center gap-2">
+                            <div className="p-1.5 rounded-full bg-primary/10">
+                              <Calendar className="h-4 w-4 text-primary/70" />
+                            </div>
+                            <span className="text-sm">
+                              {new Date(
+                                competition.startDate
+                              ).toLocaleDateString("vi-VN")}{" "}
+                              -{" "}
+                              {new Date(competition.endDate).toLocaleDateString(
+                                "vi-VN"
+                              )}
+                            </span>
+                          </div>
+
+                          {competition.note && (
+                            <div className="flex items-center gap-2">
+                              <div className="p-1.5 rounded-full bg-primary/10">
+                                <FileText className="h-4 w-4 text-primary/70" />
+                              </div>
+                              <span className="text-sm text-gray-600">
+                                {competition.note}
+                              </span>
+                            </div>
+                          )}
+
+                          <div className="flex items-center gap-2">
+                            <div className="p-1.5 rounded-full bg-primary/10">
+                              <Users className="h-4 w-4 text-primary/70" />
+                            </div>
+                            <div className="flex flex-wrap gap-2">
+                              {competition.participantStats ? (
+                                <>
+                                  {competition.participantStats.SPECIALIST >
+                                    0 && (
+                                    <span className="text-xs">
+                                      {competition.participantStats.SPECIALIST}{" "}
+                                      CG
+                                    </span>
+                                  )}
+                                  {competition.participantStats.COACH > 0 && (
+                                    <span className="text-xs">
+                                      {competition.participantStats.COACH} HLV
+                                    </span>
+                                  )}
+                                  {competition.participantStats.ATHLETE > 0 && (
+                                    <span className="text-xs">
+                                      {competition.participantStats.ATHLETE} VĐV
+                                    </span>
+                                  )}
+                                </>
+                              ) : (
+                                <span className="text-xs">
+                                  Chưa có người tham gia
+                                </span>
+                              )}
+                            </div>
                           </div>
                         </CardContent>
                       </Card>
@@ -1939,6 +2194,48 @@ export function ConcentrationDetailPage() {
         participants={participants}
         onSubmit={handleUpdateTrainingParticipants}
         trainingParticipantIds={trainingParticipantIds}
+        participantNotes={participantNotes}
+        onNoteChange={handleNoteChange}
+      />
+
+      <AlertDialog
+        open={!!competitionToDelete}
+        onOpenChange={(open) => !open && setCompetitionToDelete(null)}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Bạn có chắc chắn muốn xóa?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Đợt thi đấu tại "{competitionToDelete?.location}" sẽ bị xóa vĩnh
+              viễn.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="w-full sm:w-32 bg-gray-100 hover:bg-gray-200 border-none text-gray-900">
+              Không
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteCompetition}
+              className="w-full sm:w-32 bg-red-500 hover:bg-red-600 text-white border-none"
+            >
+              Có, xóa
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AddCompetitionParticipantDialog
+        isOpen={isAddCompetitionParticipantDialogOpen}
+        onOpenChange={(open) => {
+          if (!open) {
+            setManagingCompetition(null);
+            setCompetitionParticipantIds([]);
+          }
+          setIsAddCompetitionParticipantDialogOpen(open);
+        }}
+        participants={participants}
+        onSubmit={handleUpdateCompetitionParticipants}
+        competitionParticipantIds={competitionParticipantIds}
         participantNotes={participantNotes}
         onNoteChange={handleNoteChange}
       />

@@ -2,11 +2,27 @@ import { Users, Calendar, MapPin, Dumbbell, Trophy } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { Concentration } from "@/types/concentration";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 interface ConcentrationCardProps {
   concentration: Concentration;
   onClick?: (concentration: Concentration) => void;
 }
+
+// Thêm hàm để lấy training đang diễn ra
+const getOngoingTraining = (trainings: Concentration["trainings"]) => {
+  const today = new Date();
+  return trainings?.find((training) => {
+    const startDate = new Date(training.startDate);
+    const endDate = new Date(training.endDate);
+    return today >= startDate && today <= endDate;
+  });
+};
 
 export function ConcentrationCard({
   concentration,
@@ -43,6 +59,8 @@ export function ConcentrationCard({
     }
   };
 
+  const ongoingTraining = getOngoingTraining(concentration.trainings);
+
   return (
     <div
       className={cn(
@@ -54,6 +72,49 @@ export function ConcentrationCard({
       )}
       onClick={handleClick}
     >
+      {ongoingTraining && (
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <div className="absolute top-2 right-2 flex items-center gap-1.5 px-2 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-medium cursor-pointer">
+                <span className="relative flex h-2 w-2">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-blue-500"></span>
+                </span>
+                Đang tập huấn
+              </div>
+            </TooltipTrigger>
+            <TooltipContent side="bottom" className="p-3 space-y-2 max-w-xs">
+              <div className="font-medium">{ongoingTraining.location}</div>
+              <div className="text-xs text-gray-500">
+                {new Date(ongoingTraining.startDate).toLocaleDateString(
+                  "vi-VN"
+                )}{" "}
+                -{" "}
+                {new Date(ongoingTraining.endDate).toLocaleDateString("vi-VN")}
+              </div>
+              <div className="flex flex-wrap gap-2 text-xs">
+                {ongoingTraining.participantStats.SPECIALIST > 0 && (
+                  <span className="px-1.5 py-0.5 bg-purple-50 text-purple-700 rounded">
+                    {ongoingTraining.participantStats.SPECIALIST} CG
+                  </span>
+                )}
+                {ongoingTraining.participantStats.COACH > 0 && (
+                  <span className="px-1.5 py-0.5 bg-green-50 text-green-700 rounded">
+                    {ongoingTraining.participantStats.COACH} HLV
+                  </span>
+                )}
+                {ongoingTraining.participantStats.ATHLETE > 0 && (
+                  <span className="px-1.5 py-0.5 bg-blue-50 text-blue-700 rounded">
+                    {ongoingTraining.participantStats.ATHLETE} VĐV
+                  </span>
+                )}
+              </div>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      )}
+
       <div
         className={cn(
           "absolute top-0 right-0 w-24 h-1.5 rounded-bl",

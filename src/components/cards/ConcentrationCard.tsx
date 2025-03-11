@@ -17,9 +17,13 @@ interface ConcentrationCardProps {
 // Thêm hàm để lấy training đang diễn ra
 const getOngoingTraining = (trainings: Concentration["trainings"]) => {
   const today = new Date();
+
   return trainings?.find((training) => {
     const startDate = new Date(training.startDate);
+
     const endDate = new Date(training.endDate);
+    endDate.setHours(23, 59, 59, 999); // Set về cuối ngày
+
     return today >= startDate && today <= endDate;
   });
 };

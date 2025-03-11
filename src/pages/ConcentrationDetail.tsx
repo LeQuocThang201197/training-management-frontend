@@ -52,6 +52,8 @@ import { Input } from "@/components/ui/input";
 import { AbsenceRecord } from "@/types/participant";
 import { TrainingDialog } from "@/components/dialogs/TrainingDialog";
 import { AddTrainingParticipantDialog } from "@/components/dialogs/AddTrainingParticipantDialog";
+import { Competition, CompetitionFormData } from "@/types/competition";
+import { CompetitionDialog } from "@/components/dialogs/CompetitionDialog";
 
 interface Paper {
   id: number;
@@ -97,17 +99,6 @@ interface TrainingFormData {
   endDate: string;
   concentration_id: string;
   note?: string;
-}
-
-interface Competition {
-  id: number;
-  title: string;
-  name: string;
-  location: string;
-  startDate: string;
-  endDate: string;
-  note?: string;
-  result?: string;
 }
 
 interface TrainingParticipant {
@@ -179,7 +170,8 @@ export function ConcentrationDetailPage() {
   const [absences, setAbsences] = useState<AbsenceRecord[]>([]);
   const [loadingAbsences, setLoadingAbsences] = useState(false);
   const [trainingEvents, setTrainingEvents] = useState<Training[]>([]);
-  const [competitionEvents, setCompetitionEvents] = useState<Competition[]>([]);
+  const [competitions, setCompetitions] = useState<Competition[]>([]);
+  const [loadingCompetitions, setLoadingCompetitions] = useState(false);
   const [isAddTrainingDialogOpen, setIsAddTrainingDialogOpen] = useState(false);
   const [trainingFormData, setTrainingFormData] = useState<TrainingFormData>({
     location: "",
@@ -206,6 +198,7 @@ export function ConcentrationDetailPage() {
   const [participantNotes, setParticipantNotes] = useState<{
     [key: number]: string;
   }>({});
+  const [isCompetitionDialogOpen, setIsCompetitionDialogOpen] = useState(false);
 
   useEffect(() => {
     const fetchDetail = async () => {
@@ -765,22 +758,28 @@ export function ConcentrationDetailPage() {
     }
   }, [id]);
 
-  const fetchCompetitionEvents = useCallback(async () => {
+  const fetchCompetitions = useCallback(async () => {
+    if (!id) return;
+
     try {
+      setLoadingCompetitions(true);
       const response = await fetch(
         `${API_URL}/competitions/concentration/${id}`,
         {
           credentials: "include",
         }
       );
-      if (!response.ok) throw new Error("Không thể tải danh sách đợt thi đấu");
+
+      if (!response.ok) throw new Error("Không thể tải danh sách thi đấu");
 
       const data = await response.json();
       if (data.success) {
-        setCompetitionEvents(data.data);
+        setCompetitions(data.data);
       }
     } catch (err) {
-      console.error("Fetch competition events error:", err);
+      console.error("Fetch competitions error:", err);
+    } finally {
+      setLoadingCompetitions(false);
     }
   }, [id]);
 
@@ -788,9 +787,9 @@ export function ConcentrationDetailPage() {
     if (id) {
       fetchParticipants();
       fetchTrainingEvents();
-      fetchCompetitionEvents();
+      fetchCompetitions();
     }
-  }, [id, fetchParticipants, fetchTrainingEvents, fetchCompetitionEvents]);
+  }, [id, fetchParticipants, fetchTrainingEvents, fetchCompetitions]);
 
   const handleAddTraining = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -992,6 +991,27 @@ export function ConcentrationDetailPage() {
       }
     } catch (err) {
       console.error("Fetch training participants error:", err);
+    }
+  };
+
+  const handleAddCompetition = async (formData: CompetitionFormData) => {
+    try {
+      const response = await fetch(`${API_URL}/competitions`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify(formData),
+      });
+
+      if (!response.ok) throw new Error("Không thể tạo đợt thi đấu");
+
+      const data = await response.json();
+      if (data.success) {
+        setCompetitions((prev) => [...prev, data.data]);
+        setIsCompetitionDialogOpen(false);
+      }
+    } catch (err) {
+      console.error("Add competition error:", err);
     }
   };
 
@@ -1813,35 +1833,67 @@ export function ConcentrationDetailPage() {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle className="text-base">Thi đấu</CardTitle>
-              <Button variant="outline" size="sm" className="gap-2">
-                <PlusCircle className="h-4 w-4" />
-                <span>Thêm thi đấu</span>
-              </Button>
+              <Dialog
+                open={isCompetitionDialogOpen}
+                onOpenChange={setIsCompetitionDialogOpen}
+              >
+                <DialogTrigger asChild>
+                  <Button variant="outline" size="sm" className="gap-2">
+                    <PlusCircle className="h-4 w-4" />
+                    <span>Thêm thi đấu</span>
+                  </Button>
+                </DialogTrigger>
+                <CompetitionDialog
+                  isOpen={isCompetitionDialogOpen}
+                  onOpenChange={setIsCompetitionDialogOpen}
+                  onSubmit={handleAddCompetition}
+                  concentrationId={id || ""}
+                />
+              </Dialog>
             </CardHeader>
             <CardContent>
-              {competitionEvents.length > 0 ? (
-                <div className="space-y-3">
-                  {competitionEvents.map((event) => (
-                    <div
-                      key={event.id}
-                      className="p-3 border rounded-lg hover:bg-gray-50"
-                    >
-                      <div className="font-medium">{event.title}</div>
-                      <div className="text-sm text-gray-600 mt-1">
-                        {formatDateRange(event.startDate, event.endDate)}
-                      </div>
-                      <div className="text-sm text-gray-500">
-                        Địa điểm: {event.location}
-                      </div>
-                      <div className="text-sm text-gray-500">
-                        Kết quả: {event.result || "Chưa cập nhật"}
-                      </div>
-                    </div>
-                  ))}
-                </div>
+              {loadingCompetitions ? (
+                <div>Đang tải...</div>
               ) : (
-                <div className="text-center py-6 text-gray-500">
-                  Chưa có đợt thi đấu nào
+                <div className="space-y-4">
+                  {competitions.length === 0 ? (
+                    <div className="text-center py-8 text-gray-500">
+                      Chưa có đợt thi đấu nào
+                    </div>
+                  ) : (
+                    competitions.map((competition) => (
+                      <Card key={competition.id}>
+                        <CardHeader>
+                          <CardTitle>{competition.name}</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                          <div className="space-y-4">
+                            <div className="flex items-center gap-2">
+                              <MapPin className="h-4 w-4 text-gray-500" />
+                              <span>{competition.location}</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <Calendar className="h-4 w-4 text-gray-500" />
+                              <span>
+                                {new Date(
+                                  competition.startDate
+                                ).toLocaleDateString("vi-VN")}{" "}
+                                -{" "}
+                                {new Date(
+                                  competition.endDate
+                                ).toLocaleDateString("vi-VN")}
+                              </span>
+                            </div>
+                            {competition.note && (
+                              <div className="text-sm text-gray-600">
+                                {competition.note}
+                              </div>
+                            )}
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))
+                  )}
                 </div>
               )}
             </CardContent>

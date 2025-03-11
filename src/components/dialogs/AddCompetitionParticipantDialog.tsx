@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Search } from "lucide-react";
 import { useState } from "react";
+import { Competition } from "@/types/competition";
 
 interface AddCompetitionParticipantDialogProps {
   isOpen: boolean;
@@ -20,6 +21,14 @@ interface AddCompetitionParticipantDialogProps {
   competitionParticipantIds: number[];
   participantNotes: { [key: number]: string };
   onNoteChange: (participantId: number, note: string) => void;
+  participantDates: { [key: number]: { startDate: string; endDate: string } };
+  onDateChange: (
+    participantId: number,
+    startDate: string,
+    endDate: string
+  ) => void;
+  competition: Competition;
+  onParticipantSelect: (selectedIds: number[]) => void;
 }
 
 export function AddCompetitionParticipantDialog({
@@ -30,6 +39,10 @@ export function AddCompetitionParticipantDialog({
   competitionParticipantIds,
   participantNotes,
   onNoteChange,
+  participantDates,
+  onDateChange,
+  competition,
+  onParticipantSelect,
 }: AddCompetitionParticipantDialogProps) {
   const [searchTerm, setSearchTerm] = useState("");
 
@@ -76,9 +89,12 @@ export function AddCompetitionParticipantDialog({
                   checked={competitionParticipantIds.includes(participant.id)}
                   onCheckedChange={(checked) => {
                     if (checked) {
-                      onSubmit([...competitionParticipantIds, participant.id]);
+                      onParticipantSelect([
+                        ...competitionParticipantIds,
+                        participant.id,
+                      ]);
                     } else {
-                      onSubmit(
+                      onParticipantSelect(
                         competitionParticipantIds.filter(
                           (id) => id !== participant.id
                         )
@@ -98,14 +114,51 @@ export function AddCompetitionParticipantDialog({
                   </div>
                 </div>
                 {competitionParticipantIds.includes(participant.id) && (
-                  <Input
-                    className="max-w-[200px]"
-                    placeholder="Ghi chú"
-                    value={participantNotes[participant.id] || ""}
-                    onChange={(e) =>
-                      onNoteChange(participant.id, e.target.value)
-                    }
-                  />
+                  <div className="flex flex-col gap-2">
+                    <div className="flex gap-2">
+                      <Input
+                        type="date"
+                        className="w-32"
+                        value={
+                          participantDates[participant.id]?.startDate.split(
+                            "T"
+                          )[0] || competition.startDate.split("T")[0]
+                        }
+                        onChange={(e) =>
+                          onDateChange(
+                            participant.id,
+                            e.target.value,
+                            participantDates[participant.id]?.endDate ||
+                              competition.endDate
+                          )
+                        }
+                      />
+                      <Input
+                        type="date"
+                        className="w-32"
+                        value={
+                          participantDates[participant.id]?.endDate.split(
+                            "T"
+                          )[0] || competition.endDate.split("T")[0]
+                        }
+                        onChange={(e) =>
+                          onDateChange(
+                            participant.id,
+                            participantDates[participant.id]?.startDate ||
+                              competition.startDate,
+                            e.target.value
+                          )
+                        }
+                      />
+                    </div>
+                    <Input
+                      placeholder="Ghi chú"
+                      value={participantNotes[participant.id] || ""}
+                      onChange={(e) =>
+                        onNoteChange(participant.id, e.target.value)
+                      }
+                    />
+                  </div>
                 )}
               </div>
             ))}
@@ -118,7 +171,7 @@ export function AddCompetitionParticipantDialog({
             >
               Đóng
             </Button>
-            <Button type="submit">Lưu thay đổi</Button>
+            <Button type="submit">Cập nhật</Button>
           </div>
         </form>
       </DialogContent>

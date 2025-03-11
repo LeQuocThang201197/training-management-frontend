@@ -25,3 +25,25 @@ export interface CompetitionFormData {
   is_confirmed: boolean;
   concentration_id: string;
 }
+
+export interface CompetitionParticipantDetail {
+  participation_id: number;
+  startDate: string;
+  endDate: string;
+  note?: string;
+}
+
+export interface CompetitionParticipantResponse {
+  participants: {
+    participation_id: number;
+    startDate: string;
+    endDate: string;
+    note?: string;
+  }[];
+  stats: {
+    ATHLETE: number;
+    COACH: number;
+    SPECIALIST: number;
+    OTHER: number;
+  };
+}

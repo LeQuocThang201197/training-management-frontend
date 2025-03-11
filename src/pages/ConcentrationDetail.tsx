@@ -52,7 +52,11 @@ import { Input } from "@/components/ui/input";
 import { AbsenceRecord } from "@/types/participant";
 import { TrainingDialog } from "@/components/dialogs/TrainingDialog";
 import { AddTrainingParticipantDialog } from "@/components/dialogs/AddTrainingParticipantDialog";
-import { Competition, CompetitionFormData } from "@/types/competition";
+import {
+  Competition,
+  CompetitionFormData,
+  CompetitionParticipantResponse,
+} from "@/types/competition";
 import { CompetitionDialog } from "@/components/dialogs/CompetitionDialog";
 import { AddCompetitionParticipantDialog } from "@/components/dialogs/AddCompetitionParticipantDialog";
 
@@ -213,6 +217,9 @@ export function ConcentrationDetailPage() {
   const [competitionParticipantIds, setCompetitionParticipantIds] = useState<
     number[]
   >([]);
+  const [participantDates, setParticipantDates] = useState<{
+    [key: number]: { startDate: string; endDate: string };
+  }>({});
 
   useEffect(() => {
     const fetchDetail = async () => {
@@ -789,6 +796,10 @@ export function ConcentrationDetailPage() {
       const data = await response.json();
       if (data.success) {
         setCompetitions(data.data);
+        // Fetch thông tin người tham gia cho mỗi competition
+        data.data.forEach((competition: Competition) => {
+          fetchCompetitionParticipants(competition.id);
+        });
       }
     } catch (err) {
       console.error("Fetch competitions error:", err);
@@ -1061,14 +1072,26 @@ export function ConcentrationDetailPage() {
     if (!managingCompetition) return;
 
     try {
-      // Chỉ lấy notes của những người được chọn
-      const notes = Object.entries(participantNotes)
-        .filter(
-          ([id, note]) => selectedIds.includes(Number(id)) && note.trim() !== ""
-        )
-        .map(([id, note]) => ({
-          participation_id: Number(id),
-          note,
+      const participantDetails = selectedIds
+        .filter((id) => {
+          const hasNote = participantNotes[id]?.trim() !== "";
+          const hasDifferentDates =
+            participantDates[id] &&
+            (participantDates[id].startDate !==
+              managingCompetition.startDate.split("T")[0] ||
+              participantDates[id].endDate !==
+                managingCompetition.endDate.split("T")[0]);
+          return hasNote || hasDifferentDates;
+        })
+        .map((id) => ({
+          participation_id: id,
+          startDate:
+            participantDates[id]?.startDate ||
+            managingCompetition.startDate.split("T")[0],
+          endDate:
+            participantDates[id]?.endDate ||
+            managingCompetition.endDate.split("T")[0],
+          note: participantNotes[id]?.trim() || "",
         }));
 
       const response = await fetch(
@@ -1079,21 +1102,24 @@ export function ConcentrationDetailPage() {
           credentials: "include",
           body: JSON.stringify({
             participationIds: selectedIds,
-            ...(notes.length > 0 && { notes }),
+            ...(participantDetails.length > 0 && { participantDetails }),
           }),
         }
       );
 
       if (!response.ok) throw new Error("Không thể cập nhật người tham gia");
 
-      // Xóa notes của những người không được chọn
-      const updatedNotes: { [key: number]: string } = { ...participantNotes };
+      // Xóa notes và dates của những người không được chọn
+      const updatedNotes = { ...participantNotes };
+      const updatedDates = { ...participantDates };
       Object.keys(updatedNotes).forEach((id) => {
         if (!selectedIds.includes(Number(id))) {
           delete updatedNotes[Number(id)];
+          delete updatedDates[Number(id)];
         }
       });
       setParticipantNotes(updatedNotes);
+      setParticipantDates(updatedDates);
 
       await fetchCompetitionParticipants(managingCompetition.id);
       setIsAddCompetitionParticipantDialogOpen(false);
@@ -1116,13 +1142,13 @@ export function ConcentrationDetailPage() {
 
       const data = await response.json();
       if (data.success) {
-        const responseData = data.data as TrainingParticipantResponse;
+        const responseData = data.data as CompetitionParticipantResponse;
 
         setCompetitionParticipantIds(
           responseData.participants.map((p) => p.participation_id)
         );
 
-        // Cập nhật stats
+        // Cập nhật stats của competition
         setCompetitions((prev) =>
           prev.map((c) =>
             c.id === competitionId
@@ -1130,6 +1156,23 @@ export function ConcentrationDetailPage() {
               : c
           )
         );
+
+        const notes: { [key: number]: string } = {};
+        const dates: { [key: number]: { startDate: string; endDate: string } } =
+          {};
+
+        responseData.participants.forEach((p) => {
+          if (p.note) notes[p.participation_id] = p.note;
+          if (p.startDate || p.endDate) {
+            dates[p.participation_id] = {
+              startDate: p.startDate,
+              endDate: p.endDate,
+            };
+          }
+        });
+
+        setParticipantNotes(notes);
+        setParticipantDates(dates);
       }
     } catch (err) {
       console.error("Fetch competition participants error:", err);
@@ -2082,7 +2125,7 @@ export function ConcentrationDetailPage() {
                                     );
                                   }}
                                 >
-                                  <Users className="h-4 w-4" />
+                                  <Contact className="h-4 w-4" />
                                 </Button>
                                 <Button
                                   variant="ghost"
@@ -2273,6 +2316,8 @@ export function ConcentrationDetailPage() {
           if (!open) {
             setManagingCompetition(null);
             setCompetitionParticipantIds([]);
+            setParticipantNotes({});
+            setParticipantDates({});
           }
           setIsAddCompetitionParticipantDialogOpen(open);
         }}
@@ -2281,6 +2326,15 @@ export function ConcentrationDetailPage() {
         competitionParticipantIds={competitionParticipantIds}
         participantNotes={participantNotes}
         onNoteChange={handleNoteChange}
+        participantDates={participantDates}
+        onDateChange={(id, startDate, endDate) =>
+          setParticipantDates((prev) => ({
+            ...prev,
+            [id]: { startDate, endDate },
+          }))
+        }
+        competition={managingCompetition!}
+        onParticipantSelect={setCompetitionParticipantIds}
       />
     </div>
   );

@@ -8,6 +8,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { Competition } from "@/types/competition";
 
 interface ConcentrationCardProps {
   concentration: Concentration;
@@ -22,6 +23,19 @@ const getOngoingTraining = (trainings: Concentration["trainings"]) => {
     const startDate = new Date(training.startDate);
 
     const endDate = new Date(training.endDate);
+    endDate.setHours(23, 59, 59, 999); // Set về cuối ngày
+
+    return today >= startDate && today <= endDate;
+  });
+};
+
+// Thêm hàm để lấy competition đang diễn ra
+const getOngoingCompetition = (competitions: Competition[]) => {
+  const today = new Date();
+
+  return competitions?.find((competition) => {
+    const startDate = new Date(competition.startDate);
+    const endDate = new Date(competition.endDate);
     endDate.setHours(23, 59, 59, 999); // Set về cuối ngày
 
     return today >= startDate && today <= endDate;
@@ -64,6 +78,7 @@ export function ConcentrationCard({
   };
 
   const ongoingTraining = getOngoingTraining(concentration.trainings);
+  const ongoingCompetition = getOngoingCompetition(concentration.competitions);
 
   return (
     <div
@@ -88,9 +103,19 @@ export function ConcentrationCard({
                 Đang tập huấn
               </div>
             </TooltipTrigger>
-            <TooltipContent side="bottom" className="p-3 space-y-2 max-w-xs">
-              <div className="font-medium">{ongoingTraining.location}</div>
-              <div className="text-xs text-gray-500">
+            <TooltipContent
+              side="bottom"
+              align="end"
+              sideOffset={10}
+              alignOffset={-10}
+              className="p-3 space-y-2 max-w-xs"
+            >
+              <div className="font-medium flex items-center gap-2">
+                <MapPin className="h-4 w-4" />
+                {ongoingTraining.location}
+              </div>
+              <div className="text-xs text-gray-500 flex items-center gap-2">
+                <Calendar className="h-4 w-4" />
                 {new Date(ongoingTraining.startDate).toLocaleDateString(
                   "vi-VN"
                 )}{" "}
@@ -111,6 +136,65 @@ export function ConcentrationCard({
                 {ongoingTraining.participantStats.ATHLETE > 0 && (
                   <span className="px-1.5 py-0.5 bg-blue-50 text-blue-700 rounded">
                     {ongoingTraining.participantStats.ATHLETE} VĐV
+                  </span>
+                )}
+              </div>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      )}
+
+      {ongoingCompetition && (
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <div className="absolute top-2 right-2 flex items-center gap-1.5 px-2 py-1 bg-orange-100 text-orange-700 rounded-full text-xs font-medium cursor-pointer">
+                <span className="relative flex h-2 w-2">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-orange-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-orange-500"></span>
+                </span>
+                Đang thi đấu
+              </div>
+            </TooltipTrigger>
+            <TooltipContent
+              side="bottom"
+              align="end"
+              sideOffset={10}
+              alignOffset={-10}
+              className="p-3 space-y-2 max-w-xs"
+            >
+              <div className="font-medium flex items-center gap-2">
+                <Trophy className="h-4 w-4" />
+                {ongoingCompetition.name}
+              </div>
+              <div className="text-sm text-gray-600 flex items-center gap-2">
+                <MapPin className="h-4 w-4" />
+                {ongoingCompetition.location}
+              </div>
+              <div className="text-xs text-gray-500 flex items-center gap-2">
+                <Calendar className="h-4 w-4" />
+                {new Date(ongoingCompetition.startDate).toLocaleDateString(
+                  "vi-VN"
+                )}{" "}
+                -{" "}
+                {new Date(ongoingCompetition.endDate).toLocaleDateString(
+                  "vi-VN"
+                )}
+              </div>
+              <div className="flex flex-wrap gap-2 text-xs">
+                {ongoingCompetition.participantStats.SPECIALIST > 0 && (
+                  <span className="px-1.5 py-0.5 bg-purple-50 text-purple-700 rounded">
+                    {ongoingCompetition.participantStats.SPECIALIST} CG
+                  </span>
+                )}
+                {ongoingCompetition.participantStats.COACH > 0 && (
+                  <span className="px-1.5 py-0.5 bg-green-50 text-green-700 rounded">
+                    {ongoingCompetition.participantStats.COACH} HLV
+                  </span>
+                )}
+                {ongoingCompetition.participantStats.ATHLETE > 0 && (
+                  <span className="px-1.5 py-0.5 bg-blue-50 text-blue-700 rounded">
+                    {ongoingCompetition.participantStats.ATHLETE} VĐV
                   </span>
                 )}
               </div>
@@ -213,7 +297,7 @@ export function ConcentrationCard({
             <div className="p-1.5 rounded-full bg-orange-50">
               <Trophy className="h-4 w-4 text-orange-500" />
             </div>
-            <span>0 đợt thi đấu</span>
+            <span>{concentration.competitions?.length || 0} đợt thi đấu</span>
           </div>
         </div>
       </div>

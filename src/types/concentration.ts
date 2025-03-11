@@ -1,4 +1,5 @@
 import { Team } from "./index";
+import { Competition } from "./competition";
 
 interface Submitter {
   id: number;
@@ -37,4 +38,5 @@ export interface Concentration {
     note: string;
     participantStats: ParticipantStats;
   }[];
+  competitions: Competition[];
 }

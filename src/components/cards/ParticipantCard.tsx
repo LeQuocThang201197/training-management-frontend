@@ -10,6 +10,8 @@ import {
   LogOut,
   Clock,
   History,
+  Trophy,
+  Dumbbell,
 } from "lucide-react";
 import {
   Tooltip,
@@ -28,6 +30,19 @@ interface ParticipantCardProps {
   onDelete?: (participant: Participant) => void;
   onAbsenceChange?: () => void;
   absences: AbsenceRecord[];
+  ongoingTraining?: {
+    id: number;
+    location: string;
+    startDate: string;
+    endDate: string;
+  };
+  ongoingCompetition?: {
+    id: number;
+    name: string;
+    location: string;
+    startDate: string;
+    endDate: string;
+  };
 }
 
 const GenderIcon = ({ gender }: { gender: string }) => {
@@ -48,6 +63,8 @@ export function ParticipantCard({
   onDelete,
   onAbsenceChange,
   absences,
+  ongoingTraining,
+  ongoingCompetition,
 }: ParticipantCardProps) {
   const [showHistory, setShowHistory] = useState(false);
 
@@ -72,7 +89,11 @@ export function ParticipantCard({
           ? "bg-gray-100" // Người không tham gia
           : currentAbsence?.type === "LEAVE"
           ? "bg-yellow-50" // Người đang nghỉ phép
-          : "bg-green-50" // Người đang tham gia
+          : ongoingCompetition
+          ? "bg-orange-50"
+          : ongoingTraining
+          ? "bg-blue-50"
+          : "bg-green-50"
       )}
     >
       <CardContent className="flex items-center p-4">
@@ -162,6 +183,50 @@ export function ParticipantCard({
                     ` - ${new Date(currentAbsence.endDate).toLocaleDateString(
                       "vi-VN"
                     )}`}
+                </p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        </div>
+      )}
+
+      {(ongoingTraining || ongoingCompetition) && !currentAbsence && (
+        <div className="absolute bottom-2 right-2 z-10">
+          <TooltipProvider>
+            <Tooltip delayDuration={0}>
+              <TooltipTrigger>
+                <div className="flex items-center gap-1 text-sm">
+                  {ongoingCompetition ? (
+                    <Trophy className="h-4 w-4 text-orange-500" />
+                  ) : (
+                    <Dumbbell className="h-4 w-4 text-blue-500" />
+                  )}
+                </div>
+              </TooltipTrigger>
+              <TooltipContent side="left" className="z-20">
+                {ongoingCompetition ? (
+                  <>
+                    <p className="font-medium">{ongoingCompetition.name}</p>
+                    <p className="text-sm">{ongoingCompetition.location}</p>
+                  </>
+                ) : ongoingTraining ? (
+                  <>
+                    <p className="font-medium">Đang tập huấn</p>
+                    <p className="text-sm">{ongoingTraining.location}</p>
+                  </>
+                ) : null}
+                <p className="text-xs text-gray-500">
+                  {new Date(
+                    ongoingCompetition?.startDate ||
+                      ongoingTraining?.startDate ||
+                      ""
+                  ).toLocaleDateString("vi-VN")}{" "}
+                  -{" "}
+                  {new Date(
+                    ongoingCompetition?.endDate ||
+                      ongoingTraining?.endDate ||
+                      ""
+                  ).toLocaleDateString("vi-VN")}
                 </p>
               </TooltipContent>
             </Tooltip>

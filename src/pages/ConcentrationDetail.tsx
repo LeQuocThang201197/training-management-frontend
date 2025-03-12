@@ -107,28 +107,10 @@ interface TrainingFormData {
 }
 
 interface TrainingParticipant {
+  id: number;
   participation_id: number;
   participation: {
     id: number;
-    person: {
-      name: string;
-    };
-    role: {
-      name: string;
-    };
-    organization: {
-      name: string;
-    };
-  };
-}
-
-interface TrainingParticipantResponse {
-  participants: TrainingParticipant[];
-  stats: {
-    ATHLETE: number;
-    COACH: number;
-    SPECIALIST: number;
-    OTHER: number;
   };
 }
 
@@ -170,7 +152,7 @@ export function ConcentrationDetailPage() {
   const [participantToDelete, setParticipantToDelete] =
     useState<Participant | null>(null);
   const [editingParticipant, setEditingParticipant] =
-    useState<Participant | null>(null);
+    useState<ParticipantFormData | null>(null);
   const [participantSearchTerm, setParticipantSearchTerm] = useState("");
   const [absences, setAbsences] = useState<AbsenceRecord[]>([]);
   const [loadingAbsences, setLoadingAbsences] = useState(false);
@@ -219,6 +201,12 @@ export function ConcentrationDetailPage() {
   >([]);
   const [participantDates, setParticipantDates] = useState<{
     [key: number]: { startDate: string; endDate: string };
+  }>({});
+  const [isEditParticipantDialogOpen, setIsEditParticipantDialogOpen] =
+    useState(false);
+  const [participantId, setParticipantId] = useState<number | null>(null);
+  const [trainingParticipants, setTrainingParticipants] = useState<{
+    [trainingId: number]: number[];
   }>({});
 
   useEffect(() => {
@@ -582,16 +570,25 @@ export function ConcentrationDetailPage() {
     }
   };
 
+  const initEditParticipant = (participant: Participant) => {
+    setParticipantId(participant.id);
+    setEditingParticipant({
+      personId: participant.person.id.toString(),
+      roleId: participant.role.id.toString(),
+      organizationId: participant.organization.id.toString(),
+      note: participant.note || "",
+    });
+    setIsEditParticipantDialogOpen(true);
+  };
+
   const handleEditParticipant = async (formData: ParticipantFormData) => {
     try {
       const response = await fetch(
-        `${API_URL}/concentrations/${id}/participants/${editingParticipant?.id}`,
+        `${API_URL}/concentrations/${id}/participants/${participantId}`,
         {
           method: "PUT",
           credentials: "include",
-          headers: {
-            "Content-Type": "application/json",
-          },
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify(formData),
         }
       );
@@ -601,7 +598,7 @@ export function ConcentrationDetailPage() {
       const data = await response.json();
       if (data.success) {
         setParticipants((prev) =>
-          prev.map((p) => (p.id === editingParticipant?.id ? data.data : p))
+          prev.map((p) => (p.id === participantId ? data.data : p))
         );
         fetchParticipantStats();
         setEditingParticipant(null);
@@ -612,7 +609,16 @@ export function ConcentrationDetailPage() {
     }
   };
 
-  const formatParticipantStats = (stats: ParticipantStats): string => {
+  const formatParticipantStats = (
+    stats: ParticipantStats | undefined
+  ): string => {
+    if (
+      !stats ||
+      (stats.SPECIALIST === 0 && stats.COACH === 0 && stats.ATHLETE === 0)
+    ) {
+      return "Chưa có người tham gia";
+    }
+
     const parts = [];
 
     if (stats.SPECIALIST > 0) {
@@ -731,11 +737,6 @@ export function ConcentrationDetailPage() {
     }
   }, [id]);
 
-  const handleAbsenceChange = useCallback(() => {
-    fetchAbsences();
-    fetchParticipantStats();
-  }, [fetchAbsences, fetchParticipantStats]);
-
   const fetchTrainingEvents = useCallback(async () => {
     try {
       const response = await fetch(`${API_URL}/trainings/concentration/${id}`, {
@@ -760,13 +761,19 @@ export function ConcentrationDetailPage() {
           if (participantsResponse.ok) {
             const participantsData = await participantsResponse.json();
             if (participantsData.success) {
-              const responseData =
-                participantsData.data as TrainingParticipantResponse;
+              // Lưu danh sách ID người tham gia
+              setTrainingParticipants((prev) => ({
+                ...prev,
+                [training.id]: participantsData.data.participants.map(
+                  (p: TrainingParticipant) => p.participation.id
+                ),
+              }));
 
+              // Cập nhật stats cho training
               setTrainingEvents((prev) =>
                 prev.map((t) =>
                   t.id === training.id
-                    ? { ...t, participantStats: responseData.stats }
+                    ? { ...t, participantStats: participantsData.data.stats }
                     : t
                 )
               );
@@ -775,7 +782,7 @@ export function ConcentrationDetailPage() {
         });
       }
     } catch (err) {
-      console.error("Fetch training events error:", err);
+      console.error("Fetch trainings error:", err);
     }
   }, [id]);
 
@@ -941,81 +948,61 @@ export function ConcentrationDetailPage() {
   };
 
   const handleUpdateTrainingParticipants = async (selectedIds: number[]) => {
-    if (!managingTraining) return;
-
     try {
-      // Chỉ lấy notes của những người được chọn
-      const notes = Object.entries(participantNotes)
-        .filter(
-          ([id, note]) => selectedIds.includes(Number(id)) && note.trim() !== ""
-        )
-        .map(([id, note]) => ({
-          participation_id: Number(id),
-          note,
-        }));
-
       const response = await fetch(
-        `${API_URL}/trainings/${managingTraining.id}/participants`,
+        `${API_URL}/trainings/${managingTraining?.id}/participants`,
         {
           method: "PUT",
-          headers: { "Content-Type": "application/json" },
           credentials: "include",
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             participationIds: selectedIds,
-            ...(notes.length > 0 && { notes }),
           }),
         }
       );
 
       if (!response.ok) throw new Error("Không thể cập nhật người tham gia");
 
-      // Xóa notes của những người không được chọn
-      const updatedNotes: { [key: number]: string } = { ...participantNotes };
-      Object.keys(updatedNotes).forEach((id) => {
-        if (!selectedIds.includes(Number(id))) {
-          delete updatedNotes[Number(id)];
-        }
-      });
-      setParticipantNotes(updatedNotes);
-
-      await fetchTrainingParticipants(managingTraining.id);
-      setIsAddTrainingParticipantDialogOpen(false);
-    } catch (err) {
-      console.error("Update training participants error:", err);
-    }
-  };
-
-  const fetchTrainingParticipants = async (trainingId: number) => {
-    try {
-      const response = await fetch(
-        `${API_URL}/trainings/${trainingId}/participants`,
-        {
-          credentials: "include",
-        }
-      );
-
-      if (!response.ok)
-        throw new Error("Không thể tải danh sách người tham gia");
-
       const data = await response.json();
       if (data.success) {
-        const responseData = data.data as TrainingParticipantResponse;
-
-        setTrainingParticipantIds(
-          responseData.participants.map((p) => p.participation_id)
+        // Fetch lại thông tin người tham gia và stats
+        const participantsResponse = await fetch(
+          `${API_URL}/trainings/${managingTraining?.id}/participants`,
+          {
+            credentials: "include",
+          }
         );
 
-        // Cập nhật stats
-        setTrainingEvents((prev) =>
-          prev.map((t) =>
-            t.id === trainingId
-              ? { ...t, participantStats: responseData.stats }
-              : t
-          )
-        );
+        if (participantsResponse.ok) {
+          const participantsData = await participantsResponse.json();
+          if (participantsData.success) {
+            // Cập nhật danh sách người tham gia
+            setTrainingParticipants((prev) => ({
+              ...prev,
+              [managingTraining?.id || 0]:
+                participantsData.data.participants.map(
+                  (p: TrainingParticipant) => p.participation.id
+                ),
+            }));
+
+            // Cập nhật stats
+            setTrainingEvents((prev) =>
+              prev.map((t) =>
+                t.id === managingTraining?.id
+                  ? { ...t, participantStats: participantsData.data.stats }
+                  : t
+              )
+            );
+          }
+        }
+
+        setIsAddTrainingParticipantDialogOpen(false);
+        setManagingTraining(null);
+        setTrainingParticipantIds([]);
       }
     } catch (err) {
-      console.error("Fetch training participants error:", err);
+      console.error("Update training participants error:", err);
+      alert("Có lỗi xảy ra khi cập nhật người tham gia");
     }
   };
 
@@ -1212,6 +1199,28 @@ export function ConcentrationDetailPage() {
     }
   };
 
+  // Thêm hàm helper để kiểm tra sự kiện đang diễn ra
+  const isOngoing = (startDate: string, endDate: string) => {
+    const today = new Date();
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    end.setHours(23, 59, 59, 999);
+    return today >= start && today <= end;
+  };
+
+  const handleManageTrainingParticipants = async (training: Training) => {
+    try {
+      setManagingTraining(training);
+
+      // Lấy danh sách ID người tham gia của training này
+      setTrainingParticipantIds(trainingParticipants[training.id] || []);
+
+      setIsAddTrainingParticipantDialogOpen(true);
+    } catch (err) {
+      console.error("Fetch training participants error:", err);
+    }
+  };
+
   if (loading) {
     return <div>Đang tải...</div>;
   }
@@ -1378,18 +1387,48 @@ export function ConcentrationDetailPage() {
                       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                         {filteredParticipants
                           .filter((p) => p.role.type === "SPECIALIST")
-                          .map((specialist) => (
-                            <ParticipantCard
-                              key={specialist.id}
-                              participant={specialist}
-                              onEdit={setEditingParticipant}
-                              onDelete={setParticipantToDelete}
-                              onAbsenceChange={handleAbsenceChange}
-                              absences={absences.filter((a) => {
-                                return a.participation.id === specialist.id;
-                              })}
-                            />
-                          ))}
+                          .map((specialist) => {
+                            // Tìm training đang diễn ra mà người này tham gia
+                            const ongoingTraining = trainingEvents.find(
+                              (training) =>
+                                isOngoing(
+                                  training.startDate,
+                                  training.endDate
+                                ) &&
+                                trainingParticipants[training.id]?.includes(
+                                  specialist.id
+                                )
+                            );
+
+                            // Tìm competition đang diễn ra mà người này tham gia
+                            const ongoingCompetition = competitions.find(
+                              (competition) =>
+                                isOngoing(
+                                  competition.startDate,
+                                  competition.endDate
+                                ) &&
+                                competitionParticipantIds.includes(
+                                  specialist.id
+                                )
+                            );
+
+                            return (
+                              <ParticipantCard
+                                key={specialist.id}
+                                participant={specialist}
+                                onEdit={() => initEditParticipant(specialist)}
+                                onDelete={() =>
+                                  setParticipantToDelete(specialist)
+                                }
+                                absences={absences.filter((a) => {
+                                  return a.participation.id === specialist.id;
+                                })}
+                                onAbsenceChange={fetchAbsences}
+                                ongoingTraining={ongoingTraining}
+                                ongoingCompetition={ongoingCompetition}
+                              />
+                            );
+                          })}
                       </div>
                     </div>
                   )}
@@ -1402,18 +1441,44 @@ export function ConcentrationDetailPage() {
                       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                         {filteredParticipants
                           .filter((p) => p.role.type === "COACH")
-                          .map((coach) => (
-                            <ParticipantCard
-                              key={coach.id}
-                              participant={coach}
-                              onEdit={setEditingParticipant}
-                              onDelete={setParticipantToDelete}
-                              onAbsenceChange={handleAbsenceChange}
-                              absences={absences.filter((a) => {
-                                return a.participation.id === coach.id;
-                              })}
-                            />
-                          ))}
+                          .map((coach) => {
+                            // Tìm training đang diễn ra mà người này tham gia
+                            const ongoingTraining = trainingEvents.find(
+                              (training) =>
+                                isOngoing(
+                                  training.startDate,
+                                  training.endDate
+                                ) &&
+                                trainingParticipants[training.id]?.includes(
+                                  coach.id
+                                )
+                            );
+
+                            // Tìm competition đang diễn ra mà người này tham gia
+                            const ongoingCompetition = competitions.find(
+                              (competition) =>
+                                isOngoing(
+                                  competition.startDate,
+                                  competition.endDate
+                                ) &&
+                                competitionParticipantIds.includes(coach.id)
+                            );
+
+                            return (
+                              <ParticipantCard
+                                key={coach.id}
+                                participant={coach}
+                                onEdit={() => initEditParticipant(coach)}
+                                onDelete={() => setParticipantToDelete(coach)}
+                                absences={absences.filter((a) => {
+                                  return a.participation.id === coach.id;
+                                })}
+                                onAbsenceChange={fetchAbsences}
+                                ongoingTraining={ongoingTraining}
+                                ongoingCompetition={ongoingCompetition}
+                              />
+                            );
+                          })}
                       </div>
                     </div>
                   )}
@@ -1426,18 +1491,44 @@ export function ConcentrationDetailPage() {
                       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                         {filteredParticipants
                           .filter((p) => p.role.type === "ATHLETE")
-                          .map((athlete) => (
-                            <ParticipantCard
-                              key={athlete.id}
-                              participant={athlete}
-                              onEdit={setEditingParticipant}
-                              onDelete={setParticipantToDelete}
-                              onAbsenceChange={handleAbsenceChange}
-                              absences={absences.filter((a) => {
-                                return a.participation.id === athlete.id;
-                              })}
-                            />
-                          ))}
+                          .map((athlete) => {
+                            // Tìm training đang diễn ra mà người này tham gia
+                            const ongoingTraining = trainingEvents.find(
+                              (training) =>
+                                isOngoing(
+                                  training.startDate,
+                                  training.endDate
+                                ) &&
+                                trainingParticipants[training.id]?.includes(
+                                  athlete.id
+                                )
+                            );
+
+                            // Tìm competition đang diễn ra mà người này tham gia
+                            const ongoingCompetition = competitions.find(
+                              (competition) =>
+                                isOngoing(
+                                  competition.startDate,
+                                  competition.endDate
+                                ) &&
+                                competitionParticipantIds.includes(athlete.id)
+                            );
+
+                            return (
+                              <ParticipantCard
+                                key={athlete.id}
+                                participant={athlete}
+                                onEdit={() => initEditParticipant(athlete)}
+                                onDelete={() => setParticipantToDelete(athlete)}
+                                absences={absences.filter((a) => {
+                                  return a.participation.id === athlete.id;
+                                })}
+                                onAbsenceChange={fetchAbsences}
+                                ongoingTraining={ongoingTraining}
+                                ongoingCompetition={ongoingCompetition}
+                              />
+                            );
+                          })}
                       </div>
                     </div>
                   )}
@@ -1450,18 +1541,44 @@ export function ConcentrationDetailPage() {
                       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                         {filteredParticipants
                           .filter((p) => p.role.type === "OTHER")
-                          .map((other) => (
-                            <ParticipantCard
-                              key={other.id}
-                              participant={other}
-                              onEdit={setEditingParticipant}
-                              onDelete={setParticipantToDelete}
-                              onAbsenceChange={handleAbsenceChange}
-                              absences={absences.filter((a) => {
-                                return a.participation.id === other.id;
-                              })}
-                            />
-                          ))}
+                          .map((other) => {
+                            // Tìm training đang diễn ra mà người này tham gia
+                            const ongoingTraining = trainingEvents.find(
+                              (training) =>
+                                isOngoing(
+                                  training.startDate,
+                                  training.endDate
+                                ) &&
+                                trainingParticipants[training.id]?.includes(
+                                  other.id
+                                )
+                            );
+
+                            // Tìm competition đang diễn ra mà người này tham gia
+                            const ongoingCompetition = competitions.find(
+                              (competition) =>
+                                isOngoing(
+                                  competition.startDate,
+                                  competition.endDate
+                                ) &&
+                                competitionParticipantIds.includes(other.id)
+                            );
+
+                            return (
+                              <ParticipantCard
+                                key={other.id}
+                                participant={other}
+                                onEdit={() => initEditParticipant(other)}
+                                onDelete={() => setParticipantToDelete(other)}
+                                absences={absences.filter((a) => {
+                                  return a.participation.id === other.id;
+                                })}
+                                onAbsenceChange={fetchAbsences}
+                                ongoingTraining={ongoingTraining}
+                                ongoingCompetition={ongoingCompetition}
+                              />
+                            );
+                          })}
                       </div>
                     </div>
                   )}
@@ -1904,11 +2021,9 @@ export function ConcentrationDetailPage() {
                           variant="ghost"
                           size="icon"
                           className="h-8 w-8"
-                          onClick={async () => {
-                            setManagingTraining(event);
-                            await fetchTrainingParticipants(event.id);
-                            setIsAddTrainingParticipantDialogOpen(true);
-                          }}
+                          onClick={() =>
+                            handleManageTrainingParticipants(event)
+                          }
                         >
                           <Contact className="h-4 w-4" />
                         </Button>
@@ -1983,29 +2098,7 @@ export function ConcentrationDetailPage() {
                             <Users className="h-4 w-4 text-primary/70" />
                           </div>
                           <div className="flex flex-wrap gap-2">
-                            {event.participantStats ? (
-                              <>
-                                {event.participantStats.SPECIALIST > 0 && (
-                                  <span className="text-xs">
-                                    {event.participantStats.SPECIALIST} CG
-                                  </span>
-                                )}
-                                {event.participantStats.COACH > 0 && (
-                                  <span className="text-xs">
-                                    {event.participantStats.COACH} HLV
-                                  </span>
-                                )}
-                                {event.participantStats.ATHLETE > 0 && (
-                                  <span className="text-xs">
-                                    {event.participantStats.ATHLETE} VĐV
-                                  </span>
-                                )}
-                              </>
-                            ) : (
-                              <span className="text-xs">
-                                Chưa có người tham gia
-                              </span>
-                            )}
+                            {formatParticipantStats(event.participantStats)}
                           </div>
                         </div>
                         {event.note && (
@@ -2335,6 +2428,14 @@ export function ConcentrationDetailPage() {
         }
         competition={managingCompetition!}
         onParticipantSelect={setCompetitionParticipantIds}
+      />
+
+      <AddParticipantDialog
+        isOpen={isEditParticipantDialogOpen}
+        onOpenChange={(open) => !open && setEditingParticipant(null)}
+        onSubmit={handleEditParticipant}
+        editData={editingParticipant}
+        existingParticipants={participants}
       />
     </div>
   );

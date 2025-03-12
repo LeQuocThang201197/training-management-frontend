@@ -181,12 +181,7 @@ export function AddTrainingParticipantDialog({
               >
                 Hủy
               </Button>
-              <Button
-                onClick={handleSubmit}
-                disabled={selectedIds.length === 0}
-              >
-                Cập nhật
-              </Button>
+              <Button onClick={handleSubmit}>Cập nhật</Button>
             </div>
           </div>
         </div>

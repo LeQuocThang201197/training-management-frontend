@@ -26,14 +26,9 @@ import { Person, Role, Organization, Participant } from "@/types/participant";
 interface AddParticipantDialogProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
-  onSubmit: (formData: {
-    personId: string;
-    roleId: string;
-    organizationId: string;
-    note: string;
-  }) => void;
-  editData?: Participant | null;
+  onSubmit: (data: ParticipantFormData) => void;
   existingParticipants: Participant[];
+  editData?: ParticipantFormData | null;
 }
 
 export function AddParticipantDialog({

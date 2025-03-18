@@ -12,7 +12,6 @@ import { PersonnelPage } from "./pages/Personnel";
 import { SportsPage } from "./pages/Sports";
 import { TeamsPage } from "./pages/Teams";
 import { PermissionGate } from "./components/PermissionGate";
-import { Permission } from "./types/auth";
 import { ConcentrationPage } from "./pages/Concentration";
 import { ConcentrationDetailPage } from "./pages/ConcentrationDetail";
 import { DocumentDetailPage } from "./pages/DocumentDetail";
@@ -45,7 +44,7 @@ function App() {
                       <Route
                         path="concentrations"
                         element={
-                          <PermissionGate permission={Permission.VIEW_TRAINING}>
+                          <PermissionGate permission="READ_CONCENTRATION">
                             <ConcentrationPage />
                           </PermissionGate>
                         }
@@ -63,9 +62,7 @@ function App() {
                       <Route
                         path="personnel"
                         element={
-                          <PermissionGate
-                            permission={Permission.MANAGE_PERSONNEL}
-                          >
+                          <PermissionGate permission="READ_PERSON">
                             <PersonnelPage />
                           </PermissionGate>
                         }
@@ -84,9 +81,7 @@ function App() {
                         <Route
                           path="personnel"
                           element={
-                            <PermissionGate
-                              permission={Permission.MANAGE_PERSONNEL}
-                            >
+                            <PermissionGate permission="READ_PERSON">
                               <PersonnelRolesPage />
                             </PermissionGate>
                           }
@@ -94,9 +89,7 @@ function App() {
                         <Route
                           path="users"
                           element={
-                            <PermissionGate
-                              permission={Permission.MANAGE_PERSONNEL}
-                            >
+                            <PermissionGate permission="READ_PERSON">
                               <div>Vai trò người dùng</div>
                             </PermissionGate>
                           }
@@ -106,7 +99,7 @@ function App() {
                         <Route
                           path="tags"
                           element={
-                            <PermissionGate permission={Permission.VIEW_TAG}>
+                            <PermissionGate permission="READ_TAG">
                               <TagsPage />
                             </PermissionGate>
                           }
@@ -114,7 +107,7 @@ function App() {
                         <Route
                           path="sports"
                           element={
-                            <PermissionGate permission={Permission.VIEW_TAG}>
+                            <PermissionGate permission="READ_SPORT">
                               <SportsPage />
                             </PermissionGate>
                           }
@@ -122,7 +115,7 @@ function App() {
                         <Route
                           path="teams"
                           element={
-                            <PermissionGate permission={Permission.VIEW_TAG}>
+                            <PermissionGate permission="READ_TEAM">
                               <TeamsPage />
                             </PermissionGate>
                           }
@@ -130,7 +123,7 @@ function App() {
                         <Route
                           path="organizations"
                           element={
-                            <PermissionGate permission={Permission.VIEW_TAG}>
+                            <PermissionGate permission="READ_TAG">
                               <OrganizationsPage />
                             </PermissionGate>
                           }

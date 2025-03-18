@@ -1,8 +1,7 @@
-import { Permission } from "@/types/auth";
 import { useAuth } from "@/hooks/useAuth";
 
 interface PermissionGateProps {
-  permission: Permission;
+  permission: string;
   children: React.ReactNode;
 }
 

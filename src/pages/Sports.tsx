@@ -9,7 +9,6 @@ import {
   ChevronRight,
 } from "lucide-react";
 import { PermissionGate } from "@/components/PermissionGate";
-import { Permission } from "@/types/auth";
 import {
   Dialog,
   DialogContent,
@@ -263,7 +262,7 @@ export function SportsPage() {
     return (
       <div className="flex flex-col items-center justify-center min-h-[400px] gap-4">
         <p className="text-gray-500">Chưa có môn thể thao nào</p>
-        <PermissionGate permission={Permission.CREATE_TAG}>
+        <PermissionGate permission="CREATE_TAG">
           <Dialog open={isDialogOpen} onOpenChange={handleOpenChange}>
             <DialogTrigger asChild>
               <Button>
@@ -340,7 +339,7 @@ export function SportsPage() {
             </DropdownMenuContent>
           </DropdownMenu>
 
-          <PermissionGate permission={Permission.CREATE_TAG}>
+          <PermissionGate permission="CREATE_TAG">
             <Dialog open={isDialogOpen} onOpenChange={handleOpenChange}>
               <DialogTrigger asChild>
                 <Button>

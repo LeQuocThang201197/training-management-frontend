@@ -1,7 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { PermissionGate } from "@/components/PermissionGate";
-import { Permission } from "@/types/auth";
 import { Pencil, Trash2 } from "lucide-react";
 import { getConsistentColor, getRandomColor } from "@/lib/colors";
 import { cn } from "@/lib/utils";
@@ -51,7 +50,7 @@ export function HoverCard({
           <div className="flex items-center space-x-1">
             {children}
             {onEdit && (
-              <PermissionGate permission={Permission.EDIT_TAG}>
+              <PermissionGate permission="UPDATE_TAG">
                 <Button
                   variant="ghost"
                   size="icon"
@@ -63,7 +62,7 @@ export function HoverCard({
               </PermissionGate>
             )}
             {onDelete && (
-              <PermissionGate permission={Permission.DELETE_TAG}>
+              <PermissionGate permission="DELETE_TAG">
                 <Button
                   variant="ghost"
                   size="icon"

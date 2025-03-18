@@ -21,6 +21,7 @@ import { Label } from "@/components/ui/label";
 
 import { ConcentrationCard } from "@/components/cards/ConcentrationCard";
 import { Concentration } from "@/types/concentration";
+import { PermissionGate } from "@/components/PermissionGate";
 
 interface Team {
   id: number;
@@ -279,169 +280,173 @@ export function ConcentrationPage() {
             </DropdownMenuContent>
           </DropdownMenu>
 
-          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-            <DialogTrigger asChild>
-              <Button>
-                <Plus className="mr-2 h-4 w-4" />
-                Thêm đợt tập trung
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Thêm đợt tập trung mới</DialogTitle>
-              </DialogHeader>
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="team">Chọn đội</Label>
-                  <div className="relative">
-                    <Input
-                      id="team"
-                      value={teamSearchTerm}
-                      onChange={(e) => {
-                        setTeamSearchTerm(e.target.value);
-                        setIsTeamDropdownOpen(true);
-                      }}
-                      onFocus={() => setIsTeamDropdownOpen(true)}
-                      placeholder="Tìm kiếm đội..."
-                      required
-                    />
-                    {isTeamDropdownOpen && filteredTeams.length > 0 && (
-                      <div className="absolute z-10 w-full mt-1 bg-white border rounded-md shadow-lg max-h-[200px] overflow-y-auto">
-                        {filteredTeams.map((team) => (
-                          <div
-                            key={team.id}
-                            className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
-                            onClick={() => {
-                              setFormData((prev) => ({
-                                ...prev,
-                                team_id: team.id,
-                              }));
-                              setTeamSearchTerm(
-                                `${team.type} - ${team.sport} (${team.gender})`
-                              );
-                              setIsTeamDropdownOpen(false);
-                            }}
-                          >
-                            {team.type} - {team.sport} ({team.gender})
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                <div className="flex gap-4">
-                  <div className="space-y-2 w-24">
-                    <Label htmlFor="sequence_number">Đợt</Label>
-                    <Input
-                      id="sequence_number"
-                      type="number"
-                      min={1}
-                      value={formData.sequence_number}
-                      onChange={(e) =>
-                        setFormData((prev) => ({
-                          ...prev,
-                          sequence_number: parseInt(e.target.value) || 1,
-                        }))
-                      }
-                      required
-                    />
-                  </div>
-
-                  <div className="space-y-2 flex-1">
-                    <Label htmlFor="related_year">Năm</Label>
-                    <Input
-                      id="related_year"
-                      type="number"
-                      value={formData.related_year}
-                      onChange={(e) =>
-                        setFormData((prev) => ({
-                          ...prev,
-                          related_year: parseInt(e.target.value),
-                        }))
-                      }
-                      required
-                    />
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="location">Địa điểm</Label>
-                  <Input
-                    id="location"
-                    value={formData.location}
-                    onChange={(e) =>
-                      setFormData((prev) => ({
-                        ...prev,
-                        location: e.target.value,
-                      }))
-                    }
-                    placeholder="Nhập địa điểm tập trung"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="note">Ghi chú</Label>
-                  <Input
-                    id="note"
-                    value={formData.note}
-                    onChange={(e) =>
-                      setFormData((prev) => ({
-                        ...prev,
-                        note: e.target.value,
-                      }))
-                    }
-                    placeholder="Nhập ghi chú (nếu có)"
-                  />
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <PermissionGate permission="CREATE_CONCENTRATION">
+            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+              <DialogTrigger asChild>
+                <Button>
+                  <Plus className="mr-2 h-4 w-4" />
+                  Thêm đợt tập trung
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Thêm đợt tập trung mới</DialogTitle>
+                </DialogHeader>
+                <form onSubmit={handleSubmit} className="space-y-4">
                   <div className="space-y-2">
-                    <Label htmlFor="start_date">Ngày bắt đầu</Label>
-                    <input
-                      type="date"
-                      id="start_date"
-                      value={formData.start_date}
+                    <Label htmlFor="team">Chọn đội</Label>
+                    <div className="relative">
+                      <Input
+                        id="team"
+                        value={teamSearchTerm}
+                        onChange={(e) => {
+                          setTeamSearchTerm(e.target.value);
+                          setIsTeamDropdownOpen(true);
+                        }}
+                        onFocus={() => setIsTeamDropdownOpen(true)}
+                        placeholder="Tìm kiếm đội..."
+                        required
+                      />
+                      {isTeamDropdownOpen && filteredTeams.length > 0 && (
+                        <div className="absolute z-10 w-full mt-1 bg-white border rounded-md shadow-lg max-h-[200px] overflow-y-auto">
+                          {filteredTeams.map((team) => (
+                            <div
+                              key={team.id}
+                              className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
+                              onClick={() => {
+                                setFormData((prev) => ({
+                                  ...prev,
+                                  team_id: team.id,
+                                }));
+                                setTeamSearchTerm(
+                                  `${team.type} - ${team.sport} (${team.gender})`
+                                );
+                                setIsTeamDropdownOpen(false);
+                              }}
+                            >
+                              {team.type} - {team.sport} ({team.gender})
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="flex gap-4">
+                    <div className="space-y-2 w-24">
+                      <Label htmlFor="sequence_number">Đợt</Label>
+                      <Input
+                        id="sequence_number"
+                        type="number"
+                        min={1}
+                        value={formData.sequence_number}
+                        onChange={(e) =>
+                          setFormData((prev) => ({
+                            ...prev,
+                            sequence_number: parseInt(e.target.value) || 1,
+                          }))
+                        }
+                        required
+                      />
+                    </div>
+
+                    <div className="space-y-2 flex-1">
+                      <Label htmlFor="related_year">Năm</Label>
+                      <Input
+                        id="related_year"
+                        type="number"
+                        value={formData.related_year}
+                        onChange={(e) =>
+                          setFormData((prev) => ({
+                            ...prev,
+                            related_year: parseInt(e.target.value),
+                          }))
+                        }
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="location">Địa điểm</Label>
+                    <Input
+                      id="location"
+                      value={formData.location}
                       onChange={(e) =>
                         setFormData((prev) => ({
                           ...prev,
-                          start_date: e.target.value,
+                          location: e.target.value,
                         }))
                       }
-                      className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                      placeholder="Nhập địa điểm tập trung"
                     />
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="end_date">Ngày kết thúc</Label>
-                    <input
-                      type="date"
-                      id="end_date"
-                      value={formData.end_date}
+                    <Label htmlFor="note">Ghi chú</Label>
+                    <Input
+                      id="note"
+                      value={formData.note}
                       onChange={(e) =>
                         setFormData((prev) => ({
                           ...prev,
-                          end_date: e.target.value,
+                          note: e.target.value,
                         }))
                       }
-                      className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                      placeholder="Nhập ghi chú (nếu có)"
                     />
                   </div>
-                </div>
 
-                <div className="flex justify-end gap-2">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => setIsDialogOpen(false)}
-                  >
-                    Hủy
-                  </Button>
-                  <Button type="submit">Thêm mới</Button>
-                </div>
-              </form>
-            </DialogContent>
-          </Dialog>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="start_date">Ngày bắt đầu</Label>
+                      <input
+                        type="date"
+                        id="start_date"
+                        value={formData.start_date}
+                        onChange={(e) =>
+                          setFormData((prev) => ({
+                            ...prev,
+                            start_date: e.target.value,
+                          }))
+                        }
+                        className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="end_date">Ngày kết thúc</Label>
+                      <input
+                        type="date"
+                        id="end_date"
+                        value={formData.end_date}
+                        onChange={(e) =>
+                          setFormData((prev) => ({
+                            ...prev,
+                            end_date: e.target.value,
+                          }))
+                        }
+                        className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="flex justify-end gap-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => setIsDialogOpen(false)}
+                    >
+                      Hủy
+                    </Button>
+                    <PermissionGate permission="CREATE_CONCENTRATION">
+                      <Button type="submit">Thêm mới</Button>
+                    </PermissionGate>
+                  </div>
+                </form>
+              </DialogContent>
+            </Dialog>
+          </PermissionGate>
         </div>
       </div>
 

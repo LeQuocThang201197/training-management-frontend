@@ -2,7 +2,6 @@ import React, { useState, useEffect } from "react";
 import { AuthContext } from "./AuthContext";
 import { AuthState } from "../types/auth";
 import { API_URL, API_ENDPOINTS } from "../config/api";
-import { Permission, Role, RolePermissions } from "../types/auth";
 import Cookies from "js-cookie";
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
@@ -58,16 +57,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     });
 
     const data = await response.json();
+
     if (!response.ok || !data.success) {
       throw new Error(data.message);
     }
 
     const formattedUser = {
-      id: String(data.data.user.id),
+      id: data.data.user.id,
       email: data.data.user.email,
       name: data.data.user.name,
-      role: data.data.user.role,
-      permissions: [],
+      createdAt: data.data.user.createdAt,
+      updatedAt: data.data.user.updatedAt,
+      roles: data.data.user.roles || [],
+      permissions: data.data.user.permissions || [],
     };
 
     Cookies.set("user", JSON.stringify(formattedUser), {
@@ -95,14 +97,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     });
   };
 
-  const hasPermission = (permission: Permission) => {
-    if (!authState.user) {
-      return false;
-    }
+  const hasPermission = (permission: string) => {
+    if (!authState.user) return false;
 
-    const userRole = authState.user.role.key as Role;
-    const permissions = RolePermissions[userRole] || [];
-    return permissions.includes(permission);
+    if (authState.user.permissions.includes("ADMIN")) return true;
+    return authState.user.permissions.includes(permission);
   };
 
   const register = async (userData: {

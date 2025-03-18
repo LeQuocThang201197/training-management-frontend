@@ -10,7 +10,6 @@ import {
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { PermissionGate } from "@/components/PermissionGate";
-import { Permission } from "@/types/auth";
 import {
   Dialog,
   DialogContent,
@@ -334,7 +333,7 @@ export function TeamsPage() {
                 </DropdownMenuContent>
               </DropdownMenu>
 
-              <PermissionGate permission={Permission.CREATE_TAG}>
+              <PermissionGate permission="CREATE_TAG">
                 <Dialog
                   open={isDialogOpen}
                   onOpenChange={(open) => {

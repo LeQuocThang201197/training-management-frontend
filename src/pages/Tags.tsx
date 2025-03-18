@@ -9,7 +9,6 @@ import {
   ChevronRight,
 } from "lucide-react";
 import { PermissionGate } from "@/components/PermissionGate";
-import { Permission } from "@/types/auth";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -248,7 +247,7 @@ export function TagsPage() {
     return (
       <div className="flex flex-col items-center justify-center min-h-[400px] gap-4">
         <p className="text-gray-500">Chưa có thẻ nào</p>
-        <PermissionGate permission={Permission.CREATE_TAG}>
+        <PermissionGate permission="CREATE_TAG">
           <Dialog open={isDialogOpen} onOpenChange={handleOpenChange}>
             <DialogTrigger asChild>
               <Button>
@@ -332,7 +331,7 @@ export function TagsPage() {
             </DropdownMenuContent>
           </DropdownMenu>
 
-          <PermissionGate permission={Permission.CREATE_TAG}>
+          <PermissionGate permission="CREATE_TAG">
             <Dialog open={isDialogOpen} onOpenChange={handleOpenChange}>
               <DialogTrigger asChild>
                 <Button>

@@ -26,6 +26,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { Link, useLocation } from "react-router-dom";
+import { PermissionGate } from "@/components/PermissionGate";
 
 interface MenuItem {
   name: string;
@@ -35,6 +36,7 @@ interface MenuItem {
     name: string;
     icon: LucideIcon;
     path?: string;
+    requireAdmin?: boolean;
   }[];
 }
 
@@ -95,6 +97,7 @@ const menuItems: MenuItem[] = [
         name: "Vai trò người dùng",
         icon: UserCog,
         path: "/settings/roles/users",
+        requireAdmin: true,
       },
       { name: "Danh mục thẻ", icon: Tag, path: "/settings/categories/tags" },
       {
@@ -261,29 +264,57 @@ export function Sidebar({ collapsed, onCollapsedChange }: SidebarProps) {
                             : "-translate-x-3 opacity-0"
                         )}
                       >
-                        <Link
-                          to={child.path || "#"}
-                          className={cn(
-                            "flex items-center",
-                            "px-6 py-2 pl-12",
-                            "text-foreground",
-                            "hover:text-orange-600",
-                            "transition-colors duration-200",
-                            "text-sm",
-                            location.pathname === child.path &&
-                              "text-orange-600"
-                          )}
-                        >
-                          <child.icon
+                        {child.requireAdmin ? (
+                          <PermissionGate permission="ADMIN">
+                            <Link
+                              to={child.path || "#"}
+                              className={cn(
+                                "flex items-center",
+                                "px-6 py-2 pl-12",
+                                "text-foreground",
+                                "hover:text-orange-600",
+                                "transition-colors duration-200",
+                                "text-sm",
+                                location.pathname === child.path &&
+                                  "text-orange-600"
+                              )}
+                            >
+                              <child.icon
+                                className={cn(
+                                  "mr-3",
+                                  location.pathname === child.path &&
+                                    "text-orange-600"
+                                )}
+                                size={16}
+                              />
+                              {child.name}
+                            </Link>
+                          </PermissionGate>
+                        ) : (
+                          <Link
+                            to={child.path || "#"}
                             className={cn(
-                              "mr-3",
+                              "flex items-center",
+                              "px-6 py-2 pl-12",
+                              "text-foreground",
+                              "hover:text-orange-600",
+                              "transition-colors duration-200",
+                              "text-sm",
                               location.pathname === child.path &&
                                 "text-orange-600"
                             )}
-                            size={16}
-                          />
-                          {child.name}
-                        </Link>
+                          >
+                            <child.icon
+                              className={cn(
+                                "mr-3",
+                                location.pathname === child.path &&
+                                  "text-orange-600"
+                              )}
+                              size={16}
+                            />
+                            {child.name}
+                          </Link>
+                        )}
                       </li>
                     ))}
                   </ul>

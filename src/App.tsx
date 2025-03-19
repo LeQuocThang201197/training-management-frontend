@@ -19,7 +19,7 @@ import { PersonnelRolesPage } from "./pages/PersonnelRoles";
 import { OrganizationsPage } from "./pages/Organizations";
 import { UserManagementPage } from "@/pages/UserManagement";
 import { RoleManagementPage } from "./pages/RoleManagement";
-import { PermissionManagementPage } from "./pages/PermissionManagementPage";
+import { PermissionManagementPage } from "./pages/PermissionManagement";
 
 function App() {
   return (

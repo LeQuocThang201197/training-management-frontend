@@ -17,6 +17,9 @@ import { ConcentrationDetailPage } from "./pages/ConcentrationDetail";
 import { DocumentDetailPage } from "./pages/DocumentDetail";
 import { PersonnelRolesPage } from "./pages/PersonnelRoles";
 import { OrganizationsPage } from "./pages/Organizations";
+import { UserManagementPage } from "@/pages/UserManagement";
+import { RoleManagementPage } from "./pages/RoleManagement";
+import { PermissionManagementPage } from "./pages/PermissionManagementPage";
 
 function App() {
   return (
@@ -77,24 +80,23 @@ function App() {
 
                     {/* Thiết lập routes */}
                     <Route path="/settings">
-                      <Route path="roles">
-                        <Route
-                          path="personnel"
-                          element={
-                            <PermissionGate permission="READ_PERSON">
-                              <PersonnelRolesPage />
-                            </PermissionGate>
-                          }
-                        />
-                        <Route
-                          path="users"
-                          element={
-                            <PermissionGate permission="READ_PERSON">
-                              <div>Vai trò người dùng</div>
-                            </PermissionGate>
-                          }
-                        />
-                      </Route>
+                      <Route
+                        path="roles/personnel"
+                        element={
+                          <PermissionGate permission="READ_PERSON">
+                            <PersonnelRolesPage />
+                          </PermissionGate>
+                        }
+                      />
+
+                      <Route
+                        path="users"
+                        element={
+                          <PermissionGate permission="ADMIN">
+                            <UserManagementPage />
+                          </PermissionGate>
+                        }
+                      />
                       <Route path="categories">
                         <Route
                           path="tags"
@@ -129,6 +131,22 @@ function App() {
                           }
                         />
                       </Route>
+                      <Route
+                        path="roles"
+                        element={
+                          <PermissionGate permission="ADMIN">
+                            <RoleManagementPage />
+                          </PermissionGate>
+                        }
+                      />
+                      <Route
+                        path="permissions"
+                        element={
+                          <PermissionGate permission="ADMIN">
+                            <PermissionManagementPage />
+                          </PermissionGate>
+                        }
+                      />
                     </Route>
 
                     {/* Thành tích */}

@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import {
   ChartPie,
   ClipboardList,
-  Medal,
+  // Medal,
   Container,
   Dumbbell,
   Trophy,
@@ -15,13 +15,15 @@ import {
   Volleyball,
   FileText,
   SquareUserRound,
-  ChartNoAxesCombined,
-  NotebookPen,
-  ChartColumnIncreasing,
+  // ChartNoAxesCombined,
+  // NotebookPen,
+  // ChartColumnIncreasing,
   LucideIcon,
   PanelLeftClose,
   PanelLeftOpen,
   Building,
+  Shield,
+  Lock,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -67,23 +69,23 @@ const menuItems: MenuItem[] = [
       },
     ],
   },
-  { name: "Thành tích", icon: Medal, path: "/achievement" },
-  {
-    name: "Tổ chuyên môn",
-    icon: ChartNoAxesCombined,
-    children: [
-      {
-        name: "Thói quen ghi chép",
-        icon: NotebookPen,
-        path: "/specialized-team/habit",
-      },
-      {
-        name: "Chỉ số",
-        icon: ChartColumnIncreasing,
-        path: "/specialized-team/statistics",
-      },
-    ],
-  },
+  // { name: "Thành tích", icon: Medal, path: "/achievement" },
+  // {
+  //   name: "Tổ chuyên môn",
+  //   icon: ChartNoAxesCombined,
+  //   children: [
+  //     {
+  //       name: "Thói quen ghi chép",
+  //       icon: NotebookPen,
+  //       path: "/specialized-team/habit",
+  //     },
+  //     {
+  //       name: "Chỉ số",
+  //       icon: ChartColumnIncreasing,
+  //       path: "/specialized-team/statistics",
+  //     },
+  //   ],
+  // },
   {
     name: "Thiết lập",
     icon: Settings,
@@ -94,9 +96,9 @@ const menuItems: MenuItem[] = [
         path: "/settings/roles/personnel",
       },
       {
-        name: "Vai trò người dùng",
+        name: "Quản lý người dùng",
         icon: UserCog,
-        path: "/settings/roles/users",
+        path: "/settings/users",
         requireAdmin: true,
       },
       { name: "Danh mục thẻ", icon: Tag, path: "/settings/categories/tags" },
@@ -110,6 +112,18 @@ const menuItems: MenuItem[] = [
         name: "Danh mục đơn vị",
         icon: Building,
         path: "/settings/categories/organizations",
+      },
+      {
+        name: "Quản lý vai trò",
+        icon: Shield,
+        path: "/settings/roles",
+        requireAdmin: true,
+      },
+      {
+        name: "Danh sách quyền",
+        icon: Lock,
+        path: "/settings/permissions",
+        requireAdmin: true,
       },
     ],
   },

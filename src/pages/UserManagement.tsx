@@ -13,7 +13,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
   Search,
-  Plus,
   ArrowUpDown,
   ChevronLeft,
   ChevronRight,
@@ -26,9 +25,10 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { PermissionGate } from "@/components/PermissionGate";
+
 import { Card } from "@/components/ui/card";
 import { User } from "@/types/auth";
+import { ManageUserRolesDialog } from "@/components/dialogs/ManageUserRolesDialog";
 
 const ITEMS_PER_PAGE = 10;
 
@@ -54,6 +54,8 @@ export function UserManagementPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [currentSort, setCurrentSort] = useState<SortOption>(sortOptions[0]);
   const [searchTerm, setSearchTerm] = useState("");
+  const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const [roleDialogOpen, setRoleDialogOpen] = useState(false);
 
   const fetchUsers = async () => {
     try {
@@ -150,13 +152,6 @@ export function UserManagementPage() {
                   ))}
                 </DropdownMenuContent>
               </DropdownMenu>
-
-              <PermissionGate permission="ADMIN">
-                <Button>
-                  <Plus className="mr-2 h-4 w-4" />
-                  Thêm người dùng
-                </Button>
-              </PermissionGate>
             </div>
           </div>
 
@@ -214,7 +209,12 @@ export function UserManagementPage() {
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
-                            <DropdownMenuItem>
+                            <DropdownMenuItem
+                              onClick={() => {
+                                setSelectedUser(user);
+                                setRoleDialogOpen(true);
+                              }}
+                            >
                               <UserCog className="mr-2 h-4 w-4" />
                               Phân vai trò
                             </DropdownMenuItem>
@@ -260,6 +260,18 @@ export function UserManagementPage() {
                 <ChevronRight className="h-4 w-4" />
               </Button>
             </div>
+          )}
+
+          {selectedUser && (
+            <ManageUserRolesDialog
+              user={selectedUser}
+              open={roleDialogOpen}
+              onOpenChange={(open) => {
+                setRoleDialogOpen(open);
+                if (!open) setSelectedUser(null);
+              }}
+              onSuccess={fetchUsers}
+            />
           )}
         </div>
       )}

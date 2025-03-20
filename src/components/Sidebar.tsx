@@ -95,12 +95,6 @@ const menuItems: MenuItem[] = [
         icon: SquareUserRound,
         path: "/settings/roles/personnel",
       },
-      {
-        name: "Quản lý người dùng",
-        icon: UserCog,
-        path: "/settings/users",
-        requireAdmin: true,
-      },
       { name: "Danh mục thẻ", icon: Tag, path: "/settings/categories/tags" },
       {
         name: "Danh mục môn thể thao",
@@ -112,6 +106,12 @@ const menuItems: MenuItem[] = [
         name: "Danh mục đơn vị",
         icon: Building,
         path: "/settings/categories/organizations",
+      },
+      {
+        name: "Quản lý người dùng",
+        icon: UserCog,
+        path: "/settings/users",
+        requireAdmin: true,
       },
       {
         name: "Quản lý vai trò",

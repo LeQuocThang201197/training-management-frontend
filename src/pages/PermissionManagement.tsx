@@ -17,19 +17,9 @@ interface Permission {
   id: number;
   name: string;
   description: string;
-  group: string;
+  createdAt: string;
+  updatedAt: string;
 }
-
-const permissionGroups = {
-  user: "Quản lý người dùng",
-  role: "Quản lý vai trò",
-  person: "Quản lý nhân sự",
-  document: "Quản lý văn bản",
-  sport: "Quản lý thể thao",
-  team: "Quản lý đội",
-  tag: "Quản lý thẻ",
-  organization: "Quản lý đơn vị",
-} as const;
 
 export function PermissionManagementPage() {
   const [permissions, setPermissions] = useState<Permission[]>([]);
@@ -61,21 +51,43 @@ export function PermissionManagementPage() {
   const filteredPermissions = permissions.filter(
     (permission) =>
       permission.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      permission.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      permissionGroups[permission.group as keyof typeof permissionGroups]
-        .toLowerCase()
-        .includes(searchTerm.toLowerCase())
+      permission.description.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  // Group permissions by their group
+  // Group permissions by resource (extracted from permission name)
   const groupedPermissions = filteredPermissions.reduce((acc, permission) => {
-    const group = permission.group;
-    if (!acc[group]) {
-      acc[group] = [];
+    // Special case for ADMIN permission
+    if (permission.name === "ADMIN") {
+      if (!acc["ADMIN"]) {
+        acc["ADMIN"] = [];
+      }
+      acc["ADMIN"].push(permission);
+      return acc;
     }
-    acc[group].push(permission);
+
+    // For other permissions, extract resource name
+    const resource = permission.name.split("_")[1];
+    if (!acc[resource]) {
+      acc[resource] = [];
+    }
+    acc[resource].push(permission);
     return acc;
   }, {} as Record<string, Permission[]>);
+
+  // Map of resource names to display names
+  const resourceNames: Record<string, string> = {
+    ADMIN: "Quản trị hệ thống",
+    PERSON: "Quản lý nhân sự",
+    CONCENTRATION: "Quản lý tập trung",
+    TRAINING: "Quản lý tập huấn",
+    COMPETITION: "Quản lý thi đấu",
+    PAPER: "Quản lý văn bản",
+    TEAM: "Quản lý đội",
+    SPORT: "Quản lý môn thể thao",
+    ORGANIZATION: "Quản lý đơn vị",
+    PERSON_ROLE: "Quản lý vai trò nhân sự",
+    ABSENCE: "Quản lý vắng mặt",
+  };
 
   return (
     <Card>
@@ -109,11 +121,11 @@ export function PermissionManagementPage() {
           </div>
 
           <div className="space-y-6">
-            {Object.entries(groupedPermissions).map(([group, perms]) => (
-              <div key={group} className="rounded-md border">
+            {Object.entries(groupedPermissions).map(([resource, perms]) => (
+              <div key={resource} className="rounded-md border">
                 <div className="bg-muted px-4 py-2 border-b">
                   <h3 className="font-medium">
-                    {permissionGroups[group as keyof typeof permissionGroups]}
+                    {resourceNames[resource] || resource}
                   </h3>
                 </div>
                 <Table>

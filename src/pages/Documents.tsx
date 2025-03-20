@@ -1,15 +1,15 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { PlusCircle, Search, ArrowUpDown } from "lucide-react";
-import { Card } from "@/components/ui/card";
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
+  PlusCircle,
+  Search,
+  ArrowUpDown,
+  Edit,
+  Eye,
+  FileText,
+} from "lucide-react";
+import { Card } from "@/components/ui/card";
 import {
   Table,
   TableBody,
@@ -25,9 +25,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { API_URL } from "@/config/api";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { useNavigate } from "react-router-dom";
+import { DocumentFormDialog } from "@/components/dialogs/DocumentFormDialog";
 
 interface Document {
   id: number;
@@ -57,23 +56,15 @@ const sortOptions: SortOption[] = [
   { field: "createdAt", direction: "asc", label: "Cũ nhất" },
 ];
 
-interface DocumentFormData {
-  number: number | null;
-  code: string | null;
-  publisher: string;
-  type: string;
-  content: string;
-  related_year: number;
-  date: string;
-  file: File | null;
-}
-
 export function DocumentsPage() {
   const [documents, setDocuments] = useState<Document[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
   const navigate = useNavigate();
+  const [selectedDocument, setSelectedDocument] = useState<Document | null>(
+    null
+  );
+  const [formDialogOpen, setFormDialogOpen] = useState(false);
 
   useEffect(() => {
     const fetchDocuments = async () => {
@@ -99,53 +90,6 @@ export function DocumentsPage() {
 
   const [currentSort, setCurrentSort] = useState<SortOption>(sortOptions[0]);
   const [searchTerm, setSearchTerm] = useState("");
-
-  const [formData, setFormData] = useState<DocumentFormData>({
-    number: null,
-    code: null,
-    publisher: "",
-    type: "",
-    content: "",
-    related_year: new Date().getFullYear(),
-    date: new Date().toISOString().split("T")[0],
-    file: null,
-  });
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    try {
-      const formDataToSend = new FormData();
-      Object.entries(formData).forEach(([key, value]) => {
-        if (value !== null) formDataToSend.append(key, value);
-      });
-
-      const response = await fetch(`${API_URL}/papers`, {
-        method: "POST",
-        credentials: "include",
-        body: formDataToSend,
-      });
-
-      if (!response.ok) throw new Error("Không thể tạo văn bản");
-
-      const data = await response.json();
-      if (data.success) {
-        setDocuments((prev) => [...prev, data.data]);
-        setIsDialogOpen(false);
-        setFormData({
-          number: null,
-          code: null,
-          date: "",
-          type: "",
-          related_year: new Date().getFullYear(),
-          publisher: "",
-          content: "",
-          file: null,
-        });
-      }
-    } catch (err) {
-      console.error("Create document error:", err);
-    }
-  };
 
   const handleViewFile = async (id: number) => {
     try {
@@ -209,172 +153,10 @@ export function DocumentsPage() {
                   </DropdownMenuContent>
                 </DropdownMenu>
 
-                <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-                  <DialogTrigger asChild>
-                    <Button>
-                      <PlusCircle className="mr-2 h-4 w-4" />
-                      Thêm văn bản
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent className="sm:max-w-[600px]">
-                    <DialogHeader>
-                      <DialogTitle>Thêm văn bản mới</DialogTitle>
-                    </DialogHeader>
-                    <form onSubmit={handleSubmit} className="space-y-4">
-                      <div className="flex gap-4">
-                        <div className="space-y-2 w-24">
-                          <Label htmlFor="number">Số</Label>
-                          <Input
-                            id="number"
-                            type="number"
-                            value={
-                              formData.number === null ? "" : formData.number
-                            }
-                            onChange={(e) =>
-                              setFormData((prev) => ({
-                                ...prev,
-                                number:
-                                  e.target.value === ""
-                                    ? null
-                                    : parseInt(e.target.value),
-                              }))
-                            }
-                          />
-                        </div>
-
-                        <div className="space-y-2 flex-1">
-                          <Label htmlFor="code">Ký hiệu</Label>
-                          <Input
-                            id="code"
-                            value={formData.code === null ? "" : formData.code}
-                            onChange={(e) =>
-                              setFormData((prev) => ({
-                                ...prev,
-                                code: e.target.value || null,
-                              }))
-                            }
-                            placeholder="VD: QĐ-TCTDTT"
-                          />
-                        </div>
-
-                        <div className="space-y-2">
-                          <Label htmlFor="date">Ngày ban hành</Label>
-                          <input
-                            type="date"
-                            id="date"
-                            value={formData.date}
-                            onChange={(e) =>
-                              setFormData({ ...formData, date: e.target.value })
-                            }
-                            className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                          />
-                        </div>
-                      </div>
-
-                      <div className="flex gap-4">
-                        <div className="space-y-2 flex-1">
-                          <Label htmlFor="type">Loại văn bản</Label>
-                          <select
-                            id="type"
-                            className="w-full p-2 border rounded-md"
-                            value={formData.type}
-                            onChange={(e) =>
-                              setFormData((prev) => ({
-                                ...prev,
-                                type: e.target.value,
-                              }))
-                            }
-                            required
-                          >
-                            <option value="">Chọn loại văn bản</option>
-                            <option value="Quyết định">Quyết định</option>
-                            <option value="Công văn">Công văn</option>
-                            <option value="Tờ trình">Tờ trình</option>
-                            <option value="Thông báo">Thông báo</option>
-                            <option value="Kế hoạch">Kế hoạch</option>
-                            <option value="Báo cáo">Báo cáo</option>
-                          </select>
-                        </div>
-
-                        <div className="space-y-2 w-40">
-                          <Label htmlFor="related_year">Năm liên quan</Label>
-                          <Input
-                            id="related_year"
-                            type="number"
-                            value={formData.related_year}
-                            onChange={(e) =>
-                              setFormData((prev) => ({
-                                ...prev,
-                                related_year: parseInt(e.target.value),
-                              }))
-                            }
-                            required
-                          />
-                        </div>
-
-                        <div className="space-y-2 flex-1">
-                          <Label htmlFor="publisher">Đơn vị ban hành</Label>
-                          <Input
-                            id="publisher"
-                            value={formData.publisher}
-                            onChange={(e) =>
-                              setFormData((prev) => ({
-                                ...prev,
-                                publisher: e.target.value,
-                              }))
-                            }
-                            placeholder="VD: Cục thể dục thể thao"
-                            required
-                          />
-                        </div>
-                      </div>
-
-                      <div className="space-y-2">
-                        <Label htmlFor="content">Trích yếu nội dung</Label>
-                        <Textarea
-                          id="content"
-                          value={formData.content}
-                          onChange={(e) =>
-                            setFormData((prev) => ({
-                              ...prev,
-                              content: e.target.value,
-                            }))
-                          }
-                          placeholder="VD: V/v tập huấn đội tuyển Điền kinh quốc gia tại Trung tâm  
-Huấn luyện Thể thao quốc gia thành phố Hồ Chí Minh năm 2025"
-                          required
-                        />
-                      </div>
-
-                      <div className="space-y-2">
-                        <Label htmlFor="file">Tệp đính kèm</Label>
-                        <Input
-                          id="file"
-                          type="file"
-                          onChange={(e) =>
-                            setFormData((prev) => ({
-                              ...prev,
-                              file: e.target.files?.[0] || null,
-                            }))
-                          }
-                          accept=".pdf,.doc,.docx"
-                          required
-                        />
-                      </div>
-
-                      <div className="flex justify-end gap-2">
-                        <Button
-                          type="button"
-                          variant="outline"
-                          onClick={() => setIsDialogOpen(false)}
-                        >
-                          Hủy
-                        </Button>
-                        <Button type="submit">Thêm mới</Button>
-                      </div>
-                    </form>
-                  </DialogContent>
-                </Dialog>
+                <Button onClick={() => setFormDialogOpen(true)}>
+                  <PlusCircle className="mr-2 h-4 w-4" />
+                  Thêm tài liệu
+                </Button>
               </div>
             </div>
 
@@ -426,22 +208,38 @@ Huấn luyện Thể thao quốc gia thành phố Hồ Chí Minh năm 2025"
                       <TableCell>{doc.publisher}</TableCell>
                       <TableCell>
                         <div className="flex gap-1">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleViewFile(doc.id)}
-                          >
-                            Xem
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() =>
-                              navigate(`/management/papers/${doc.id}`)
-                            }
-                          >
-                            Chi tiết
-                          </Button>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="sm">
+                                <Edit className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent>
+                              <DropdownMenuItem
+                                onClick={() => handleViewFile(doc.id)}
+                              >
+                                <Eye className="mr-2 h-4 w-4" />
+                                Xem
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                onClick={() =>
+                                  navigate(`/management/papers/${doc.id}`)
+                                }
+                              >
+                                <FileText className="mr-2 h-4 w-4" />
+                                Chi tiết
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                onClick={() => {
+                                  setSelectedDocument(doc);
+                                  setFormDialogOpen(true);
+                                }}
+                              >
+                                <Edit className="mr-2 h-4 w-4" />
+                                Chỉnh sửa
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
                         </div>
                       </TableCell>
                     </TableRow>
@@ -452,6 +250,33 @@ Huấn luyện Thể thao quốc gia thành phố Hồ Chí Minh năm 2025"
           </>
         )}
       </Card>
+      <DocumentFormDialog
+        document={selectedDocument}
+        open={formDialogOpen}
+        onOpenChange={(open) => {
+          setFormDialogOpen(open);
+          if (!open) setSelectedDocument(null);
+        }}
+        onSuccess={() => {
+          const fetchDocuments = async () => {
+            try {
+              const response = await fetch(`${API_URL}/papers`, {
+                credentials: "include",
+              });
+              if (!response.ok)
+                throw new Error("Không thể tải danh sách văn bản");
+
+              const data = await response.json();
+              if (data.success) {
+                setDocuments(data.data);
+              }
+            } catch (err) {
+              setError(err instanceof Error ? err.message : "Lỗi tải dữ liệu");
+            }
+          };
+          fetchDocuments();
+        }}
+      />
     </div>
   );
 }

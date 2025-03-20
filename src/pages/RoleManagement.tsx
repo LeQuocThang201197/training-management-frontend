@@ -11,7 +11,14 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Search, Plus, MoreHorizontal, Shield, Trash2 } from "lucide-react";
+import {
+  Search,
+  Plus,
+  MoreHorizontal,
+  Shield,
+  Trash2,
+  Edit,
+} from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -22,6 +29,7 @@ import {
 import { Card } from "@/components/ui/card";
 import { ManageRolePermissionsDialog } from "@/components/dialogs/ManageRolePermissionsDialog";
 import { Role } from "@/types/role";
+import { RoleFormDialog } from "@/components/dialogs/RoleFormDialog";
 
 export function RoleManagementPage() {
   const [roles, setRoles] = useState<Role[]>([]);
@@ -30,6 +38,7 @@ export function RoleManagementPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedRole, setSelectedRole] = useState<Role | null>(null);
   const [permissionDialogOpen, setPermissionDialogOpen] = useState(false);
+  const [formDialogOpen, setFormDialogOpen] = useState(false);
 
   const fetchRoles = async () => {
     try {
@@ -94,7 +103,7 @@ export function RoleManagementPage() {
                 Quản lý vai trò và phân quyền trong hệ thống
               </p>
             </div>
-            <Button>
+            <Button onClick={() => setFormDialogOpen(true)}>
               <Plus className="mr-2 h-4 w-4" />
               Thêm vai trò
             </Button>
@@ -163,6 +172,15 @@ export function RoleManagementPage() {
                               <Shield className="mr-2 h-4 w-4" />
                               Phân quyền
                             </DropdownMenuItem>
+                            <DropdownMenuItem
+                              onClick={() => {
+                                setSelectedRole(role);
+                                setFormDialogOpen(true);
+                              }}
+                            >
+                              <Edit className="mr-2 h-4 w-4" />
+                              Chỉnh sửa
+                            </DropdownMenuItem>
                             <DropdownMenuSeparator />
                             <DropdownMenuItem
                               className="text-red-600"
@@ -191,6 +209,16 @@ export function RoleManagementPage() {
               }}
             />
           )}
+
+          <RoleFormDialog
+            role={selectedRole || undefined}
+            open={formDialogOpen}
+            onOpenChange={(open) => {
+              setFormDialogOpen(open);
+              if (!open) setSelectedRole(null);
+            }}
+            onSuccess={fetchRoles}
+          />
         </div>
       )}
     </Card>

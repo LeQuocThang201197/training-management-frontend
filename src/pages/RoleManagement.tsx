@@ -20,47 +20,35 @@ import {
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 import { Card } from "@/components/ui/card";
-
-interface Permission {
-  permission: {
-    id?: number;
-    name: string;
-    description: string;
-  };
-}
-
-interface Role {
-  id: number;
-  name: string;
-  description: string;
-  permissions: Permission[];
-  createdAt: string;
-}
+import { ManageRolePermissionsDialog } from "@/components/dialogs/ManageRolePermissionsDialog";
+import { Role } from "@/types/role";
 
 export function RoleManagementPage() {
   const [roles, setRoles] = useState<Role[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
+  const [selectedRole, setSelectedRole] = useState<Role | null>(null);
+  const [permissionDialogOpen, setPermissionDialogOpen] = useState(false);
+
+  const fetchRoles = async () => {
+    try {
+      const response = await fetch(`${API_URL}/auth/roles`, {
+        credentials: "include",
+      });
+      if (!response.ok) throw new Error("Lấy dữ liệu vai trò thất bại");
+
+      const data = await response.json();
+      setRoles(data.data);
+      setError(null);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Lỗi lấy dữ liệu");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchRoles = async () => {
-      try {
-        const response = await fetch(`${API_URL}/auth/roles`, {
-          credentials: "include",
-        });
-        if (!response.ok) throw new Error("Lấy dữ liệu vai trò thất bại");
-
-        const data = await response.json();
-        setRoles(data.data);
-        setError(null);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "Lỗi lấy dữ liệu");
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchRoles();
   }, []);
 
@@ -166,7 +154,12 @@ export function RoleManagementPage() {
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
-                            <DropdownMenuItem>
+                            <DropdownMenuItem
+                              onClick={() => {
+                                setSelectedRole(role);
+                                setPermissionDialogOpen(true);
+                              }}
+                            >
                               <Shield className="mr-2 h-4 w-4" />
                               Phân quyền
                             </DropdownMenuItem>
@@ -187,6 +180,17 @@ export function RoleManagementPage() {
               </TableBody>
             </Table>
           </div>
+
+          {selectedRole && (
+            <ManageRolePermissionsDialog
+              role={selectedRole}
+              open={permissionDialogOpen}
+              onOpenChange={setPermissionDialogOpen}
+              onSuccess={() => {
+                fetchRoles();
+              }}
+            />
+          )}
         </div>
       )}
     </Card>

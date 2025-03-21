@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -48,16 +48,14 @@ interface Document {
 }
 
 type SortOption = {
-  field: "title" | "createdAt";
+  field: "date";
   direction: "asc" | "desc";
   label: string;
 };
 
 const sortOptions: SortOption[] = [
-  { field: "title", direction: "asc", label: "Tiêu đề (A-Z)" },
-  { field: "title", direction: "desc", label: "Tiêu đề (Z-A)" },
-  { field: "createdAt", direction: "desc", label: "Mới nhất" },
-  { field: "createdAt", direction: "asc", label: "Cũ nhất" },
+  { field: "date", direction: "desc", label: "Ngày ban hành (Mới nhất)" },
+  { field: "date", direction: "asc", label: "Ngày ban hành (Cũ nhất)" },
 ];
 
 // Add pagination interface
@@ -84,7 +82,9 @@ export function DocumentsPage() {
   );
   const [formDialogOpen, setFormDialogOpen] = useState(false);
 
-  // Add pagination state
+  // Update state management
+  const [currentSort, setCurrentSort] = useState<SortOption>(sortOptions[0]);
+  const [searchTerm, setSearchTerm] = useState("");
   const [pagination, setPagination] = useState<PaginationData>({
     page: 1,
     limit: 10,
@@ -92,40 +92,44 @@ export function DocumentsPage() {
     totalPages: 1,
   });
 
-  // Update fetchDocuments to handle pagination
-  const fetchDocuments = async (page: number = 1) => {
-    try {
-      const response = await fetch(`${API_URL}/papers?page=${page}`, {
-        credentials: "include",
-      });
-      if (!response.ok) throw new Error("Không thể tải danh sách văn bản");
+  // Update fetchDocuments to be independent of state changes
+  const fetchDocuments = useCallback(
+    async (page: number, search: string, sort: SortOption) => {
+      try {
+        const params = new URLSearchParams({
+          page: page.toString(),
+          sortBy: sort.field,
+          order: sort.direction,
+          ...(search && { search }),
+        });
 
-      const data: ApiResponse = await response.json();
-      if (data.success) {
-        setDocuments(data.data);
-        setPagination(data.pagination);
+        const response = await fetch(`${API_URL}/papers?${params}`, {
+          credentials: "include",
+        });
+        if (!response.ok) throw new Error("Không thể tải danh sách văn bản");
+
+        const data: ApiResponse = await response.json();
+        if (data.success) {
+          setDocuments(data.data);
+          setPagination(data.pagination);
+        }
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Lỗi tải dữ liệu");
+      } finally {
+        setLoading(false);
       }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Lỗi tải dữ liệu");
-    } finally {
-      setLoading(false);
-    }
-  };
+    },
+    []
+  );
 
-  // Update useEffect to use pagination
+  // Separate effects for different triggers
   useEffect(() => {
-    fetchDocuments(pagination.page);
-  }, [pagination.page]); // Reload when page changes
+    fetchDocuments(1, searchTerm, currentSort);
+  }, [searchTerm, currentSort, fetchDocuments]);
 
-  // Add page change handler
-  const handlePageChange = (newPage: number) => {
-    if (newPage >= 1 && newPage <= pagination.totalPages) {
-      setPagination((prev) => ({ ...prev, page: newPage }));
-    }
-  };
-
-  const [currentSort, setCurrentSort] = useState<SortOption>(sortOptions[0]);
-  const [searchTerm, setSearchTerm] = useState("");
+  useEffect(() => {
+    fetchDocuments(pagination.page, searchTerm, currentSort);
+  }, [pagination.page, searchTerm, currentSort, fetchDocuments]);
 
   const handleViewFile = async (id: number) => {
     try {
@@ -183,6 +187,12 @@ export function DocumentsPage() {
     }
   };
 
+  const handlePageChange = (newPage: number) => {
+    if (newPage >= 1 && newPage <= pagination.totalPages) {
+      setPagination((prev) => ({ ...prev, page: newPage }));
+    }
+  };
+
   return (
     <div className="space-y-4">
       <Card className="p-6 space-y-6">
@@ -234,19 +244,11 @@ export function DocumentsPage() {
               <div className="flex-1 relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500" />
                 <Input
-                  placeholder="Tìm kiếm văn bản..."
+                  placeholder="Tìm kiếm bằng số, nội dung hoặc đơn vị ban hành văn bản..."
                   className="pl-10"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                 />
-              </div>
-              <div className="w-64">
-                <select className="w-full p-2 border rounded-md">
-                  <option value="">Tất cả loại</option>
-                  <option value="plan">Kế hoạch</option>
-                  <option value="report">Báo cáo</option>
-                  <option value="decision">Quyết định</option>
-                </select>
               </div>
             </div>
 
@@ -371,7 +373,7 @@ export function DocumentsPage() {
           if (!open) setSelectedDocument(null);
         }}
         onSuccess={() => {
-          fetchDocuments(pagination.page);
+          fetchDocuments(pagination.page, searchTerm, currentSort);
         }}
       />
     </div>

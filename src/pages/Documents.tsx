@@ -8,6 +8,8 @@ import {
   Edit,
   Eye,
   FileText,
+  EllipsisVertical,
+  Trash2,
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import {
@@ -113,6 +115,40 @@ export function DocumentsPage() {
     }
   };
 
+  const handleDeleteDocument = async (id: number) => {
+    if (!window.confirm("Bạn có chắc chắn muốn xóa văn bản này?")) return;
+
+    try {
+      const response = await fetch(`${API_URL}/papers/${id}`, {
+        method: "DELETE",
+        credentials: "include",
+      });
+
+      if (!response.ok) throw new Error("Xóa văn bản thất bại");
+
+      // Refresh documents list
+      const fetchDocuments = async () => {
+        try {
+          const response = await fetch(`${API_URL}/papers`, {
+            credentials: "include",
+          });
+          if (!response.ok) throw new Error("Không thể tải danh sách văn bản");
+
+          const data = await response.json();
+          if (data.success) {
+            setDocuments(data.data);
+          }
+        } catch (err) {
+          setError(err instanceof Error ? err.message : "Lỗi tải dữ liệu");
+        }
+      };
+      fetchDocuments();
+    } catch (error) {
+      console.error("Delete document error:", error);
+      alert("Không thể xóa văn bản");
+    }
+  };
+
   return (
     <div className="space-y-4">
       <Card className="p-6 space-y-6">
@@ -211,7 +247,7 @@ export function DocumentsPage() {
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                               <Button variant="ghost" size="sm">
-                                <Edit className="h-4 w-4" />
+                                <EllipsisVertical className="h-4 w-4" />
                               </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent>
@@ -237,6 +273,13 @@ export function DocumentsPage() {
                               >
                                 <Edit className="mr-2 h-4 w-4" />
                                 Chỉnh sửa
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                onClick={() => handleDeleteDocument(doc.id)}
+                                className="text-red-600"
+                              >
+                                <Trash2 className="mr-2 h-4 w-4" />
+                                Xóa
                               </DropdownMenuItem>
                             </DropdownMenuContent>
                           </DropdownMenu>

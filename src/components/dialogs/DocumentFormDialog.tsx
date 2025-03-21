@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { API_URL } from "@/config/api";
 import {
   Dialog,
@@ -48,6 +48,42 @@ export function DocumentFormDialog({
     file: null as File | null,
   });
   const [loading, setLoading] = useState(false);
+  const [currentFileName, setCurrentFileName] = useState<string>("");
+
+  useEffect(() => {
+    if (open && document) {
+      setFormData({
+        number: document.number,
+        code: document.code,
+        publisher: document.publisher,
+        type: document.type,
+        content: document.content,
+        related_year: document.related_year,
+        date: document.date,
+        file: null, // Keep null initially since we can't get the file back
+      });
+    } else if (!open) {
+      // Reset form when closing
+      setFormData({
+        number: null,
+        code: null,
+        publisher: "",
+        type: "",
+        content: "",
+        related_year: new Date().getFullYear(),
+        date: new Date().toISOString().split("T")[0],
+        file: null,
+      });
+    }
+  }, [open, document]);
+
+  useEffect(() => {
+    if (document?.file_name) {
+      setCurrentFileName(document.file_name);
+    } else {
+      setCurrentFileName("");
+    }
+  }, [document]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -56,8 +92,11 @@ export function DocumentFormDialog({
     const formDataToSend = new FormData();
     Object.entries(formData).forEach(([key, value]) => {
       if (value !== null) {
-        if (value instanceof File) {
-          formDataToSend.append(key, value);
+        if (key === "file") {
+          // Only append file if a new one is selected
+          if (value instanceof File) {
+            formDataToSend.append("file", value);
+          }
         } else {
           formDataToSend.append(key, String(value));
         }
@@ -80,6 +119,7 @@ export function DocumentFormDialog({
       onOpenChange(false);
     } catch (error) {
       console.error("Failed to save document:", error);
+      alert("Lưu văn bản thất bại");
     } finally {
       setLoading(false);
     }
@@ -216,6 +256,11 @@ export function DocumentFormDialog({
 
           <div className="space-y-2">
             <Label htmlFor="file">Tệp đính kèm</Label>
+            {currentFileName && (
+              <div className="text-sm text-muted-foreground mb-2">
+                File hiện tại: {currentFileName}
+              </div>
+            )}
             <Input
               id="file"
               type="file"
@@ -228,6 +273,11 @@ export function DocumentFormDialog({
               accept=".pdf,.doc,.docx"
               required={!document}
             />
+            <p className="text-sm text-muted-foreground">
+              {document
+                ? "Tải lên file mới nếu muốn thay thế file hiện tại"
+                : "Chọn file để tải lên (.pdf, .doc, .docx)"}
+            </p>
           </div>
 
           <div className="flex justify-end gap-2">

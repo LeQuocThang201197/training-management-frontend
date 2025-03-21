@@ -10,6 +10,8 @@ import {
   FileText,
   EllipsisVertical,
   Trash2,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import {
@@ -58,6 +60,20 @@ const sortOptions: SortOption[] = [
   { field: "createdAt", direction: "asc", label: "Cũ nhất" },
 ];
 
+// Add pagination interface
+interface PaginationData {
+  page: number;
+  limit: number;
+  total: number;
+  totalPages: number;
+}
+
+interface ApiResponse {
+  success: boolean;
+  data: Document[];
+  pagination: PaginationData;
+}
+
 export function DocumentsPage() {
   const [documents, setDocuments] = useState<Document[]>([]);
   const [loading, setLoading] = useState(true);
@@ -68,27 +84,45 @@ export function DocumentsPage() {
   );
   const [formDialogOpen, setFormDialogOpen] = useState(false);
 
-  useEffect(() => {
-    const fetchDocuments = async () => {
-      try {
-        const response = await fetch(`${API_URL}/papers`, {
-          credentials: "include",
-        });
-        if (!response.ok) throw new Error("Không thể tải danh sách văn bản");
+  // Add pagination state
+  const [pagination, setPagination] = useState<PaginationData>({
+    page: 1,
+    limit: 10,
+    total: 0,
+    totalPages: 1,
+  });
 
-        const data = await response.json();
-        if (data.success) {
-          setDocuments(data.data);
-        }
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "Lỗi tải dữ liệu");
-      } finally {
-        setLoading(false);
+  // Update fetchDocuments to handle pagination
+  const fetchDocuments = async (page: number = 1) => {
+    try {
+      const response = await fetch(`${API_URL}/papers?page=${page}`, {
+        credentials: "include",
+      });
+      if (!response.ok) throw new Error("Không thể tải danh sách văn bản");
+
+      const data: ApiResponse = await response.json();
+      if (data.success) {
+        setDocuments(data.data);
+        setPagination(data.pagination);
       }
-    };
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Lỗi tải dữ liệu");
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    fetchDocuments();
-  }, []);
+  // Update useEffect to use pagination
+  useEffect(() => {
+    fetchDocuments(pagination.page);
+  }, [pagination.page]); // Reload when page changes
+
+  // Add page change handler
+  const handlePageChange = (newPage: number) => {
+    if (newPage >= 1 && newPage <= pagination.totalPages) {
+      setPagination((prev) => ({ ...prev, page: newPage }));
+    }
+  };
 
   const [currentSort, setCurrentSort] = useState<SortOption>(sortOptions[0]);
   const [searchTerm, setSearchTerm] = useState("");
@@ -290,6 +324,42 @@ export function DocumentsPage() {
                 </TableBody>
               </Table>
             </div>
+
+            {/* Update pagination UI */}
+            {pagination.totalPages > 1 && (
+              <div className="flex items-center justify-center gap-2 mt-4">
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => handlePageChange(pagination.page - 1)}
+                  disabled={pagination.page === 1}
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
+                {Array.from(
+                  { length: pagination.totalPages },
+                  (_, i) => i + 1
+                ).map((page) => (
+                  <Button
+                    key={page}
+                    variant={pagination.page === page ? "default" : "outline"}
+                    size="icon"
+                    onClick={() => handlePageChange(page)}
+                    className="w-8 h-8"
+                  >
+                    {page}
+                  </Button>
+                ))}
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => handlePageChange(pagination.page + 1)}
+                  disabled={pagination.page === pagination.totalPages}
+                >
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              </div>
+            )}
           </>
         )}
       </Card>
@@ -301,23 +371,7 @@ export function DocumentsPage() {
           if (!open) setSelectedDocument(null);
         }}
         onSuccess={() => {
-          const fetchDocuments = async () => {
-            try {
-              const response = await fetch(`${API_URL}/papers`, {
-                credentials: "include",
-              });
-              if (!response.ok)
-                throw new Error("Không thể tải danh sách văn bản");
-
-              const data = await response.json();
-              if (data.success) {
-                setDocuments(data.data);
-              }
-            } catch (err) {
-              setError(err instanceof Error ? err.message : "Lỗi tải dữ liệu");
-            }
-          };
-          fetchDocuments();
+          fetchDocuments(pagination.page);
         }}
       />
     </div>

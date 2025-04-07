@@ -373,7 +373,7 @@ export function DocumentsPage() {
           if (!open) setSelectedDocument(null);
         }}
         onSuccess={() => {
-          fetchDocuments(pagination.page);
+          fetchDocuments(pagination.page, searchTerm, currentSort);
         }}
       />
     </div>

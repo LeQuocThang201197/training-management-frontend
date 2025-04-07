@@ -23,6 +23,17 @@ import { Search } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Person, Role, Organization, Participant } from "@/types/participant";
 
+interface ParticipantFormData {
+  personId: string;
+  roleId: string;
+  organizationId: string;
+  note: string;
+  person?: Person;
+  role?: Role;
+  organization?: Organization;
+  id?: number;
+}
+
 interface AddParticipantDialogProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
@@ -173,7 +184,7 @@ export function AddParticipantDialog({
 
   // Cập nhật useEffect cho editData
   useEffect(() => {
-    if (editData) {
+    if (editData && editData.person && editData.role && editData.organization) {
       setFormData({
         personId: editData.person.id.toString(),
         roleId: editData.role.id.toString(),

@@ -14,7 +14,9 @@ export const useAuth = () => {
   };
 
   const hasRole = (requiredRole: string) => {
-    return context.user?.roles.includes(requiredRole) ?? false;
+    return (
+      context.user?.roles.some((r) => r.role.name === requiredRole) ?? false
+    );
   };
 
   return {

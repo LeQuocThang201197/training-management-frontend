@@ -36,20 +36,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { HoverCard } from "@/components/cards/HoverCard";
-
-interface Team {
-  id: number;
-  sport: string;
-  type: string;
-  gender: string;
-  createdAt: string;
-  updatedAt: string;
-  rawData: {
-    sportId: number;
-    type: string;
-    gender: string;
-  };
-}
+import { Team } from "@/types/index";
 
 interface TeamEnums {
   types: { value: string; label: string }[];

@@ -33,7 +33,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
-import { ParticipantStats, Team } from "@/types/index";
+import { ParticipantStats } from "@/types/index";
 import { ConcentrationDialog } from "@/components/dialogs/ConcentrationDialog";
 import { AddParticipantDialog } from "@/components/dialogs/AddParticipantDialog";
 import {
@@ -125,6 +125,8 @@ export function ConcentrationDetailPage() {
   const navigate = useNavigate();
   const [detail, setDetail] = useState<ConcentrationDetail | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isNoteDialogOpen, setIsNoteDialogOpen] = useState(false);
   const [noteInput, setNoteInput] = useState("");
   const [papers, setPapers] = useState<Paper[]>([]);
@@ -133,18 +135,6 @@ export function ConcentrationDetailPage() {
   const [loadingLinkedPapers, setLoadingLinkedPapers] = useState(false);
   const [selectedPaperIds, setSelectedPaperIds] = useState<number[]>([]);
   const [availablePapers, setAvailablePapers] = useState<Paper[]>([]);
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-  const [editFormData, setEditFormData] = useState({
-    teamId: 0,
-    related_year: new Date().getFullYear(),
-    sequence_number: 1,
-    location: "",
-    startDate: "",
-    endDate: "",
-  });
-  const [teamSearchTerm, setTeamSearchTerm] = useState("");
-  const [isTeamDropdownOpen, setIsTeamDropdownOpen] = useState(false);
-  const [teams, setTeams] = useState<Team[]>([]);
   const [isAddParticipantDialogOpen, setIsAddParticipantDialogOpen] =
     useState(false);
   const [participants, setParticipants] = useState<Participant[]>([]);
@@ -209,27 +199,29 @@ export function ConcentrationDetailPage() {
     [trainingId: number]: number[];
   }>({});
 
-  useEffect(() => {
-    const fetchDetail = async () => {
-      try {
-        const response = await fetch(`${API_URL}/concentrations/${id}`, {
-          credentials: "include",
-        });
-        if (!response.ok) throw new Error("Không thể tải thông tin chi tiết");
+  const fetchConcentration = useCallback(async () => {
+    try {
+      setLoading(true);
+      const response = await fetch(`${API_URL}/concentrations/${id}`, {
+        credentials: "include",
+      });
+      if (!response.ok)
+        throw new Error("Không thể tải thông tin đợt tập trung");
 
-        const data = await response.json();
-        if (data.success) {
-          setDetail(data.data);
-        }
-      } catch (err) {
-        console.error(err);
-      } finally {
-        setLoading(false);
+      const data = await response.json();
+      if (data.success) {
+        setDetail(data.data);
       }
-    };
-
-    fetchDetail();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Lỗi tải dữ liệu");
+    } finally {
+      setLoading(false);
+    }
   }, [id]);
+
+  useEffect(() => {
+    fetchConcentration();
+  }, [fetchConcentration]);
 
   const fetchParticipants = useCallback(async () => {
     try {
@@ -442,40 +434,6 @@ export function ConcentrationDetailPage() {
     );
   };
 
-  const handleEdit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    try {
-      // Chuyển đổi tên các trường cho phù hợp với API
-      const requestData = {
-        teamId: editFormData.teamId,
-        related_year: editFormData.related_year,
-        sequence_number: editFormData.sequence_number,
-        location: editFormData.location,
-        startDate: editFormData.startDate,
-        endDate: editFormData.endDate,
-      };
-
-      const response = await fetch(`${API_URL}/concentrations/${id}`, {
-        method: "PUT",
-        credentials: "include",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(requestData),
-      });
-
-      if (!response.ok) throw new Error("Không thể cập nhật đợt tập trung");
-
-      const data = await response.json();
-      if (data.success) {
-        setDetail(data.data);
-        setIsEditDialogOpen(false);
-      }
-    } catch (err) {
-      console.error("Update concentration error:", err);
-    }
-  };
-
   const handleDelete = async () => {
     if (!window.confirm("Bạn có chắc chắn muốn xóa đợt tập trung này?")) {
       return;
@@ -498,26 +456,6 @@ export function ConcentrationDetailPage() {
       alert("Có lỗi xảy ra khi xóa đợt tập trung");
     }
   };
-
-  useEffect(() => {
-    const fetchTeams = async () => {
-      try {
-        const response = await fetch(`${API_URL}/teams`, {
-          credentials: "include",
-        });
-        if (!response.ok) throw new Error("Không thể tải danh sách đội");
-
-        const data = await response.json();
-        if (data.success) {
-          setTeams(data.data);
-        }
-      } catch (err) {
-        console.error("Fetch teams error:", err);
-      }
-    };
-
-    fetchTeams();
-  }, []);
 
   const handleAddParticipant = async (formData: ParticipantFormData) => {
     try {
@@ -1229,6 +1167,14 @@ export function ConcentrationDetailPage() {
     return <div>Không tìm thấy thông tin</div>;
   }
 
+  if (error) {
+    return (
+      <div className="flex justify-center items-center min-h-[400px] text-red-500">
+        <p>{error}</p>
+      </div>
+    );
+  }
+
   return (
     <div className="container mx-auto p-6 bg-white rounded-lg shadow">
       {/* Breadcrumb */}
@@ -1259,22 +1205,7 @@ export function ConcentrationDetailPage() {
               variant="outline"
               size="sm"
               className="gap-2"
-              onClick={() => {
-                if (detail) {
-                  setEditFormData({
-                    teamId: detail.teamId,
-                    related_year: detail.related_year,
-                    sequence_number: detail.sequence_number,
-                    location: detail.location,
-                    startDate: detail.startDate.split("T")[0],
-                    endDate: detail.endDate.split("T")[0],
-                  });
-                  setTeamSearchTerm(
-                    `${detail.team.type} - ${detail.team.sport} (${detail.team.gender})`
-                  );
-                  setIsEditDialogOpen(true);
-                }
-              }}
+              onClick={() => setIsEditDialogOpen(true)}
             >
               <Pencil className="h-4 w-4" />
               <span>Chỉnh sửa</span>
@@ -1929,14 +1860,33 @@ export function ConcentrationDetailPage() {
       <ConcentrationDialog
         isOpen={isEditDialogOpen}
         onOpenChange={setIsEditDialogOpen}
-        formData={editFormData}
-        setFormData={setEditFormData}
-        onSubmit={handleEdit}
-        teams={teams}
-        teamSearchTerm={teamSearchTerm}
-        setTeamSearchTerm={setTeamSearchTerm}
-        isTeamDropdownOpen={isTeamDropdownOpen}
-        setIsTeamDropdownOpen={setIsTeamDropdownOpen}
+        onSubmit={async (formData) => {
+          // Thay vì (e: React.FormEvent)
+          try {
+            const response = await fetch(`${API_URL}/concentrations/${id}`, {
+              method: "PUT",
+              credentials: "include",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(formData),
+            });
+
+            if (!response.ok)
+              throw new Error("Không thể cập nhật đợt tập trung");
+
+            const data = await response.json();
+            if (data.success) {
+              fetchConcentration();
+              setIsEditDialogOpen(false);
+            }
+          } catch (err) {
+            console.error("Update concentration error:", err);
+            alert(
+              err instanceof Error
+                ? err.message
+                : "Lỗi khi cập nhật đợt tập trung"
+            );
+          }
+        }}
         mode="edit"
       />
 

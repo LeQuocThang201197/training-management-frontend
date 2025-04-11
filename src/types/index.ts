@@ -11,10 +11,18 @@ export interface Document {
 
 export interface Team {
   id: number;
-  sport: string;
-  type: string;
-  gender: string;
-  room: string;
+  sportId: number;
+  type: string; // "ADULT" | "JUNIOR" | "DISABILITY"
+  gender: string; // "MALE" | "FEMALE" | "MIXED"
+  createdAt: string;
+  updatedAt: string;
+  sport: {
+    id: number;
+    name: string;
+  };
+  sportName: string;
+  typeLabel: string;
+  genderLabel: string;
 }
 
 export * from "./concentration";

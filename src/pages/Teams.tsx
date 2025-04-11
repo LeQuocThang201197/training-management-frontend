@@ -41,29 +41,19 @@ interface Team {
   id: number;
   sport: string;
   type: string;
-  room: string;
   gender: string;
   createdAt: string;
   updatedAt: string;
   rawData: {
     sportId: number;
     type: string;
-    room: string;
     gender: string;
   };
 }
 
 interface TeamEnums {
   types: { value: string; label: string }[];
-  rooms: { value: string; label: string }[];
   genders: { value: string; label: string }[];
-}
-
-interface TeamFormData {
-  sportId: number;
-  type: string;
-  room: string;
-  gender: string;
 }
 
 const ITEMS_PER_PAGE = 10;
@@ -86,10 +76,9 @@ export function TeamsPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [currentSort, setCurrentSort] = useState<SortOption>(sortOptions[0]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [formData, setFormData] = useState<TeamFormData>({
+  const [formData, setFormData] = useState({
     sportId: 0,
     type: "",
-    room: "",
     gender: "",
   });
   const [searchTerm, setSearchTerm] = useState("");
@@ -98,11 +87,9 @@ export function TeamsPage() {
   const [sports, setSports] = useState<{ id: number; name: string }[]>([]);
   const [enums, setEnums] = useState<TeamEnums>({
     types: [],
-    rooms: [],
     genders: [],
   });
   const [filters, setFilters] = useState({
-    room: "",
     type: "",
   });
 
@@ -170,7 +157,6 @@ export function TeamsPage() {
     setFormData({
       sportId: 0,
       type: "",
-      room: "",
       gender: "",
     });
     setEditingTeam(null);
@@ -293,9 +279,9 @@ export function TeamsPage() {
 
   const filteredTeams = teams.filter(
     (team) =>
-      (filters.room ? team.rawData.room === filters.room : true) &&
       (filters.type ? team.rawData.type === filters.type : true) &&
-      team.sport.toLowerCase().includes(searchTerm.toLowerCase().trim())
+      (team.sport?.toLowerCase().includes(searchTerm.toLowerCase().trim()) ??
+        false)
   );
 
   const totalPages = Math.ceil(filteredTeams.length / ITEMS_PER_PAGE);
@@ -404,26 +390,6 @@ export function TeamsPage() {
                       </div>
 
                       <div className="space-y-2">
-                        <Label htmlFor="room">Quản lý</Label>
-                        <select
-                          id="room"
-                          value={formData.room}
-                          onChange={(e) =>
-                            setFormData({ ...formData, room: e.target.value })
-                          }
-                          className="w-full p-2 border rounded-md"
-                          required
-                        >
-                          <option value="">Chọn quản lý</option>
-                          {enums.rooms.map((room) => (
-                            <option key={room.value} value={room.value}>
-                              {room.label}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
-
-                      <div className="space-y-2">
                         <Label htmlFor="gender">Giới tính</Label>
                         <select
                           id="gender"
@@ -468,22 +434,6 @@ export function TeamsPage() {
             </div>
             <div className="w-64">
               <select
-                value={filters.room}
-                onChange={(e) =>
-                  setFilters((prev) => ({ ...prev, room: e.target.value }))
-                }
-                className="w-full p-2 border rounded-md"
-              >
-                <option value="">Tất cả phòng</option>
-                {enums.rooms.map((room) => (
-                  <option key={room.value} value={room.value}>
-                    {room.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div className="w-64">
-              <select
                 value={filters.type}
                 onChange={(e) =>
                   setFilters((prev) => ({ ...prev, type: e.target.value }))
@@ -504,7 +454,7 @@ export function TeamsPage() {
             <div>
               Hiển thị {sortedAndPaginatedTeams.length} / {filteredTeams.length}{" "}
               đội
-              {searchTerm || filters.room || filters.type ? " (đã lọc)" : ""}
+              {searchTerm || filters.type ? " (đã lọc)" : ""}
             </div>
           </div>
 
@@ -522,22 +472,12 @@ export function TeamsPage() {
                 <HoverCard
                   key={team.id}
                   id={team.id}
-                  title={`Đội tuyển ${
-                    team.type === "Trẻ"
-                      ? ` ${team.type.toLocaleLowerCase()}`
-                      : ""
-                  } ${team.sport} ${
-                    team.gender === "Cả nam và nữ"
-                      ? ""
-                      : `${team.gender.toLocaleLowerCase()}`
-                  } quốc gia`}
-                  subtitle={team.room}
+                  title={`Đội ${team.type} ${team.sport} ${team.gender}`}
                   onEdit={() => {
                     setEditingTeam(team);
                     setFormData({
                       sportId: team.rawData.sportId,
                       type: team.rawData.type,
-                      room: team.rawData.room,
                       gender: team.rawData.gender,
                     });
                     setIsDialogOpen(true);
@@ -594,8 +534,8 @@ export function TeamsPage() {
           <AlertDialogHeader>
             <AlertDialogTitle>Bạn có chắc chắn muốn xóa?</AlertDialogTitle>
             <AlertDialogDescription>
-              Đội "{teamToDelete?.type}" sẽ bị xóa vĩnh viễn và không thể khôi
-              phục.
+              Đội tuyển {teamToDelete?.type} {teamToDelete?.sport}{" "}
+              {teamToDelete?.gender} sẽ bị xóa vĩnh viễn và không thể khôi phục.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter className="sm:space-x-4">

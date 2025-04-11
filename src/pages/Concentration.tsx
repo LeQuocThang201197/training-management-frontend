@@ -10,44 +10,11 @@ import {
   DropdownMenuItem,
 } from "@/components/ui/dropdown-menu";
 import { ArrowUpDown } from "lucide-react";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import { Label } from "@/components/ui/label";
 
 import { ConcentrationCard } from "@/components/cards/ConcentrationCard";
 import { Concentration } from "@/types/concentration";
 import { PermissionGate } from "@/components/PermissionGate";
-
-interface Team {
-  id: number;
-  sport: string;
-  type: string;
-  room: string;
-  gender: string;
-  createdAt: string;
-  updatedAt: string;
-  rawData: {
-    sportId: number;
-    type: string;
-    room: string;
-    gender: string;
-  };
-}
-
-interface ConcentrationFormData {
-  team_id: number;
-  related_year: number;
-  sequence_number: number;
-  location: string;
-  note: string;
-  start_date: string;
-  end_date: string;
-}
+import { ConcentrationDialog } from "@/components/dialogs/ConcentrationDialog";
 
 const ITEMS_PER_PAGE = 21;
 
@@ -71,19 +38,7 @@ export function ConcentrationPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [currentSort, setCurrentSort] = useState<SortOption>(sortOptions[0]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [formData, setFormData] = useState<ConcentrationFormData>({
-    team_id: 0,
-    related_year: new Date().getFullYear(),
-    sequence_number: 1,
-    location: "",
-    note: "",
-    start_date: "",
-    end_date: "",
-  });
   const [searchTerm, setSearchTerm] = useState("");
-  const [teams, setTeams] = useState<Team[]>([]);
-  const [teamSearchTerm, setTeamSearchTerm] = useState("");
-  const [isTeamDropdownOpen, setIsTeamDropdownOpen] = useState(false);
   const [teamTypeFilter, setTeamTypeFilter] = useState<string>("all");
 
   const filterOptions = [
@@ -93,91 +48,27 @@ export function ConcentrationPage() {
     { value: "Khuyết tật", label: "Đội người khuyết tật" },
   ];
 
-  useEffect(() => {
-    const fetchConcentrations = async () => {
-      try {
-        const response = await fetch(`${API_URL}/concentrations`, {
-          credentials: "include",
-        });
-        if (!response.ok) throw new Error("Không thể tải danh sách tập trung");
-
-        const data = await response.json();
-        if (data.success) {
-          setConcentrations(data.data);
-        }
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "Lỗi tải dữ liệu");
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchConcentrations();
-  }, []);
-
-  useEffect(() => {
-    const fetchTeams = async () => {
-      try {
-        const response = await fetch(`${API_URL}/teams`, {
-          credentials: "include",
-        });
-        if (!response.ok) throw new Error("Không thể tải danh sách đội");
-
-        const data = await response.json();
-        if (data.success) {
-          setTeams(data.data);
-        }
-      } catch (err) {
-        console.error("Fetch teams error:", err);
-      }
-    };
-
-    fetchTeams();
-  }, []);
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const fetchConcentrations = async () => {
     try {
-      const dataToSubmit = {
-        teamId: formData.team_id,
-        location: formData.location,
-        related_year: formData.related_year,
-        sequence_number: formData.sequence_number,
-        startDate: formData.start_date,
-        endDate: formData.end_date,
-        note: formData.note,
-      };
-
       const response = await fetch(`${API_URL}/concentrations`, {
-        method: "POST",
         credentials: "include",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(dataToSubmit),
       });
-
-      if (!response.ok) throw new Error("Không thể tạo đợt tập trung");
+      if (!response.ok) throw new Error("Không thể tải danh sách tập trung");
 
       const data = await response.json();
       if (data.success) {
-        setConcentrations((prev) => [...prev, data.data]);
-        setIsDialogOpen(false);
-        setFormData({
-          team_id: 0,
-          related_year: new Date().getFullYear(),
-          sequence_number: 1,
-          location: "",
-          note: "",
-          start_date: "",
-          end_date: "",
-        });
+        setConcentrations(data.data);
       }
     } catch (err) {
-      console.error("Create concentration error:", err);
-      alert(err instanceof Error ? err.message : "Lỗi khi tạo đợt tập trung");
+      setError(err instanceof Error ? err.message : "Lỗi tải dữ liệu");
+    } finally {
+      setLoading(false);
     }
   };
+
+  useEffect(() => {
+    fetchConcentrations();
+  }, []);
 
   if (loading) {
     return (
@@ -222,16 +113,6 @@ export function ConcentrationPage() {
       return a.team.sport.localeCompare(b.team.sport) * modifier;
     })
     .slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
-
-  const filteredTeams = teams.filter(
-    (team) =>
-      (team.type
-        ? team.type.toLowerCase().includes(teamSearchTerm.toLowerCase())
-        : false) ||
-      (team.sport
-        ? team.sport.toLowerCase().includes(teamSearchTerm.toLowerCase())
-        : false)
-  );
 
   return (
     <div className="container mx-auto p-6 bg-white rounded-lg shadow">
@@ -281,171 +162,10 @@ export function ConcentrationPage() {
           </DropdownMenu>
 
           <PermissionGate permission="CREATE_CONCENTRATION">
-            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-              <DialogTrigger asChild>
-                <Button>
-                  <Plus className="mr-2 h-4 w-4" />
-                  Thêm đợt tập trung
-                </Button>
-              </DialogTrigger>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>Thêm đợt tập trung mới</DialogTitle>
-                </DialogHeader>
-                <form onSubmit={handleSubmit} className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="team">Chọn đội</Label>
-                    <div className="relative">
-                      <Input
-                        id="team"
-                        value={teamSearchTerm}
-                        onChange={(e) => {
-                          setTeamSearchTerm(e.target.value);
-                          setIsTeamDropdownOpen(true);
-                        }}
-                        onFocus={() => setIsTeamDropdownOpen(true)}
-                        placeholder="Tìm kiếm đội..."
-                        required
-                      />
-                      {isTeamDropdownOpen && filteredTeams.length > 0 && (
-                        <div className="absolute z-10 w-full mt-1 bg-white border rounded-md shadow-lg max-h-[200px] overflow-y-auto">
-                          {filteredTeams.map((team) => (
-                            <div
-                              key={team.id}
-                              className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
-                              onClick={() => {
-                                setFormData((prev) => ({
-                                  ...prev,
-                                  team_id: team.id,
-                                }));
-                                setTeamSearchTerm(
-                                  `${team.type} - ${team.sport} (${team.gender})`
-                                );
-                                setIsTeamDropdownOpen(false);
-                              }}
-                            >
-                              {team.type} - {team.sport} ({team.gender})
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="flex gap-4">
-                    <div className="space-y-2 w-24">
-                      <Label htmlFor="sequence_number">Đợt</Label>
-                      <Input
-                        id="sequence_number"
-                        type="number"
-                        min={1}
-                        value={formData.sequence_number}
-                        onChange={(e) =>
-                          setFormData((prev) => ({
-                            ...prev,
-                            sequence_number: parseInt(e.target.value) || 1,
-                          }))
-                        }
-                        required
-                      />
-                    </div>
-
-                    <div className="space-y-2 flex-1">
-                      <Label htmlFor="related_year">Năm</Label>
-                      <Input
-                        id="related_year"
-                        type="number"
-                        value={formData.related_year}
-                        onChange={(e) =>
-                          setFormData((prev) => ({
-                            ...prev,
-                            related_year: parseInt(e.target.value),
-                          }))
-                        }
-                        required
-                      />
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="location">Địa điểm</Label>
-                    <Input
-                      id="location"
-                      value={formData.location}
-                      onChange={(e) =>
-                        setFormData((prev) => ({
-                          ...prev,
-                          location: e.target.value,
-                        }))
-                      }
-                      placeholder="Nhập địa điểm tập trung"
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="note">Ghi chú</Label>
-                    <Input
-                      id="note"
-                      value={formData.note}
-                      onChange={(e) =>
-                        setFormData((prev) => ({
-                          ...prev,
-                          note: e.target.value,
-                        }))
-                      }
-                      placeholder="Nhập ghi chú (nếu có)"
-                    />
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="start_date">Ngày bắt đầu</Label>
-                      <input
-                        type="date"
-                        id="start_date"
-                        value={formData.start_date}
-                        onChange={(e) =>
-                          setFormData((prev) => ({
-                            ...prev,
-                            start_date: e.target.value,
-                          }))
-                        }
-                        className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="end_date">Ngày kết thúc</Label>
-                      <input
-                        type="date"
-                        id="end_date"
-                        value={formData.end_date}
-                        onChange={(e) =>
-                          setFormData((prev) => ({
-                            ...prev,
-                            end_date: e.target.value,
-                          }))
-                        }
-                        className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="flex justify-end gap-2">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={() => setIsDialogOpen(false)}
-                    >
-                      Hủy
-                    </Button>
-                    <PermissionGate permission="CREATE_CONCENTRATION">
-                      <Button type="submit">Thêm mới</Button>
-                    </PermissionGate>
-                  </div>
-                </form>
-              </DialogContent>
-            </Dialog>
+            <Button onClick={() => setIsDialogOpen(true)}>
+              <Plus className="mr-2 h-4 w-4" />
+              Thêm đợt tập trung
+            </Button>
           </PermissionGate>
         </div>
       </div>
@@ -502,6 +222,35 @@ export function ConcentrationPage() {
           </Button>
         </div>
       )}
+
+      <ConcentrationDialog
+        isOpen={isDialogOpen}
+        onOpenChange={setIsDialogOpen}
+        onSubmit={async (formData) => {
+          try {
+            const response = await fetch(`${API_URL}/concentrations`, {
+              method: "POST",
+              credentials: "include",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(formData),
+            });
+
+            if (!response.ok) throw new Error("Không thể tạo đợt tập trung");
+
+            const data = await response.json();
+            if (data.success) {
+              fetchConcentrations();
+              setIsDialogOpen(false);
+            }
+          } catch (err) {
+            console.error("Create concentration error:", err);
+            alert(
+              err instanceof Error ? err.message : "Lỗi khi tạo đợt tập trung"
+            );
+          }
+        }}
+        mode="create"
+      />
     </div>
   );
 }

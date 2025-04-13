@@ -139,14 +139,10 @@ export function DocumentsPage() {
 
       if (!response.ok) throw new Error("Không thể tải file");
 
-      // Lấy blob từ response
-      const blob = await response.blob();
-      // Tạo URL tạm thời để mở file
-      const url = window.URL.createObjectURL(blob);
-      // Mở file trong tab mới
-      window.open(url, "_blank");
-      // Giải phóng URL
-      window.URL.revokeObjectURL(url);
+      const data = await response.json();
+      if (data.success && data.url) {
+        window.open(data.url, "_blank");
+      }
     } catch (err) {
       console.error("View file error:", err);
       alert("Không thể mở file");

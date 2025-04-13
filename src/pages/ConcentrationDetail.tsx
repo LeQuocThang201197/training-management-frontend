@@ -411,10 +411,10 @@ export function ConcentrationDetailPage() {
 
       if (!response.ok) throw new Error("Không thể tải file");
 
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      window.open(url, "_blank");
-      window.URL.revokeObjectURL(url);
+      const data = await response.json();
+      if (data.success && data.url) {
+        window.open(data.url, "_blank");
+      }
     } catch (err) {
       console.error("View file error:", err);
       alert("Không thể mở file");

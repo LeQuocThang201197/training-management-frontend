@@ -150,10 +150,10 @@ export function DocumentDetailPage() {
 
       if (!response.ok) throw new Error("Không thể tải file");
 
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      window.open(url, "_blank");
-      window.URL.revokeObjectURL(url);
+      const data = await response.json();
+      if (data.success && data.url) {
+        window.open(data.url, "_blank");
+      }
     } catch (err) {
       console.error("View file error:", err);
       alert("Không thể mở file");
@@ -168,19 +168,15 @@ export function DocumentDetailPage() {
 
       if (!response.ok) throw new Error("Không thể tải file");
 
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-
-      if (typeof window !== "undefined" && window.document) {
+      const data = await response.json();
+      if (data.success && data.url && typeof window !== "undefined") {
         const link = window.document.createElement("a");
-        link.href = url;
+        link.href = data.url;
         link.download = document?.file_name || "document";
         window.document.body.appendChild(link);
         link.click();
         window.document.body.removeChild(link);
       }
-
-      window.URL.revokeObjectURL(url);
     } catch (err) {
       console.error("Download file error:", err);
       alert("Không thể tải file");

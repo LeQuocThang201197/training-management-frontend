@@ -50,24 +50,51 @@ export function ConcentrationCard({
 
   const getCardStyle = (concentration: Concentration) => {
     const today = new Date();
+    const startDate = new Date(concentration.startDate);
     const endDate = new Date(concentration.endDate);
-    const isEnded = endDate < today;
+    endDate.setHours(23, 59, 59, 999);
+
+    const isEnded = today > endDate;
+    const hasNotStarted = today < startDate;
 
     if (isEnded) {
-      return "from-gray-50 to-gray-100/50 [&_svg]:text-gray-500 [&_.bg-primary/10]:bg-gray-100/80 [&_h3]:text-gray-600";
+      return {
+        style:
+          "from-gray-50 to-gray-100/50 [&_svg]:text-gray-500 [&_.bg-primary/10]:bg-gray-100/80 [&_h3]:text-gray-600",
+        status: "ended",
+      };
+    }
+
+    if (hasNotStarted) {
+      return {
+        style:
+          "from-white to-yellow-50 [&_svg]:text-yellow-500 [&_.bg-primary/10]:bg-yellow-100/50 [&_h3]:text-yellow-700",
+        status: "upcoming",
+      };
     }
 
     switch (concentration.team.type) {
       case "Trẻ":
-        return "from-white to-emerald-50 [&_svg]:text-emerald-500 [&_.bg-primary/10]:bg-emerald-100/50 [&_h3]:text-emerald-700";
+        return {
+          style:
+            "from-white to-emerald-50 [&_svg]:text-emerald-500 [&_.bg-primary/10]:bg-emerald-100/50 [&_h3]:text-emerald-700",
+        };
       case "Người khuyết tật":
-        return "from-white to-purple-50 [&_svg]:text-purple-500 [&_.bg-primary/10]:bg-purple-100/50 [&_h3]:text-purple-700";
+        return {
+          style:
+            "from-white to-purple-50 [&_svg]:text-purple-500 [&_.bg-primary/10]:bg-purple-100/50 [&_h3]:text-purple-700",
+        };
       case "Tuyển":
-        return "from-white to-red-50 [&_svg]:text-red-500 [&_.bg-primary/10]:bg-red-100/50 [&_h3]:text-red-700";
+        return {
+          style:
+            "from-white to-red-50 [&_svg]:text-red-500 [&_.bg-primary/10]:bg-red-100/50 [&_h3]:text-red-700",
+        };
       default:
-        return "from-white to-primary/5";
+        return { style: "from-white to-primary/5" };
     }
   };
+
+  const cardStyle = getCardStyle(concentration);
 
   const handleClick = () => {
     if (onClick) {
@@ -85,7 +112,7 @@ export function ConcentrationCard({
       className={cn(
         "p-6 border rounded-lg hover:shadow-lg transition-all cursor-pointer",
         "bg-gradient-to-br",
-        getCardStyle(concentration),
+        cardStyle.style,
         "hover:scale-[1.02] hover:-translate-y-1",
         "relative overflow-hidden"
       )}
@@ -206,8 +233,10 @@ export function ConcentrationCard({
       <div
         className={cn(
           "absolute top-0 right-0 w-24 h-1.5 rounded-bl",
-          new Date(concentration.endDate) < new Date()
+          cardStyle.status === "ended"
             ? "bg-gray-300"
+            : cardStyle.status === "upcoming"
+            ? "bg-yellow-300"
             : concentration.team.type === "Trẻ"
             ? "bg-emerald-300"
             : concentration.team.type === "Người khuyết tật"
@@ -216,9 +245,15 @@ export function ConcentrationCard({
         )}
       />
 
-      {new Date(concentration.endDate) < new Date() && (
+      {cardStyle.status === "ended" && (
         <div className="absolute top-2 right-2 px-2 py-0.5 bg-gray-100 text-gray-600 text-xs rounded-full">
           Đã kết thúc
+        </div>
+      )}
+
+      {cardStyle.status === "upcoming" && (
+        <div className="absolute top-2 right-2 px-2 py-0.5 bg-yellow-100 text-yellow-600 text-xs rounded-full">
+          Sắp diễn ra
         </div>
       )}
 

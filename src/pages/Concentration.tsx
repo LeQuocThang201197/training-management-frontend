@@ -113,7 +113,9 @@ export function ConcentrationPage() {
 
     const today = new Date();
     const startDate = new Date(concentration.startDate);
+
     const endDate = new Date(concentration.endDate);
+    endDate.setHours(23, 59, 59, 999);
 
     const status =
       today < startDate
@@ -132,6 +134,42 @@ export function ConcentrationPage() {
 
   const sortedAndPaginatedConcentrations = [...filteredConcentrations]
     .sort((a, b) => {
+      // Hàm xác định trạng thái
+      const getStatus = (date: { startDate: string; endDate: string }) => {
+        const today = new Date();
+        const startDate = new Date(date.startDate);
+
+        const endDate = new Date(date.endDate);
+        endDate.setHours(23, 59, 59, 999); // Set về cuối ngày
+
+        return today < startDate ? 2 : today <= endDate ? 1 : 3;
+      };
+
+      // Hàm xác định thứ tự ưu tiên của loại đội
+      const getTeamTypeOrder = (type: string) => {
+        switch (type) {
+          case "Tuyển":
+            return 1;
+          case "Trẻ":
+            return 2;
+          case "Người khuyết tật":
+            return 3;
+          default:
+            return 4;
+        }
+      };
+
+      // So sánh trạng thái trước
+      const statusA = getStatus(a);
+      const statusB = getStatus(b);
+      if (statusA !== statusB) return statusA - statusB;
+
+      // Nếu cùng trạng thái, so sánh loại đội
+      const teamOrderA = getTeamTypeOrder(a.team.type);
+      const teamOrderB = getTeamTypeOrder(b.team.type);
+      if (teamOrderA !== teamOrderB) return teamOrderA - teamOrderB;
+
+      // Nếu cùng loại đội, áp dụng sort option
       const modifier = currentSort.direction === "asc" ? 1 : -1;
       if (currentSort.field === "date") {
         return (

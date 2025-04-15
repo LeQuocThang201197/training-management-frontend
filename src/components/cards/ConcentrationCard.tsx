@@ -59,11 +59,11 @@ export function ConcentrationCard({
 
     switch (concentration.team.type) {
       case "Trẻ":
-        return "from-white to-blue-50 [&_svg]:text-blue-500 [&_.bg-primary/10]:bg-blue-100/50 [&_h3]:text-blue-700";
+        return "from-white to-emerald-50 [&_svg]:text-emerald-500 [&_.bg-primary/10]:bg-emerald-100/50 [&_h3]:text-emerald-700";
       case "Người khuyết tật":
         return "from-white to-purple-50 [&_svg]:text-purple-500 [&_.bg-primary/10]:bg-purple-100/50 [&_h3]:text-purple-700";
       case "Tuyển":
-        return "from-white to-emerald-50 [&_svg]:text-emerald-500 [&_.bg-primary/10]:bg-emerald-100/50 [&_h3]:text-emerald-700";
+        return "from-white to-red-50 [&_svg]:text-red-500 [&_.bg-primary/10]:bg-red-100/50 [&_h3]:text-red-700";
       default:
         return "from-white to-primary/5";
     }
@@ -209,10 +209,10 @@ export function ConcentrationCard({
           new Date(concentration.endDate) < new Date()
             ? "bg-gray-300"
             : concentration.team.type === "Trẻ"
-            ? "bg-blue-300"
+            ? "bg-emerald-300"
             : concentration.team.type === "Người khuyết tật"
             ? "bg-purple-300"
-            : "bg-emerald-300"
+            : "bg-red-300"
         )}
       />
 

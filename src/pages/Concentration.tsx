@@ -10,6 +10,7 @@ import {
   DropdownMenuItem,
 } from "@/components/ui/dropdown-menu";
 import { ArrowUpDown } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
 
 import { ConcentrationCard } from "@/components/cards/ConcentrationCard";
 import { Concentration } from "@/types/concentration";
@@ -39,10 +40,9 @@ export function ConcentrationPage() {
   const [currentSort, setCurrentSort] = useState<SortOption>(sortOptions[0]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
-  const [teamTypeFilter, setTeamTypeFilter] = useState<string>("all");
+  const [teamTypeFilters, setTeamTypeFilters] = useState<string[]>([]);
 
   const filterOptions = [
-    { value: "all", label: "Tất cả" },
     { value: "Tuyển", label: "Đội tuyển" },
     { value: "Trẻ", label: "Đội trẻ" },
     { value: "Người khuyết tật", label: "Đội người khuyết tật" },
@@ -94,7 +94,8 @@ export function ConcentrationPage() {
       : false;
 
     const matchesType =
-      teamTypeFilter === "all" || concentration.team.type === teamTypeFilter;
+      teamTypeFilters.length === 0 ||
+      teamTypeFilters.includes(concentration.team.type);
 
     return matchesSearch && matchesType;
   });
@@ -123,20 +124,29 @@ export function ConcentrationPage() {
             <DropdownMenuTrigger asChild>
               <Button variant="outline" className="flex items-center gap-2">
                 <Users className="h-4 w-4" />
-                {
-                  filterOptions.find(
-                    (option) => option.value === teamTypeFilter
-                  )?.label
-                }
+                {teamTypeFilters.length === 0
+                  ? "Tất cả các đội"
+                  : `${teamTypeFilters.length} loại đội`}
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent>
               {filterOptions.map((option) => (
                 <DropdownMenuItem
                   key={option.value}
-                  onClick={() => setTeamTypeFilter(option.value)}
+                  onClick={() => {
+                    setTeamTypeFilters((prev) =>
+                      prev.includes(option.value)
+                        ? prev.filter((type) => type !== option.value)
+                        : [...prev, option.value]
+                    );
+                  }}
                 >
-                  {option.label}
+                  <div className="flex items-center gap-2">
+                    <Checkbox
+                      checked={teamTypeFilters.includes(option.value)}
+                    />
+                    {option.label}
+                  </div>
                 </DropdownMenuItem>
               ))}
             </DropdownMenuContent>

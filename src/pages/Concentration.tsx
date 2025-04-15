@@ -45,7 +45,7 @@ export function ConcentrationPage() {
     { value: "all", label: "Tất cả" },
     { value: "Tuyển", label: "Đội tuyển" },
     { value: "Trẻ", label: "Đội trẻ" },
-    { value: "Khuyết tật", label: "Đội người khuyết tật" },
+    { value: "Người khuyết tật", label: "Đội người khuyết tật" },
   ];
 
   const fetchConcentrations = async () => {

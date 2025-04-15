@@ -28,28 +28,37 @@ interface CreateConcentrationDialogProps {
   mode?: "create" | "edit";
 }
 
+const initialFormData = {
+  team_id: 0,
+  related_year: new Date().getFullYear(),
+  sequence_number: 1,
+  location: "",
+  startDate: "",
+  endDate: "",
+  room: "",
+  note: "",
+  filePath: "",
+};
+
 export function ConcentrationDialog({
   isOpen,
   onOpenChange,
   onSubmit,
   mode = "create",
 }: CreateConcentrationDialogProps) {
-  const [formData, setFormData] = useState({
-    team_id: 0,
-    related_year: new Date().getFullYear(),
-    sequence_number: 1,
-    location: "",
-    startDate: "",
-    endDate: "",
-    room: "",
-    note: "",
-    filePath: "",
-  });
-
+  const [formData, setFormData] = useState(initialFormData);
   const [teams, setTeams] = useState<Team[]>([]);
   const [rooms, setRooms] = useState<{ value: string; label: string }[]>([]);
   const [teamSearchTerm, setTeamSearchTerm] = useState("");
   const [isTeamDropdownOpen, setIsTeamDropdownOpen] = useState(false);
+
+  // Reset form khi dialog đóng
+  useEffect(() => {
+    if (!isOpen) {
+      setFormData(initialFormData);
+      setTeamSearchTerm("");
+    }
+  }, [isOpen]);
 
   useEffect(() => {
     if (isOpen) {
@@ -107,6 +116,12 @@ export function ConcentrationDialog({
     };
 
     await onSubmit(submitData);
+
+    // Reset form sau khi submit thành công
+    if (mode === "create") {
+      setFormData(initialFormData);
+      setTeamSearchTerm("");
+    }
   };
 
   return (

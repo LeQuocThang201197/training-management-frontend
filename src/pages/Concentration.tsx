@@ -84,6 +84,34 @@ export function ConcentrationPage() {
     fetchConcentrations();
   }, []);
 
+  // Reset page when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, teamTypeFilters, statusFilters]);
+
+  const handleFilterChange = {
+    team: (value: string) => {
+      setTeamTypeFilters((prev) =>
+        prev.includes(value)
+          ? prev.filter((type) => type !== value)
+          : [...prev, value]
+      );
+    },
+    status: (value: string) => {
+      setStatusFilters((prev) =>
+        prev.includes(value)
+          ? prev.filter((status) => status !== value)
+          : [...prev, value]
+      );
+    },
+    search: (value: string) => {
+      setSearchTerm(value);
+    },
+    sort: (option: SortOption) => {
+      setCurrentSort(option);
+    },
+  };
+
   if (loading) {
     return (
       <div className="flex justify-center items-center min-h-[400px]">
@@ -199,13 +227,7 @@ export function ConcentrationPage() {
               {filterOptions.map((option) => (
                 <DropdownMenuItem
                   key={option.value}
-                  onClick={() => {
-                    setTeamTypeFilters((prev) =>
-                      prev.includes(option.value)
-                        ? prev.filter((type) => type !== option.value)
-                        : [...prev, option.value]
-                    );
-                  }}
+                  onClick={() => handleFilterChange.team(option.value)}
                 >
                   <div className="flex items-center gap-2">
                     <Checkbox
@@ -231,13 +253,7 @@ export function ConcentrationPage() {
               {statusOptions.map((option) => (
                 <DropdownMenuItem
                   key={option.value}
-                  onClick={() => {
-                    setStatusFilters((prev) =>
-                      prev.includes(option.value)
-                        ? prev.filter((status) => status !== option.value)
-                        : [...prev, option.value]
-                    );
-                  }}
+                  onClick={() => handleFilterChange.status(option.value)}
                 >
                   <div className="flex items-center gap-2">
                     <Checkbox checked={statusFilters.includes(option.value)} />
@@ -259,7 +275,7 @@ export function ConcentrationPage() {
               {sortOptions.map((option) => (
                 <DropdownMenuItem
                   key={`${option.field}-${option.direction}`}
-                  onClick={() => setCurrentSort(option)}
+                  onClick={() => handleFilterChange.sort(option)}
                 >
                   {option.label}
                 </DropdownMenuItem>
@@ -282,7 +298,7 @@ export function ConcentrationPage() {
           placeholder="Tìm kiếm đợt tập trung..."
           className="pl-10"
           value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
+          onChange={(e) => handleFilterChange.search(e.target.value)}
         />
       </div>
 

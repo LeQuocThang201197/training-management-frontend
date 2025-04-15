@@ -1,7 +1,14 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Search, Plus, ChevronLeft, ChevronRight, Users } from "lucide-react";
+import {
+  Search,
+  Plus,
+  ChevronLeft,
+  ChevronRight,
+  Users,
+  Calendar,
+} from "lucide-react";
 import { API_URL } from "@/config/api";
 import {
   DropdownMenu,
@@ -41,11 +48,18 @@ export function ConcentrationPage() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [teamTypeFilters, setTeamTypeFilters] = useState<string[]>([]);
+  const [statusFilters, setStatusFilters] = useState<string[]>(["ongoing"]);
 
   const filterOptions = [
     { value: "Tuyển", label: "Đội tuyển" },
     { value: "Trẻ", label: "Đội trẻ" },
     { value: "Người khuyết tật", label: "Đội người khuyết tật" },
+  ];
+
+  const statusOptions = [
+    { value: "ongoing", label: "Đang diễn ra" },
+    { value: "upcoming", label: "Sắp diễn ra" },
+    { value: "completed", label: "Đã kết thúc" },
   ];
 
   const fetchConcentrations = async () => {
@@ -97,7 +111,21 @@ export function ConcentrationPage() {
       teamTypeFilters.length === 0 ||
       teamTypeFilters.includes(concentration.team.type);
 
-    return matchesSearch && matchesType;
+    const today = new Date();
+    const startDate = new Date(concentration.startDate);
+    const endDate = new Date(concentration.endDate);
+
+    const status =
+      today < startDate
+        ? "upcoming"
+        : today > endDate
+        ? "completed"
+        : "ongoing";
+
+    const matchesStatus =
+      statusFilters.length === 0 || statusFilters.includes(status);
+
+    return matchesSearch && matchesType && matchesStatus;
   });
 
   const totalPages = Math.ceil(filteredConcentrations.length / ITEMS_PER_PAGE);
@@ -145,6 +173,36 @@ export function ConcentrationPage() {
                     <Checkbox
                       checked={teamTypeFilters.includes(option.value)}
                     />
+                    {option.label}
+                  </div>
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" className="flex items-center gap-2">
+                <Calendar className="h-4 w-4" />
+                {statusFilters.length === 0
+                  ? "Tất cả trạng thái"
+                  : `${statusFilters.length} trạng thái`}
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent>
+              {statusOptions.map((option) => (
+                <DropdownMenuItem
+                  key={option.value}
+                  onClick={() => {
+                    setStatusFilters((prev) =>
+                      prev.includes(option.value)
+                        ? prev.filter((status) => status !== option.value)
+                        : [...prev, option.value]
+                    );
+                  }}
+                >
+                  <div className="flex items-center gap-2">
+                    <Checkbox checked={statusFilters.includes(option.value)} />
                     {option.label}
                   </div>
                 </DropdownMenuItem>

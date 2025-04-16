@@ -22,6 +22,7 @@ import {
   Plane,
   Home,
   Contact,
+  ChevronRight,
 } from "lucide-react";
 import { Concentration } from "@/types/concentration";
 import { Button } from "@/components/ui/button";
@@ -198,6 +199,11 @@ export function ConcentrationDetailPage() {
   const [trainingParticipants, setTrainingParticipants] = useState<{
     [trainingId: number]: number[];
   }>({});
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [searchTerm, setSearchTerm] = useState("");
+  const ITEMS_PER_PAGE = 10;
+  const [isLinkPaperDialogOpen, setIsLinkPaperDialogOpen] = useState(false);
 
   const fetchConcentration = useCallback(async () => {
     try {
@@ -1159,6 +1165,41 @@ export function ConcentrationDetailPage() {
     }
   };
 
+  // Cập nhật hàm fetch papers
+  const fetchAvailablePapers = useCallback(async () => {
+    try {
+      setLoadingPapers(true);
+      const response = await fetch(
+        `${API_URL}/concentrations/${id}/available-papers?page=${currentPage}&limit=${ITEMS_PER_PAGE}&search=${searchTerm}`,
+        {
+          credentials: "include",
+        }
+      );
+      if (!response.ok) throw new Error("Không thể tải danh sách giấy tờ");
+      const data = await response.json();
+      if (data.success) {
+        setAvailablePapers(data.data);
+        setTotalPages(Math.ceil(data.total / ITEMS_PER_PAGE));
+      }
+    } catch (err) {
+      console.error("Fetch available papers error:", err);
+    } finally {
+      setLoadingPapers(false);
+    }
+  }, [id, currentPage, searchTerm]);
+
+  // Reset page khi search thay đổi
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm]);
+
+  // Fetch lại khi page hoặc search thay đổi
+  useEffect(() => {
+    if (isLinkPaperDialogOpen) {
+      fetchAvailablePapers();
+    }
+  }, [isLinkPaperDialogOpen, currentPage, searchTerm, fetchAvailablePapers]);
+
   if (loading) {
     return <div>Đang tải...</div>;
   }
@@ -1609,7 +1650,9 @@ export function ConcentrationDetailPage() {
               <CardTitle>Giấy tờ</CardTitle>
               <div className="flex gap-2">
                 <Dialog
+                  open={isLinkPaperDialogOpen}
                   onOpenChange={(open) => {
+                    setIsLinkPaperDialogOpen(open);
                     if (open) fetchPapers();
                   }}
                 >
@@ -1623,6 +1666,28 @@ export function ConcentrationDetailPage() {
                     <DialogHeader>
                       <DialogTitle>Liên kết giấy tờ</DialogTitle>
                     </DialogHeader>
+
+                    <div className="relative mb-4">
+                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500" />
+                      <Input
+                        placeholder="Tìm kiếm giấy tờ..."
+                        className="pl-10"
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                      />
+                    </div>
+
+                    {/* Thêm thông tin số lượng */}
+                    <div className="text-sm text-gray-500 mb-4">
+                      {searchTerm ? (
+                        <span>Tìm thấy {availablePapers.length} kết quả</span>
+                      ) : (
+                        <span>
+                          Có {availablePapers.length} giấy tờ có thể liên kết
+                        </span>
+                      )}
+                    </div>
+
                     <div className="max-h-[60vh] overflow-y-auto">
                       {loadingPapers ? (
                         <div className="flex justify-center py-8">
@@ -1681,7 +1746,30 @@ export function ConcentrationDetailPage() {
                         </div>
                       )}
                     </div>
-                    <div className="mt-4 flex justify-end">
+
+                    <div className="mt-4 flex items-center justify-between">
+                      <div className="flex gap-2">
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          onClick={() =>
+                            setCurrentPage((p) => Math.max(1, p - 1))
+                          }
+                          disabled={currentPage === 1 || loadingPapers}
+                        >
+                          <ChevronLeft className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          onClick={() =>
+                            setCurrentPage((p) => Math.min(totalPages, p + 1))
+                          }
+                          disabled={currentPage === totalPages || loadingPapers}
+                        >
+                          <ChevronRight className="h-4 w-4" />
+                        </Button>
+                      </div>
                       <Button
                         onClick={handleLinkPapers}
                         disabled={selectedPaperIds.length === 0}

@@ -200,10 +200,14 @@ export function ConcentrationDetailPage() {
     [trainingId: number]: number[];
   }>({});
   const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
   const [searchTerm, setSearchTerm] = useState("");
   const ITEMS_PER_PAGE = 10;
   const [isLinkPaperDialogOpen, setIsLinkPaperDialogOpen] = useState(false);
+  // Thêm state để lưu thông tin pagination
+  const [papersPagination, setPapersPagination] = useState({
+    total: 0,
+    totalPages: 1,
+  });
 
   const fetchConcentration = useCallback(async () => {
     try {
@@ -1179,7 +1183,10 @@ export function ConcentrationDetailPage() {
       const data = await response.json();
       if (data.success) {
         setAvailablePapers(data.data);
-        setTotalPages(Math.ceil(data.total / ITEMS_PER_PAGE));
+        setPapersPagination({
+          total: data.pagination.total,
+          totalPages: data.pagination.totalPages,
+        });
       }
     } catch (err) {
       console.error("Fetch available papers error:", err);
@@ -1680,10 +1687,10 @@ export function ConcentrationDetailPage() {
                     {/* Thêm thông tin số lượng */}
                     <div className="text-sm text-gray-500 mb-4">
                       {searchTerm ? (
-                        <span>Tìm thấy {availablePapers.length} kết quả</span>
+                        <span>Tìm thấy {papersPagination.total} kết quả</span>
                       ) : (
                         <span>
-                          Có {availablePapers.length} giấy tờ có thể liên kết
+                          Có {papersPagination.total} giấy tờ có thể liên kết
                         </span>
                       )}
                     </div>
@@ -1759,13 +1766,26 @@ export function ConcentrationDetailPage() {
                         >
                           <ChevronLeft className="h-4 w-4" />
                         </Button>
+
+                        {/* Thêm hiển thị số trang */}
+                        <div className="flex items-center text-sm text-gray-600">
+                          <span>
+                            Trang {currentPage} / {papersPagination.totalPages}
+                          </span>
+                        </div>
+
                         <Button
                           variant="outline"
                           size="icon"
                           onClick={() =>
-                            setCurrentPage((p) => Math.min(totalPages, p + 1))
+                            setCurrentPage((p) =>
+                              Math.min(papersPagination.totalPages, p + 1)
+                            )
                           }
-                          disabled={currentPage === totalPages || loadingPapers}
+                          disabled={
+                            currentPage === papersPagination.totalPages ||
+                            loadingPapers
+                          }
                         >
                           <ChevronRight className="h-4 w-4" />
                         </Button>

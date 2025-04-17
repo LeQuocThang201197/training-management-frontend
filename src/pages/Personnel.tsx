@@ -196,10 +196,10 @@ export function PersonnelPage() {
     setFormData({
       name: person.name,
       identity_number: person.identity_number,
-      identity_date: person.identity_date,
+      identity_date: person.identity_date?.split("T")[0] || "",
       identity_place: person.identity_place,
       social_insurance: person.social_insurance,
-      birthday: person.birthday,
+      birthday: person.birthday?.split("T")[0] || "",
       gender: person.gender,
       phone: person.phone,
       email: person.email,

@@ -59,8 +59,8 @@ export function DocumentFormDialog({
         type: document.type,
         content: document.content,
         related_year: document.related_year,
-        date: document.date,
-        file: null, // Keep null initially since we can't get the file back
+        date: new Date(document.date).toISOString().split("T")[0],
+        file: null,
       });
     } else if (!open) {
       // Reset form when closing

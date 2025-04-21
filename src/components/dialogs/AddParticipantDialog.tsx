@@ -18,21 +18,15 @@ import {
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Search } from "lucide-react";
 
 import { cn } from "@/lib/utils";
-import { Person, Role, Organization, Participant } from "@/types/participant";
-
-interface ParticipantFormData {
-  personId: string;
-  roleId: string;
-  organizationId: string;
-  note: string;
-  person?: Person;
-  role?: Role;
-  organization?: Organization;
-  id?: number;
-}
+import {
+  Person,
+  Role,
+  Organization,
+  Participant,
+  ParticipantFormData,
+} from "@/types/participant";
 
 interface AddParticipantDialogProps {
   isOpen: boolean;
@@ -184,15 +178,16 @@ export function AddParticipantDialog({
 
   // Cập nhật useEffect cho editData
   useEffect(() => {
-    if (editData && editData.person && editData.role && editData.organization) {
+    if (editData) {
       setFormData({
-        personId: editData.person.id.toString(),
-        roleId: editData.role.id.toString(),
-        organizationId: editData.organization.id.toString(),
+        personId: editData.personId,
+        roleId: editData.roleId,
+        organizationId: editData.organizationId,
         note: editData.note || "",
       });
-      setSearchTerm(editData.person.name);
-      setOrganizationSearchTerm(editData.organization.name);
+      // Hiển thị tên người và đơn vị đã chọn
+      setSearchTerm(editData.person?.name || "");
+      setOrganizationSearchTerm(editData.organization?.name || "");
     }
   }, [editData]);
 
@@ -227,65 +222,67 @@ export function AddParticipantDialog({
           {/* Tìm kiếm người */}
           <div className="space-y-2">
             <Label>
-              Tìm kiếm người <span className="text-red-500">*</span>
+              Người tham gia <span className="text-red-500">*</span>
             </Label>
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500" />
               <Input
-                className="pl-10"
-                placeholder="Nhập tên để tìm..."
+                placeholder="Tìm kiếm người tham gia..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
+                disabled={!!editData}
+                className={cn(editData && "bg-gray-100")}
               />
-            </div>
-            {loading && (
-              <div className="text-sm text-gray-500">Đang tìm kiếm...</div>
-            )}
-            {searchResults.length > 0 && (
-              <div className="border rounded-md max-h-40 overflow-y-auto">
-                {searchResults.map((person) => {
-                  const isExisting = isPersonAlreadyAdded(person.id.toString());
-                  return (
-                    <div
-                      key={person.id}
-                      className={cn(
-                        "p-2 hover:bg-gray-100",
-                        isExisting
-                          ? "cursor-not-allowed opacity-50"
-                          : "cursor-pointer"
-                      )}
-                      onClick={() => {
-                        if (!isExisting) {
-                          setFormData((prev) => ({
-                            ...prev,
-                            personId: person.id.toString(),
-                          }));
-                          setSearchTerm(person.name);
-                          setSearchResults([]);
-                        }
-                      }}
-                    >
-                      <div className="flex justify-between items-center">
-                        <div>
-                          <div className="font-medium">{person.name}</div>
-                          <div className="text-sm text-gray-500">
-                            {person.gender} {getBirthYear(person.birthday)}
-                          </div>
-                        </div>
-                        {isExisting && (
-                          <div className="text-sm text-red-500">
-                            Đã tham gia đợt tập trung
-                          </div>
+              {loading && (
+                <div className="text-sm text-gray-500">Đang tìm kiếm...</div>
+              )}
+              {searchResults.length > 0 && (
+                <div className="border rounded-md max-h-40 overflow-y-auto">
+                  {searchResults.map((person) => {
+                    const isExisting = isPersonAlreadyAdded(
+                      person.id.toString()
+                    );
+                    return (
+                      <div
+                        key={person.id}
+                        className={cn(
+                          "p-2 hover:bg-gray-100",
+                          isExisting
+                            ? "cursor-not-allowed opacity-50"
+                            : "cursor-pointer"
                         )}
+                        onClick={() => {
+                          if (!isExisting) {
+                            setFormData((prev) => ({
+                              ...prev,
+                              personId: person.id.toString(),
+                            }));
+                            setSearchTerm(person.name);
+                            setSearchResults([]);
+                          }
+                        }}
+                      >
+                        <div className="flex justify-between items-center">
+                          <div>
+                            <div className="font-medium">{person.name}</div>
+                            <div className="text-sm text-gray-500">
+                              {person.gender} {getBirthYear(person.birthday)}
+                            </div>
+                          </div>
+                          {isExisting && (
+                            <div className="text-sm text-red-500">
+                              Đã tham gia đợt tập trung
+                            </div>
+                          )}
+                        </div>
                       </div>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-            {errors.personId && (
-              <p className="text-sm text-red-500">{errors.personId}</p>
-            )}
+                    );
+                  })}
+                </div>
+              )}
+              {errors.personId && (
+                <p className="text-sm text-red-500">{errors.personId}</p>
+              )}
+            </div>
           </div>
 
           {/* Chọn vai trò */}

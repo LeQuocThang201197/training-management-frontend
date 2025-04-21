@@ -48,14 +48,26 @@ export interface AbsenceRecord {
 
 export interface Participant {
   id: number;
-  participation_id: number;
+  person_id: number;
+  concentration_id: number;
+  role_id: number;
+  organization_id: number;
+  note: string;
+  assigned_by: number;
+  createdAt: string;
+  updatedAt: string;
   person: Person;
   role: Role;
   organization: Organization;
-  startDate: string;
-  endDate: string;
+}
+
+export interface ParticipantFormData {
+  personId: string;
+  roleId: string;
+  organizationId: string;
   note: string;
-  absenceRecords?: AbsenceRecord[];
-  isCurrentlyAbsent?: boolean;
-  currentAbsence?: AbsenceRecord;
+  person?: Person;
+  role?: Role;
+  organization?: Organization;
+  id?: number;
 }

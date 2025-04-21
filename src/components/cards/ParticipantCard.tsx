@@ -131,7 +131,13 @@ export function ParticipantCard({
                   <Button
                     variant="ghost"
                     size="icon"
-                    onClick={() => onEdit(participant)}
+                    onClick={() => {
+                      console.log(
+                        "Edit button clicked, participant data:",
+                        participant
+                      );
+                      onEdit(participant);
+                    }}
                   >
                     <Pencil className="h-4 w-4" />
                   </Button>

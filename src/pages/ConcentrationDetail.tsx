@@ -60,6 +60,7 @@ import {
 } from "@/types/competition";
 import { CompetitionDialog } from "@/components/dialogs/CompetitionDialog";
 import { AddCompetitionParticipantDialog } from "@/components/dialogs/AddCompetitionParticipantDialog";
+import { ParticipantFormData } from "@/types/participant";
 
 interface Paper {
   id: number;
@@ -74,13 +75,6 @@ interface Paper {
 interface ConcentrationDetail extends Concentration {
   participants: Participant[];
   papers: Paper[];
-}
-
-interface ParticipantFormData {
-  personId: string;
-  roleId: string;
-  organizationId: string;
-  note: string;
 }
 
 interface Training {
@@ -142,8 +136,9 @@ export function ConcentrationDetailPage() {
   const [loadingParticipants, setLoadingParticipants] = useState(true);
   const [participantToDelete, setParticipantToDelete] =
     useState<Participant | null>(null);
-  const [editingParticipant, setEditingParticipant] =
-    useState<ParticipantFormData | null>(null);
+  const [editingParticipant, setEditingParticipant] = useState<
+    (ParticipantFormData & { id?: number }) | null
+  >(null);
   const [participantSearchTerm, setParticipantSearchTerm] = useState("");
   const [absences, setAbsences] = useState<AbsenceRecord[]>([]);
   const [loadingAbsences, setLoadingAbsences] = useState(false);
@@ -193,7 +188,6 @@ export function ConcentrationDetailPage() {
   const [participantDates, setParticipantDates] = useState<{
     [key: number]: { startDate: string; endDate: string };
   }>({});
-  const [participantId, setParticipantId] = useState<number | null>(null);
   const [trainingParticipants, setTrainingParticipants] = useState<{
     [trainingId: number]: number[];
   }>({});
@@ -517,19 +511,23 @@ export function ConcentrationDetailPage() {
   };
 
   const initEditParticipant = (participant: Participant) => {
-    setParticipantId(participant.id);
     setEditingParticipant({
+      id: participant.id,
       personId: participant.person.id.toString(),
       roleId: participant.role.id.toString(),
       organizationId: participant.organization.id.toString(),
       note: participant.note || "",
+      // Thêm các object đầy đủ
+      person: participant.person,
+      role: participant.role,
+      organization: participant.organization,
     });
   };
 
   const handleEditParticipant = async (formData: ParticipantFormData) => {
     try {
       const response = await fetch(
-        `${API_URL}/concentrations/${id}/participants/${participantId}`,
+        `${API_URL}/concentrations/${id}/participants/${editingParticipant?.id}`,
         {
           method: "PUT",
           credentials: "include",
@@ -543,7 +541,7 @@ export function ConcentrationDetailPage() {
       const data = await response.json();
       if (data.success) {
         setParticipants((prev) =>
-          prev.map((p) => (p.id === participantId ? data.data : p))
+          prev.map((p) => (p.id === editingParticipant?.id ? data.data : p))
         );
         fetchParticipantStats();
         setEditingParticipant(null);

@@ -23,9 +23,18 @@ interface CreateConcentrationDialogProps {
     endDate: string;
     note?: string;
     room: string;
-    filePath?: string;
   }) => Promise<void>;
   mode?: "create" | "edit";
+  editData?: {
+    teamId: number;
+    location: string;
+    room: string;
+    related_year: number;
+    sequence_number: number;
+    startDate: string;
+    endDate: string;
+    note?: string;
+  };
 }
 
 const initialFormData = {
@@ -37,7 +46,6 @@ const initialFormData = {
   endDate: "",
   room: "",
   note: "",
-  filePath: "",
 };
 
 export function ConcentrationDialog({
@@ -45,6 +53,7 @@ export function ConcentrationDialog({
   onOpenChange,
   onSubmit,
   mode = "create",
+  editData,
 }: CreateConcentrationDialogProps) {
   const [formData, setFormData] = useState(initialFormData);
   const [teams, setTeams] = useState<Team[]>([]);
@@ -54,11 +63,22 @@ export function ConcentrationDialog({
 
   // Reset form khi dialog đóng
   useEffect(() => {
-    if (!isOpen) {
+    if (isOpen && mode === "edit" && editData) {
+      setFormData({
+        team_id: editData.teamId,
+        location: editData.location,
+        room: editData.room,
+        related_year: editData.related_year,
+        sequence_number: editData.sequence_number,
+        startDate: new Date(editData.startDate).toISOString().split("T")[0],
+        endDate: new Date(editData.endDate).toISOString().split("T")[0],
+        note: editData.note || "",
+      });
+    } else if (!isOpen) {
       setFormData(initialFormData);
       setTeamSearchTerm("");
     }
-  }, [isOpen]);
+  }, [isOpen, mode, editData]);
 
   useEffect(() => {
     if (isOpen) {
@@ -112,7 +132,6 @@ export function ConcentrationDialog({
       endDate: formData.endDate,
       note: formData.note,
       room: formData.room,
-      filePath: formData.filePath || undefined,
     };
 
     await onSubmit(submitData);

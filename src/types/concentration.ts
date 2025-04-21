@@ -1,9 +1,9 @@
 import { Team } from "./index";
 import { Competition } from "./competition";
 
-interface Submitter {
+interface Creator {
   id: number;
-  username: string;
+  name: string;
   email: string;
 }
 
@@ -20,14 +20,15 @@ export interface Concentration {
   sequence_number: number;
   related_year: number;
   location: string;
+  room: string;
   startDate: string;
   endDate: string;
   note: string;
-  submitter_id: number;
+  creator_id: number;
   createdAt: string;
   updatedAt: string;
   team: Team;
-  submitter: Submitter;
+  creator: Creator;
   participantStats: ParticipantStats;
   trainings: {
     id: number;

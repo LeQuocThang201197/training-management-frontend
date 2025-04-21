@@ -193,8 +193,6 @@ export function ConcentrationDetailPage() {
   const [participantDates, setParticipantDates] = useState<{
     [key: number]: { startDate: string; endDate: string };
   }>({});
-  const [isEditParticipantDialogOpen, setIsEditParticipantDialogOpen] =
-    useState(false);
   const [participantId, setParticipantId] = useState<number | null>(null);
   const [trainingParticipants, setTrainingParticipants] = useState<{
     [trainingId: number]: number[];
@@ -526,7 +524,6 @@ export function ConcentrationDetailPage() {
       organizationId: participant.organization.id.toString(),
       note: participant.note || "",
     });
-    setIsEditParticipantDialogOpen(true);
   };
 
   const handleEditParticipant = async (formData: ParticipantFormData) => {
@@ -1572,9 +1569,15 @@ export function ConcentrationDetailPage() {
             </CardContent>
           </Card>
           <AddParticipantDialog
-            isOpen={isAddParticipantDialogOpen}
-            onOpenChange={setIsAddParticipantDialogOpen}
-            onSubmit={handleAddParticipant}
+            isOpen={isAddParticipantDialogOpen || !!editingParticipant}
+            onOpenChange={(open) => {
+              setIsAddParticipantDialogOpen(open);
+              if (!open) setEditingParticipant(null);
+            }}
+            onSubmit={
+              editingParticipant ? handleEditParticipant : handleAddParticipant
+            }
+            editData={editingParticipant}
             existingParticipants={participants}
           />
         </TabsContent>
@@ -1969,7 +1972,6 @@ export function ConcentrationDetailPage() {
         isOpen={isEditDialogOpen}
         onOpenChange={setIsEditDialogOpen}
         onSubmit={async (formData) => {
-          // Thay vì (e: React.FormEvent)
           try {
             const response = await fetch(`${API_URL}/concentrations/${id}`, {
               method: "PUT",
@@ -1996,6 +1998,16 @@ export function ConcentrationDetailPage() {
           }
         }}
         mode="edit"
+        editData={{
+          teamId: detail.teamId,
+          location: detail.location,
+          room: detail.room,
+          related_year: detail.related_year,
+          sequence_number: detail.sequence_number,
+          startDate: detail.startDate,
+          endDate: detail.endDate,
+          note: detail.note,
+        }}
       />
 
       <AlertDialog
@@ -2023,14 +2035,6 @@ export function ConcentrationDetailPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-
-      <AddParticipantDialog
-        isOpen={!!editingParticipant}
-        onOpenChange={(open) => !open && setEditingParticipant(null)}
-        onSubmit={handleEditParticipant}
-        editData={editingParticipant}
-        existingParticipants={participants}
-      />
 
       <div className="space-y-6 mt-10">
         <h3 className="text-lg font-medium">Các đợt tập huấn & thi đấu</h3>
@@ -2486,14 +2490,6 @@ export function ConcentrationDetailPage() {
         }
         competition={managingCompetition!}
         onParticipantSelect={setCompetitionParticipantIds}
-      />
-
-      <AddParticipantDialog
-        isOpen={isEditParticipantDialogOpen}
-        onOpenChange={(open) => !open && setEditingParticipant(null)}
-        onSubmit={handleEditParticipant}
-        editData={editingParticipant}
-        existingParticipants={participants}
       />
     </div>
   );

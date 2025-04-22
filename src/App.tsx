@@ -7,7 +7,6 @@ import { AppLayout } from "./components/AppLayout";
 import { OverviewPage } from "./pages/Overview";
 import { DocumentsPage } from "./pages/Documents";
 import { TagsPage } from "./pages/Tags";
-import { AdditionalTrainingPage } from "./pages/AdditionalTraining";
 import { PersonnelPage } from "./pages/Personnel";
 import { SportsPage } from "./pages/Sports";
 import { TeamsPage } from "./pages/Teams";
@@ -51,14 +50,6 @@ function App() {
                             <ConcentrationPage />
                           </PermissionGate>
                         }
-                      />
-                      <Route
-                        path="additional-training"
-                        element={<AdditionalTrainingPage />}
-                      />
-                      <Route
-                        path="minus-training"
-                        element={<div>Thôi tập huấn</div>}
                       />
                       <Route path="trainings" element={<div>Tập huấn</div>} />
                       <Route path="competitions" element={<div>Thi đấu</div>} />

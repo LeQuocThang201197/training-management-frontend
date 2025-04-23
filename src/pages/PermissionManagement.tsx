@@ -87,6 +87,7 @@ export function PermissionManagementPage() {
     ORGANIZATION: "Quản lý đơn vị",
     PERSON_ROLE: "Quản lý vai trò nhân sự",
     ABSENCE: "Quản lý vắng mặt",
+    OVERVIEW: "Tổng quan",
   };
 
   return (

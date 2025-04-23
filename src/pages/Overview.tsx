@@ -67,10 +67,38 @@ interface CompetitionStats {
   };
 }
 
+interface TrainingStats {
+  total: number;
+  byLocation: {
+    domestic: number;
+    foreign: number;
+  };
+  byTeamType: {
+    ADULT: {
+      total: number;
+      domestic: number;
+      foreign: number;
+    };
+    JUNIOR: {
+      total: number;
+      domestic: number;
+      foreign: number;
+    };
+    DISABILITY: {
+      total: number;
+      domestic: number;
+      foreign: number;
+    };
+  };
+}
+
 export function OverviewPage() {
   const [stats, setStats] = useState<OverviewStats | null>(null);
   const [competitionStats, setCompetitionStats] =
     useState<CompetitionStats | null>(null);
+  const [trainingStats, setTrainingStats] = useState<TrainingStats | null>(
+    null
+  );
 
   useEffect(() => {
     const fetchOverviewStats = async () => {
@@ -110,6 +138,25 @@ export function OverviewPage() {
     };
 
     fetchCompetitionStats();
+
+    const fetchTrainingStats = async () => {
+      try {
+        const response = await fetch(`${API_URL}/overview/trainings`, {
+          credentials: "include",
+        });
+
+        if (!response.ok) throw new Error("Failed to fetch training stats");
+
+        const data = await response.json();
+        if (data.success) {
+          setTrainingStats(data.data);
+        }
+      } catch (err) {
+        console.error("Error fetching training stats:", err);
+      }
+    };
+
+    fetchTrainingStats();
   }, []);
 
   // Helper function to safely get team type stats
@@ -314,13 +361,74 @@ export function OverviewPage() {
             </CardHeader>
             <CardContent>
               <div className="flex items-baseline justify-between">
-                <div className="text-2xl font-bold">--</div>
+                <div className="flex items-center gap-2">
+                  <div className="text-2xl font-bold">
+                    {trainingStats?.total || 0}
+                  </div>
+                  <div className="text-xs text-muted-foreground flex items-center gap-2">
+                    <span className="flex items-center gap-1">
+                      <Home className="h-3 w-3" />
+                      {trainingStats?.byLocation?.domestic || 0}
+                    </span>
+                    <span className="flex items-center gap-1">
+                      <Plane className="h-3 w-3" />
+                      {trainingStats?.byLocation?.foreign || 0}
+                    </span>
+                  </div>
+                </div>
                 <div className="text-xs text-muted-foreground">
                   đang diễn ra
                 </div>
               </div>
               <div className="space-y-1 text-xs text-muted-foreground border-t mt-2 pt-2">
-                <div>Chưa có dữ liệu</div>
+                <div className="flex justify-between">
+                  <span>Đội tuyển:</span>
+                  <span className="flex items-center gap-1">
+                    {trainingStats?.byTeamType?.ADULT?.total || 0} đợt
+                    <span className="text-muted-foreground/75 ml-1 flex items-center gap-2">
+                      <span className="flex items-center gap-1">
+                        <Home className="h-3 w-3" />
+                        {trainingStats?.byTeamType?.ADULT?.domestic || 0}
+                      </span>
+                      <span className="flex items-center gap-1">
+                        <Plane className="h-3 w-3" />
+                        {trainingStats?.byTeamType?.ADULT?.foreign || 0}
+                      </span>
+                    </span>
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Đội trẻ:</span>
+                  <span className="flex items-center gap-1">
+                    {trainingStats?.byTeamType?.JUNIOR?.total || 0} đợt
+                    <span className="text-muted-foreground/75 ml-1 flex items-center gap-2">
+                      <span className="flex items-center gap-1">
+                        <Home className="h-3 w-3" />
+                        {trainingStats?.byTeamType?.JUNIOR?.domestic || 0}
+                      </span>
+                      <span className="flex items-center gap-1">
+                        <Plane className="h-3 w-3" />
+                        {trainingStats?.byTeamType?.JUNIOR?.foreign || 0}
+                      </span>
+                    </span>
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Đội khuyết năng:</span>
+                  <span className="flex items-center gap-1">
+                    {trainingStats?.byTeamType?.DISABILITY?.total || 0} đợt
+                    <span className="text-muted-foreground/75 ml-1 flex items-center gap-2">
+                      <span className="flex items-center gap-1">
+                        <Home className="h-3 w-3" />
+                        {trainingStats?.byTeamType?.DISABILITY?.domestic || 0}
+                      </span>
+                      <span className="flex items-center gap-1">
+                        <Plane className="h-3 w-3" />
+                        {trainingStats?.byTeamType?.DISABILITY?.foreign || 0}
+                      </span>
+                    </span>
+                  </span>
+                </div>
               </div>
             </CardContent>
           </Card>

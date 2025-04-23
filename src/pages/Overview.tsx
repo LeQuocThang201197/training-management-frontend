@@ -92,6 +92,19 @@ interface TrainingStats {
   };
 }
 
+// First, let's create a styled wrapper for each card type
+const StyledCard = ({
+  children,
+  className,
+}: {
+  children: React.ReactNode;
+  className?: string;
+}) => (
+  <Card className={`transition-all hover:shadow-md ${className}`}>
+    {children}
+  </Card>
+);
+
 export function OverviewPage() {
   const [stats, setStats] = useState<OverviewStats | null>(null);
   const [competitionStats, setCompetitionStats] =
@@ -173,25 +186,27 @@ export function OverviewPage() {
         <CardTitle className="text-2xl font-bold">Tổng quan</CardTitle>
       </CardHeader>
       <CardContent className="space-y-6">
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-6 grid-cols-1 sm:grid-cols-2">
           {/* Concentrations */}
-          <Card>
+          <StyledCard className="bg-blue-50/50 dark:bg-blue-950/20">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium">
+              <CardTitle className="text-sm font-medium text-blue-700 dark:text-blue-400">
                 Đợt tập trung
               </CardTitle>
-              <Calendar className="h-4 w-4 text-muted-foreground" />
+              <Calendar className="h-4 w-4 text-blue-600" />
             </CardHeader>
-            <CardContent>
-              <div className="flex items-baseline justify-between">
-                <div className="text-2xl font-bold">
-                  {stats?.concentrations?.total || 0}
+            <CardContent className="pt-4">
+              <div className="flex items-baseline justify-between mb-6">
+                <div className="pl-4">
+                  <div className="text-3xl font-bold">
+                    {stats?.concentrations?.total || 0}
+                  </div>
                 </div>
-                <div className="text-xs text-muted-foreground">
+                <div className="text-sm text-muted-foreground">
                   đang diễn ra
                 </div>
               </div>
-              <div className="space-y-1 text-xs text-muted-foreground border-t mt-2 pt-2">
+              <div className="space-y-2.5 text-sm border-t pt-4">
                 <div className="flex justify-between">
                   <span>Đội tuyển:</span>
                   <span>
@@ -212,26 +227,30 @@ export function OverviewPage() {
                 </div>
               </div>
             </CardContent>
-          </Card>
+          </StyledCard>
 
           {/* Personnel */}
-          <Card>
+          <StyledCard className="bg-green-50/50 dark:bg-green-950/20">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium">Nhân sự</CardTitle>
-              <Users className="h-4 w-4 text-muted-foreground" />
+              <CardTitle className="text-sm font-medium text-green-700 dark:text-green-400">
+                Nhân sự
+              </CardTitle>
+              <Users className="h-4 w-4 text-green-600" />
             </CardHeader>
-            <CardContent>
-              <div className="flex items-baseline justify-between">
-                <div className="text-2xl font-bold">
-                  {(stats?.participants?.total?.ATHLETE || 0) +
-                    (stats?.participants?.total?.COACH || 0) +
-                    (stats?.participants?.total?.SPECIALIST || 0)}
+            <CardContent className="pt-4">
+              <div className="flex items-baseline justify-between mb-6">
+                <div className="pl-4">
+                  <div className="text-3xl font-bold">
+                    {(stats?.participants?.total?.ATHLETE || 0) +
+                      (stats?.participants?.total?.COACH || 0) +
+                      (stats?.participants?.total?.SPECIALIST || 0)}
+                  </div>
                 </div>
-                <div className="text-xs text-muted-foreground">
+                <div className="text-sm text-muted-foreground">
                   đang tham gia tập trung
                 </div>
               </div>
-              <div className="space-y-1 text-xs text-muted-foreground border-t mt-2 pt-2">
+              <div className="space-y-2.5 text-sm border-t pt-4">
                 <div className="flex justify-between">
                   <span>Đội tuyển:</span>
                   <span>
@@ -270,21 +289,23 @@ export function OverviewPage() {
                 </div>
               </div>
             </CardContent>
-          </Card>
+          </StyledCard>
 
           {/* Competitions */}
-          <Card>
+          <StyledCard className="bg-purple-50/50 dark:bg-purple-950/20">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium">Thi đấu</CardTitle>
-              <Trophy className="h-4 w-4 text-muted-foreground" />
+              <CardTitle className="text-sm font-medium text-purple-700 dark:text-purple-400">
+                Thi đấu
+              </CardTitle>
+              <Trophy className="h-4 w-4 text-purple-600" />
             </CardHeader>
-            <CardContent>
-              <div className="flex items-baseline justify-between">
-                <div className="flex items-center gap-2">
-                  <div className="text-2xl font-bold">
+            <CardContent className="pt-4">
+              <div className="flex items-baseline justify-between mb-6">
+                <div className="flex items-center gap-3 pl-4">
+                  <div className="text-3xl font-bold">
                     {competitionStats?.total || 0}
                   </div>
-                  <div className="text-xs text-muted-foreground flex items-center gap-2">
+                  <div className="text-sm text-muted-foreground flex items-center gap-2">
                     <span className="flex items-center gap-1">
                       <Home className="h-3 w-3" />
                       {competitionStats?.byLocation?.domestic || 0}
@@ -295,11 +316,11 @@ export function OverviewPage() {
                     </span>
                   </div>
                 </div>
-                <div className="text-xs text-muted-foreground">
+                <div className="text-sm text-muted-foreground">
                   giải đang diễn ra
                 </div>
               </div>
-              <div className="space-y-1 text-xs text-muted-foreground border-t mt-2 pt-2">
+              <div className="space-y-2.5 text-sm border-t pt-4">
                 <div className="flex justify-between">
                   <span>Đội tuyển:</span>
                   <span className="flex items-center gap-1">
@@ -351,21 +372,23 @@ export function OverviewPage() {
                 </div>
               </div>
             </CardContent>
-          </Card>
+          </StyledCard>
 
           {/* Trainings */}
-          <Card>
+          <StyledCard className="bg-orange-50/50 dark:bg-orange-950/20">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium">Tập huấn</CardTitle>
-              <Dumbbell className="h-4 w-4 text-muted-foreground" />
+              <CardTitle className="text-sm font-medium text-orange-700 dark:text-orange-400">
+                Tập huấn
+              </CardTitle>
+              <Dumbbell className="h-4 w-4 text-orange-600" />
             </CardHeader>
-            <CardContent>
-              <div className="flex items-baseline justify-between">
-                <div className="flex items-center gap-2">
-                  <div className="text-2xl font-bold">
+            <CardContent className="pt-4">
+              <div className="flex items-baseline justify-between mb-6">
+                <div className="flex items-center gap-3 pl-4">
+                  <div className="text-3xl font-bold">
                     {trainingStats?.total || 0}
                   </div>
-                  <div className="text-xs text-muted-foreground flex items-center gap-2">
+                  <div className="text-sm text-muted-foreground flex items-center gap-2">
                     <span className="flex items-center gap-1">
                       <Home className="h-3 w-3" />
                       {trainingStats?.byLocation?.domestic || 0}
@@ -376,11 +399,11 @@ export function OverviewPage() {
                     </span>
                   </div>
                 </div>
-                <div className="text-xs text-muted-foreground">
+                <div className="text-sm text-muted-foreground">
                   đang diễn ra
                 </div>
               </div>
-              <div className="space-y-1 text-xs text-muted-foreground border-t mt-2 pt-2">
+              <div className="space-y-2.5 text-sm border-t pt-4">
                 <div className="flex justify-between">
                   <span>Đội tuyển:</span>
                   <span className="flex items-center gap-1">
@@ -431,7 +454,7 @@ export function OverviewPage() {
                 </div>
               </div>
             </CardContent>
-          </Card>
+          </StyledCard>
         </div>
       </CardContent>
     </Card>

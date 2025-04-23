@@ -323,8 +323,8 @@ export function ConcentrationCard({
 
         <div className="flex items-center gap-6">
           <div className="flex items-center gap-3">
-            <div className="p-1.5 rounded-full bg-blue-50">
-              <Dumbbell className="h-4 w-4 text-blue-500" />
+            <div className="p-1.5 rounded-full bg-orange-50">
+              <Dumbbell className="h-4 w-4 text-orange-500" />
             </div>
             <span>{concentration.trainings?.length || 0} đợt tập huấn</span>
           </div>

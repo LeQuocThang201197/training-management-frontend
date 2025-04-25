@@ -208,8 +208,12 @@ export function PersonnelPage() {
     setIsDialogOpen(true);
   };
 
-  const getBirthYear = (birthday: string) => {
-    return new Date(birthday).getFullYear();
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString("vi-VN", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+    });
   };
 
   const toggleSort = (field: "name" | "birthday") => {
@@ -329,6 +333,8 @@ export function PersonnelPage() {
                     </Tooltip>
                   </TooltipProvider>
                 </TableHead>
+                <TableHead>CCCD/CMND</TableHead>
+                <TableHead>Bảo hiểm XH</TableHead>
                 <TableHead>Giới tính</TableHead>
                 <TableHead>
                   <TooltipProvider>
@@ -338,7 +344,7 @@ export function PersonnelPage() {
                           className="flex items-center gap-2 cursor-pointer text-blue-600 hover:text-blue-800"
                           onClick={() => toggleSort("birthday")}
                         >
-                          Năm sinh
+                          Ngày sinh
                           <ArrowUpDown
                             className={cn(
                               "h-4 w-4",
@@ -351,7 +357,7 @@ export function PersonnelPage() {
                         </div>
                       </TooltipTrigger>
                       <TooltipContent>
-                        <p>Nhấn để sắp xếp theo năm sinh</p>
+                        <p>Nhấn để sắp xếp theo ngày sinh</p>
                       </TooltipContent>
                     </Tooltip>
                   </TooltipProvider>
@@ -366,8 +372,10 @@ export function PersonnelPage() {
                       <TableCell className="font-medium">
                         {person.name}
                       </TableCell>
+                      <TableCell>{person.identity_number}</TableCell>
+                      <TableCell>{person.social_insurance}</TableCell>
                       <TableCell>{person.gender}</TableCell>
-                      <TableCell>{getBirthYear(person.birthday)}</TableCell>
+                      <TableCell>{formatDate(person.birthday)}</TableCell>
                       <TableCell className="text-right">
                         <Button
                           variant="ghost"
@@ -384,8 +392,10 @@ export function PersonnelPage() {
                       <TableCell className="font-medium">
                         {person.name}
                       </TableCell>
+                      <TableCell>{person.identity_number}</TableCell>
+                      <TableCell>{person.social_insurance}</TableCell>
                       <TableCell>{person.gender}</TableCell>
-                      <TableCell>{getBirthYear(person.birthday)}</TableCell>
+                      <TableCell>{formatDate(person.birthday)}</TableCell>
                       <TableCell className="text-right">
                         <Button
                           variant="ghost"

@@ -323,7 +323,9 @@ export function DocumentsPage() {
             </div>
 
             {/* Update pagination UI */}
-            {pagination.totalPages > 1 && (
+            {(searchTerm
+              ? documents.length > 0
+              : pagination.totalPages > 1) && (
               <Pagination
                 currentPage={pagination.page}
                 totalPages={pagination.totalPages}

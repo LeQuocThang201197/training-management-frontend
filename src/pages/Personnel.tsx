@@ -402,17 +402,19 @@ export function PersonnelPage() {
         </div>
       )}
 
-      {!searchTerm && (
-        <Pagination
-          currentPage={currentPage}
-          totalPages={totalPages}
-          onPageChange={setCurrentPage}
-          loading={loading}
-          total={pagination.total}
-          itemsPerPage={personnel.length}
-          itemName="nhân sự"
-        />
-      )}
+      <Pagination
+        currentPage={currentPage}
+        totalPages={
+          searchTerm
+            ? Math.ceil(searchResults.length / pagination.limit)
+            : totalPages
+        }
+        onPageChange={setCurrentPage}
+        loading={loading}
+        total={searchTerm ? searchResults.length : pagination.total}
+        itemsPerPage={searchTerm ? searchResults.length : personnel.length}
+        itemName="nhân sự"
+      />
     </div>
   );
 }

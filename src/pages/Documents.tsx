@@ -10,8 +10,6 @@ import {
   FileText,
   EllipsisVertical,
   Trash2,
-  ChevronLeft,
-  ChevronRight,
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import {
@@ -31,6 +29,7 @@ import {
 import { API_URL } from "@/config/api";
 import { useNavigate } from "react-router-dom";
 import { DocumentFormDialog } from "@/components/dialogs/DocumentFormDialog";
+import { Pagination } from "@/components/ui/pagination";
 
 interface Document {
   id: number;
@@ -325,38 +324,15 @@ export function DocumentsPage() {
 
             {/* Update pagination UI */}
             {pagination.totalPages > 1 && (
-              <div className="flex items-center justify-center gap-2 mt-4">
-                <Button
-                  variant="outline"
-                  size="icon"
-                  onClick={() => handlePageChange(pagination.page - 1)}
-                  disabled={pagination.page === 1}
-                >
-                  <ChevronLeft className="h-4 w-4" />
-                </Button>
-                {Array.from(
-                  { length: pagination.totalPages },
-                  (_, i) => i + 1
-                ).map((page) => (
-                  <Button
-                    key={page}
-                    variant={pagination.page === page ? "default" : "outline"}
-                    size="icon"
-                    onClick={() => handlePageChange(page)}
-                    className="w-8 h-8"
-                  >
-                    {page}
-                  </Button>
-                ))}
-                <Button
-                  variant="outline"
-                  size="icon"
-                  onClick={() => handlePageChange(pagination.page + 1)}
-                  disabled={pagination.page === pagination.totalPages}
-                >
-                  <ChevronRight className="h-4 w-4" />
-                </Button>
-              </div>
+              <Pagination
+                currentPage={pagination.page}
+                totalPages={pagination.totalPages}
+                onPageChange={handlePageChange}
+                loading={loading}
+                total={pagination.total}
+                itemsPerPage={documents.length}
+                itemName="văn bản"
+              />
             )}
           </>
         )}

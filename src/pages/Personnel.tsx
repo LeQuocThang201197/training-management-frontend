@@ -26,6 +26,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { Pagination } from "@/components/ui/pagination";
 
 interface Person {
   id: number;
@@ -402,44 +403,15 @@ export function PersonnelPage() {
       )}
 
       {!searchTerm && (
-        <div className="mt-4 flex items-center justify-between">
-          <div className="text-sm text-gray-500">
-            Hiển thị {personnel.length} trên tổng số {pagination.total} nhân sự
-          </div>
-          <div className="flex gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setCurrentPage((prev) => prev - 1)}
-              disabled={currentPage === 1 || loading}
-            >
-              Trước
-            </Button>
-            <div className="flex items-center gap-2">
-              {Array.from({ length: totalPages }, (_, i) => i + 1).map(
-                (page) => (
-                  <Button
-                    key={page}
-                    variant={currentPage === page ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => setCurrentPage(page)}
-                    disabled={loading}
-                  >
-                    {page}
-                  </Button>
-                )
-              )}
-            </div>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setCurrentPage((prev) => prev + 1)}
-              disabled={currentPage === totalPages || loading}
-            >
-              Sau
-            </Button>
-          </div>
-        </div>
+        <Pagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPageChange={setCurrentPage}
+          loading={loading}
+          total={pagination.total}
+          itemsPerPage={personnel.length}
+          itemName="nhân sự"
+        />
       )}
     </div>
   );

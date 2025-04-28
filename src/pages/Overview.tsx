@@ -317,14 +317,14 @@ export function OverviewPage() {
                   </div>
                 </div>
                 <div className="text-sm text-muted-foreground">
-                  giải đang diễn ra
+                  đội đang tham gia
                 </div>
               </div>
               <div className="space-y-2.5 text-sm border-t pt-4">
                 <div className="flex justify-between">
                   <span>Đội tuyển:</span>
                   <span className="flex items-center gap-1">
-                    {competitionStats?.byTeamType?.ADULT?.total || 0} giải
+                    {competitionStats?.byTeamType?.ADULT?.total || 0} đội
                     <span className="text-muted-foreground/75 ml-1 flex items-center gap-2">
                       <span className="flex items-center gap-1">
                         <Home className="h-3 w-3" />
@@ -340,7 +340,7 @@ export function OverviewPage() {
                 <div className="flex justify-between">
                   <span>Đội trẻ:</span>
                   <span className="flex items-center gap-1">
-                    {competitionStats?.byTeamType?.JUNIOR?.total || 0} giải
+                    {competitionStats?.byTeamType?.JUNIOR?.total || 0} đội
                     <span className="text-muted-foreground/75 ml-1 flex items-center gap-2">
                       <span className="flex items-center gap-1">
                         <Home className="h-3 w-3" />
@@ -356,7 +356,7 @@ export function OverviewPage() {
                 <div className="flex justify-between">
                   <span>Đội khuyết năng:</span>
                   <span className="flex items-center gap-1">
-                    {competitionStats?.byTeamType?.DISABILITY?.total || 0} giải
+                    {competitionStats?.byTeamType?.DISABILITY?.total || 0} đội
                     <span className="text-muted-foreground/75 ml-1 flex items-center gap-2">
                       <span className="flex items-center gap-1">
                         <Home className="h-3 w-3" />
@@ -400,14 +400,14 @@ export function OverviewPage() {
                   </div>
                 </div>
                 <div className="text-sm text-muted-foreground">
-                  đang diễn ra
+                  đội đang tham gia
                 </div>
               </div>
               <div className="space-y-2.5 text-sm border-t pt-4">
                 <div className="flex justify-between">
                   <span>Đội tuyển:</span>
                   <span className="flex items-center gap-1">
-                    {trainingStats?.byTeamType?.ADULT?.total || 0} đợt
+                    {trainingStats?.byTeamType?.ADULT?.total || 0} đội
                     <span className="text-muted-foreground/75 ml-1 flex items-center gap-2">
                       <span className="flex items-center gap-1">
                         <Home className="h-3 w-3" />
@@ -423,7 +423,7 @@ export function OverviewPage() {
                 <div className="flex justify-between">
                   <span>Đội trẻ:</span>
                   <span className="flex items-center gap-1">
-                    {trainingStats?.byTeamType?.JUNIOR?.total || 0} đợt
+                    {trainingStats?.byTeamType?.JUNIOR?.total || 0} đội
                     <span className="text-muted-foreground/75 ml-1 flex items-center gap-2">
                       <span className="flex items-center gap-1">
                         <Home className="h-3 w-3" />
@@ -439,7 +439,7 @@ export function OverviewPage() {
                 <div className="flex justify-between">
                   <span>Đội khuyết năng:</span>
                   <span className="flex items-center gap-1">
-                    {trainingStats?.byTeamType?.DISABILITY?.total || 0} đợt
+                    {trainingStats?.byTeamType?.DISABILITY?.total || 0} đội
                     <span className="text-muted-foreground/75 ml-1 flex items-center gap-2">
                       <span className="flex items-center gap-1">
                         <Home className="h-3 w-3" />

@@ -412,19 +412,21 @@ export function PersonnelPage() {
         </div>
       )}
 
-      <Pagination
-        currentPage={currentPage}
-        totalPages={
-          searchTerm
-            ? Math.ceil(searchResults.length / pagination.limit)
-            : totalPages
-        }
-        onPageChange={setCurrentPage}
-        loading={loading}
-        total={searchTerm ? searchResults.length : pagination.total}
-        itemsPerPage={searchTerm ? searchResults.length : personnel.length}
-        itemName="nhân sự"
-      />
+      <div className="mt-4">
+        <Pagination
+          currentPage={currentPage}
+          totalPages={
+            searchTerm
+              ? Math.ceil(searchResults.length / pagination.limit)
+              : totalPages
+          }
+          onPageChange={setCurrentPage}
+          loading={loading}
+          total={searchTerm ? searchResults.length : pagination.total}
+          itemsPerPage={searchTerm ? searchResults.length : personnel.length}
+          itemName="nhân sự"
+        />
+      </div>
     </div>
   );
 }

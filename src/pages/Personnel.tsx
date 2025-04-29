@@ -8,6 +8,7 @@ import {
   MoreHorizontal,
   Pencil,
   Trash2,
+  Eye,
 } from "lucide-react";
 import {
   Table,
@@ -40,6 +41,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { useNavigate } from "react-router-dom";
 
 interface Person {
   id: number;
@@ -94,6 +96,7 @@ export function PersonnelPage() {
     limit: 10,
   });
   const [searchResults, setSearchResults] = useState<Person[]>([]);
+  const navigate = useNavigate();
 
   const fetchPersonnel = useCallback(
     async (page: number, search?: string) => {
@@ -245,6 +248,10 @@ export function PersonnelPage() {
     } catch (err) {
       console.error("Delete person error:", err);
     }
+  };
+
+  const handleViewDetail = (personId: number) => {
+    navigate(`/personnel/${personId}`);
   };
 
   const formatDate = (dateString: string) => {
@@ -425,6 +432,12 @@ export function PersonnelPage() {
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
                             <DropdownMenuItem
+                              onClick={() => handleViewDetail(person.id)}
+                            >
+                              <Eye className="mr-2 h-4 w-4" />
+                              <span>Xem chi tiết</span>
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
                               onClick={() => handleEdit(person)}
                             >
                               <Pencil className="mr-2 h-4 w-4" />
@@ -460,6 +473,12 @@ export function PersonnelPage() {
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
+                            <DropdownMenuItem
+                              onClick={() => handleViewDetail(person.id)}
+                            >
+                              <Eye className="mr-2 h-4 w-4" />
+                              <span>Xem chi tiết</span>
+                            </DropdownMenuItem>
                             <DropdownMenuItem
                               onClick={() => handleEdit(person)}
                             >

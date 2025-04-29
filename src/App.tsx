@@ -19,6 +19,7 @@ import { OrganizationsPage } from "./pages/Organizations";
 import { UserManagementPage } from "@/pages/UserManagement";
 import { RoleManagementPage } from "./pages/RoleManagement";
 import { PermissionManagementPage } from "./pages/PermissionManagement";
+import { PersonnelDetailPage } from "./pages/PersonnelDetail";
 
 function App() {
   return (
@@ -58,6 +59,14 @@ function App() {
                         element={
                           <PermissionGate permission="READ_PERSON">
                             <PersonnelPage />
+                          </PermissionGate>
+                        }
+                      />
+                      <Route
+                        path="personnel/:id"
+                        element={
+                          <PermissionGate permission="READ_PERSON">
+                            <PersonnelDetailPage />
                           </PermissionGate>
                         }
                       />

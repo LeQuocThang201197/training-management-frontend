@@ -1202,6 +1202,18 @@ export function ConcentrationDetailPage() {
     }
   }, [isLinkPaperDialogOpen, currentPage, searchTerm, fetchAvailablePapers]);
 
+  // Thêm hàm helper để sắp xếp HLV
+  const sortCoaches = (coaches: Participant[]) => {
+    return [...coaches].sort((a, b) => {
+      // HLV trưởng luôn đứng đầu
+      if (a.role.name.toLowerCase().includes("trưởng")) return -1;
+      if (b.role.name.toLowerCase().includes("trưởng")) return 1;
+
+      // Các HLV khác giữ nguyên thứ tự
+      return 0;
+    });
+  };
+
   if (loading) {
     return <div>Đang tải...</div>;
   }
@@ -1413,46 +1425,44 @@ export function ConcentrationDetailPage() {
                     <div>
                       <h3 className="font-medium mb-3">Huấn luyện viên</h3>
                       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        {filteredParticipants
-                          .filter((p) => p.role.type === "COACH")
-                          .map((coach) => {
-                            // Tìm training đang diễn ra mà người này tham gia
-                            const ongoingTraining = trainingEvents.find(
-                              (training) =>
-                                isOngoing(
-                                  training.startDate,
-                                  training.endDate
-                                ) &&
-                                trainingParticipants[training.id]?.includes(
-                                  coach.id
-                                )
-                            );
+                        {sortCoaches(
+                          filteredParticipants.filter(
+                            (p) => p.role.type === "COACH"
+                          )
+                        ).map((coach) => {
+                          // Tìm training đang diễn ra mà người này tham gia
+                          const ongoingTraining = trainingEvents.find(
+                            (training) =>
+                              isOngoing(training.startDate, training.endDate) &&
+                              trainingParticipants[training.id]?.includes(
+                                coach.id
+                              )
+                          );
 
-                            // Tìm competition đang diễn ra mà người này tham gia
-                            const ongoingCompetition = competitions.find(
-                              (competition) =>
-                                isOngoing(
-                                  competition.startDate,
-                                  competition.endDate
-                                ) &&
-                                competitionParticipantIds.includes(coach.id)
-                            );
+                          // Tìm competition đang diễn ra mà người này tham gia
+                          const ongoingCompetition = competitions.find(
+                            (competition) =>
+                              isOngoing(
+                                competition.startDate,
+                                competition.endDate
+                              ) && competitionParticipantIds.includes(coach.id)
+                          );
 
-                            return (
-                              <ParticipantCard
-                                key={coach.id}
-                                participant={coach}
-                                onEdit={() => initEditParticipant(coach)}
-                                onDelete={() => setParticipantToDelete(coach)}
-                                absences={absences.filter((a) => {
-                                  return a.participation.id === coach.id;
-                                })}
-                                onAbsenceChange={fetchAbsences}
-                                ongoingTraining={ongoingTraining}
-                                ongoingCompetition={ongoingCompetition}
-                              />
-                            );
-                          })}
+                          return (
+                            <ParticipantCard
+                              key={coach.id}
+                              participant={coach}
+                              onEdit={() => initEditParticipant(coach)}
+                              onDelete={() => setParticipantToDelete(coach)}
+                              absences={absences.filter((a) => {
+                                return a.participation.id === coach.id;
+                              })}
+                              onAbsenceChange={fetchAbsences}
+                              ongoingTraining={ongoingTraining}
+                              ongoingCompetition={ongoingCompetition}
+                            />
+                          );
+                        })}
                       </div>
                     </div>
                   )}

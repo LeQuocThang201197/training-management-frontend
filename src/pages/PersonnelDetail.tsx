@@ -20,25 +20,9 @@ interface Person {
   updatedAt: string;
 }
 
-interface Activity {
-  id: number;
-  type: string;
-  description: string;
-  date: string;
-}
-
-interface Achievement {
-  id: number;
-  title: string;
-  description: string;
-  date: string;
-}
-
 export function PersonnelDetailPage() {
   const { id } = useParams();
   const [person, setPerson] = useState<Person | null>(null);
-  const [activities, setActivities] = useState<Activity[]>([]);
-  const [achievements, setAchievements] = useState<Achievement[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -102,8 +86,6 @@ export function PersonnelDetailPage() {
       <Tabs defaultValue="info" className="space-y-4">
         <TabsList>
           <TabsTrigger value="info">Thông tin cá nhân</TabsTrigger>
-          <TabsTrigger value="activities">Lịch sử hoạt động</TabsTrigger>
-          <TabsTrigger value="achievements">Thành tích</TabsTrigger>
         </TabsList>
 
         <TabsContent value="info">
@@ -144,44 +126,6 @@ export function PersonnelDetailPage() {
                   <p>{person.phone}</p>
                 </div>
               </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="activities">
-          <Card>
-            <CardHeader>
-              <CardTitle>Lịch sử hoạt động</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {activities.length === 0 ? (
-                <p className="text-center text-gray-500">
-                  Chưa có hoạt động nào
-                </p>
-              ) : (
-                <div className="space-y-4">
-                  {/* Hiển thị danh sách hoạt động ở đây */}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="achievements">
-          <Card>
-            <CardHeader>
-              <CardTitle>Thành tích</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {achievements.length === 0 ? (
-                <p className="text-center text-gray-500">
-                  Chưa có thành tích nào
-                </p>
-              ) : (
-                <div className="space-y-4">
-                  {/* Hiển thị danh sách thành tích ở đây */}
-                </div>
-              )}
             </CardContent>
           </Card>
         </TabsContent>

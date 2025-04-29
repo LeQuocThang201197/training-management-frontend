@@ -1,7 +1,14 @@
 import { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Search, PlusCircle, ArrowUpDown } from "lucide-react";
+import {
+  Search,
+  PlusCircle,
+  ArrowUpDown,
+  MoreHorizontal,
+  Pencil,
+  Trash2,
+} from "lucide-react";
 import {
   Table,
   TableBody,
@@ -27,6 +34,12 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { Pagination } from "@/components/ui/pagination";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 interface Person {
   id: number;
@@ -208,6 +221,32 @@ export function PersonnelPage() {
     setIsDialogOpen(true);
   };
 
+  const handleDelete = async (personId: number) => {
+    if (!window.confirm("Bạn có chắc chắn muốn xóa nhân sự này?")) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`${API_URL}/persons/${personId}`, {
+        method: "DELETE",
+        credentials: "include",
+      });
+
+      if (!response.ok) throw new Error("Không thể xóa nhân sự");
+
+      const data = await response.json();
+      if (data.success) {
+        if (searchTerm) {
+          setSearchResults((prev) => prev.filter((p) => p.id !== personId));
+        } else {
+          setPersonnel((prev) => prev.filter((p) => p.id !== personId));
+        }
+      }
+    } catch (err) {
+      console.error("Delete person error:", err);
+    }
+  };
+
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString("vi-VN", {
       day: "2-digit",
@@ -377,13 +416,29 @@ export function PersonnelPage() {
                       <TableCell>{person.gender}</TableCell>
                       <TableCell>{formatDate(person.birthday)}</TableCell>
                       <TableCell className="text-right">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleEdit(person)}
-                        >
-                          Chỉnh sửa
-                        </Button>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" className="h-8 w-8 p-0">
+                              <span className="sr-only">Mở menu</span>
+                              <MoreHorizontal className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem
+                              onClick={() => handleEdit(person)}
+                            >
+                              <Pencil className="mr-2 h-4 w-4" />
+                              <span>Chỉnh sửa</span>
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              onClick={() => handleDelete(person.id)}
+                              className="text-red-600"
+                            >
+                              <Trash2 className="mr-2 h-4 w-4" />
+                              <span>Xóa</span>
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
                       </TableCell>
                     </TableRow>
                   ))
@@ -397,13 +452,29 @@ export function PersonnelPage() {
                       <TableCell>{person.gender}</TableCell>
                       <TableCell>{formatDate(person.birthday)}</TableCell>
                       <TableCell className="text-right">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleEdit(person)}
-                        >
-                          Chỉnh sửa
-                        </Button>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" className="h-8 w-8 p-0">
+                              <span className="sr-only">Mở menu</span>
+                              <MoreHorizontal className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem
+                              onClick={() => handleEdit(person)}
+                            >
+                              <Pencil className="mr-2 h-4 w-4" />
+                              <span>Chỉnh sửa</span>
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              onClick={() => handleDelete(person.id)}
+                              className="text-red-600"
+                            >
+                              <Trash2 className="mr-2 h-4 w-4" />
+                              <span>Xóa</span>
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
                       </TableCell>
                     </TableRow>
                   ))}

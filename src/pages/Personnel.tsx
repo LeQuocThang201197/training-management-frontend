@@ -251,7 +251,7 @@ export function PersonnelPage() {
   };
 
   const handleViewDetail = (personId: number) => {
-    navigate(`/personnel/${personId}`);
+    navigate(`/management/personnel/${personId}`);
   };
 
   const formatDate = (dateString: string) => {

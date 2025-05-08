@@ -53,20 +53,22 @@ export function DocumentFormDialog({
   useEffect(() => {
     if (open && document) {
       setFormData({
-        number: document.number,
-        code: document.code,
-        publisher: document.publisher,
-        type: document.type,
-        content: document.content,
-        related_year: document.related_year,
-        date: new Date(document.date).toISOString().split("T")[0],
+        number: document.number || null,
+        code: document.code || "",
+        publisher: document.publisher || "",
+        type: document.type || "",
+        content: document.content || "",
+        related_year: document.related_year || new Date().getFullYear(),
+        date:
+          document.date?.split("T")[0] ||
+          new Date().toISOString().split("T")[0],
         file: null,
       });
     } else if (!open) {
       // Reset form when closing
       setFormData({
         number: null,
-        code: null,
+        code: "",
         publisher: "",
         type: "",
         content: "",

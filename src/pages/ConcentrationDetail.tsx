@@ -1722,13 +1722,13 @@ export function ConcentrationDetailPage() {
                                   selectedPaperIds.includes(paper.id) &&
                                     "border-primary"
                                 )}
-                                onClick={() => {
-                                  handlePaperSelect(paper);
-                                }}
                               >
                                 <CardContent className="p-4">
                                   <div className="flex items-start justify-between">
-                                    <div className="flex items-start space-x-4">
+                                    <div
+                                      className="flex items-start space-x-4 flex-1 cursor-pointer"
+                                      onClick={() => handlePaperSelect(paper)}
+                                    >
                                       <FileText className="h-5 w-5 text-gray-500 mt-1" />
                                       <div>
                                         <p className="font-medium">
@@ -1752,6 +1752,16 @@ export function ConcentrationDetailPage() {
                                         </p>
                                       </div>
                                     </div>
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      onClick={(e) => {
+                                        e.stopPropagation(); // Ngăn việc chọn card khi click nút
+                                        handleViewFile(paper.id);
+                                      }}
+                                    >
+                                      Xem file
+                                    </Button>
                                   </div>
                                 </CardContent>
                               </Card>

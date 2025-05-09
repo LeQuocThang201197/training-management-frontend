@@ -31,97 +31,111 @@ interface Props {
   onSuccess: () => void;
 }
 
+// Thêm hàm khởi tạo formData
+const getInitialFormData = (doc?: Document | null) => ({
+  number: doc?.number || null,
+  code: doc?.code || "",
+  publisher: doc?.publisher || "",
+  type: doc?.type || "",
+  content: doc?.content || "",
+  related_year: doc?.related_year || new Date().getFullYear(),
+  date: doc?.date?.split("T")[0] || new Date().toISOString().split("T")[0],
+  file: null as File | null,
+});
+
 export function DocumentFormDialog({
   document,
   open,
   onOpenChange,
   onSuccess,
 }: Props) {
-  const [formData, setFormData] = useState({
-    number: document?.number || null,
-    code: document?.code || null,
-    publisher: document?.publisher || "",
-    type: document?.type || "",
-    content: document?.content || "",
-    related_year: document?.related_year || new Date().getFullYear(),
-    date: document?.date || new Date().toISOString().split("T")[0],
-    file: null as File | null,
-  });
+  const [formData, setFormData] = useState(getInitialFormData(document));
   const [loading, setLoading] = useState(false);
-  const [currentFileName, setCurrentFileName] = useState<string>("");
 
   useEffect(() => {
-    if (open && document) {
-      setFormData({
-        number: document.number || null,
-        code: document.code || "",
-        publisher: document.publisher || "",
-        type: document.type || "",
-        content: document.content || "",
-        related_year: document.related_year || new Date().getFullYear(),
-        date:
-          document.date?.split("T")[0] ||
-          new Date().toISOString().split("T")[0],
-        file: null,
-      });
-    } else if (!open) {
-      // Reset form when closing
-      setFormData({
-        number: null,
-        code: "",
-        publisher: "",
-        type: "",
-        content: "",
-        related_year: new Date().getFullYear(),
-        date: new Date().toISOString().split("T")[0],
-        file: null,
-      });
+    if (open) {
+      setFormData(getInitialFormData(document));
     }
   }, [open, document]);
 
-  useEffect(() => {
-    if (document?.file_name) {
-      setCurrentFileName(document.file_name);
-    } else {
-      setCurrentFileName("");
-    }
-  }, [document]);
+  const validateForm = (data: typeof formData) => {
+    if (!data.type) return "Vui lòng chọn loại văn bản";
+    if (!data.publisher) return "Vui lòng nhập đơn vị ban hành";
+    if (!data.content) return "Vui lòng nhập nội dung";
+    if (!data.related_year) return "Vui lòng nhập năm liên quan";
+    if (!document && !data.file) return "Vui lòng chọn file đính kèm";
+    return null;
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    const error = validateForm(formData);
+    if (error) {
+      alert(error);
+      return;
+    }
+
     setLoading(true);
 
-    const formDataToSend = new FormData();
-    Object.entries(formData).forEach(([key, value]) => {
-      if (value !== null) {
-        if (key === "file") {
-          // Only append file if a new one is selected
-          if (value instanceof File) {
-            formDataToSend.append("file", value);
-          }
-        } else {
-          formDataToSend.append(key, String(value));
-        }
-      }
-    });
-
     try {
-      const response = await fetch(
-        `${API_URL}/papers${document ? `/${document.id}` : ""}`,
-        {
-          method: document ? "PUT" : "POST",
+      // Nếu là thêm mới (có file) thì dùng FormData
+      if (!document) {
+        const formDataToSend = new FormData();
+        Object.entries(formData).forEach(([key, value]) => {
+          if (value !== null && value !== undefined && value !== "") {
+            if (key === "file" && value instanceof File) {
+              formDataToSend.append("file", value);
+            } else if (key !== "file") {
+              formDataToSend.append(key, String(value));
+            }
+          }
+        });
+
+        const response = await fetch(`${API_URL}/papers`, {
+          method: "POST",
           credentials: "include",
           body: formDataToSend,
-        }
-      );
+        });
 
-      if (!response.ok) throw new Error("Lưu văn bản thất bại");
+        const data = await response.json();
+        if (!response.ok) {
+          throw new Error(data.message || "Lưu văn bản thất bại");
+        }
+      }
+      // Nếu là cập nhật (không có file) thì dùng JSON
+      else {
+        // Lấy tất cả trường trừ file
+        const dataToSend = {
+          number: formData.number,
+          code: formData.code,
+          publisher: formData.publisher,
+          type: formData.type,
+          content: formData.content,
+          related_year: formData.related_year,
+          date: formData.date,
+        };
+        const response = await fetch(`${API_URL}/papers/${document.id}`, {
+          method: "PUT",
+          credentials: "include",
+          headers: {
+            "Content-Type": "application/json",
+            Accept: "application/json",
+          },
+          body: JSON.stringify(dataToSend),
+        });
+
+        const data = await response.json();
+        if (!response.ok) {
+          throw new Error(data.message || "Lưu văn bản thất bại");
+        }
+      }
 
       onSuccess();
       onOpenChange(false);
     } catch (error) {
       console.error("Failed to save document:", error);
-      alert("Lưu văn bản thất bại");
+      alert(error instanceof Error ? error.message : "Lưu văn bản thất bại");
     } finally {
       setLoading(false);
     }
@@ -132,7 +146,7 @@ export function DocumentFormDialog({
       <DialogContent className="sm:max-w-[600px]">
         <DialogHeader>
           <DialogTitle>
-            {document ? "Chỉnh sửa văn bản" : "Thêm văn bản mới"}
+            {document ? "Chỉnh sửa thông tin văn bản" : "Thêm văn bản mới"}
           </DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -157,11 +171,11 @@ export function DocumentFormDialog({
               <Label htmlFor="code">Ký hiệu</Label>
               <Input
                 id="code"
-                value={formData.code === null ? "" : formData.code}
+                value={formData.code}
                 onChange={(e) =>
                   setFormData((prev) => ({
                     ...prev,
-                    code: e.target.value || null,
+                    code: e.target.value,
                   }))
                 }
                 placeholder="VD: QĐ-TCTDTT"
@@ -256,31 +270,26 @@ export function DocumentFormDialog({
             />
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="file">Tệp đính kèm</Label>
-            {currentFileName && (
-              <div className="text-sm text-muted-foreground mb-2">
-                File hiện tại: {currentFileName}
-              </div>
-            )}
-            <Input
-              id="file"
-              type="file"
-              onChange={(e) =>
-                setFormData((prev) => ({
-                  ...prev,
-                  file: e.target.files?.[0] || null,
-                }))
-              }
-              accept=".pdf,.doc,.docx"
-              required={!document}
-            />
-            <p className="text-sm text-muted-foreground">
-              {document
-                ? "Tải lên file mới nếu muốn thay thế file hiện tại"
-                : "Chọn file để tải lên (.pdf, .doc, .docx)"}
-            </p>
-          </div>
+          {!document && (
+            <div className="space-y-2">
+              <Label htmlFor="file">Tệp đính kèm</Label>
+              <Input
+                id="file"
+                type="file"
+                onChange={(e) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    file: e.target.files?.[0] || null,
+                  }))
+                }
+                accept=".pdf,.doc,.docx"
+                required
+              />
+              <p className="text-sm text-muted-foreground">
+                Chọn file để tải lên (.pdf, .doc, .docx)
+              </p>
+            </div>
+          )}
 
           <div className="flex justify-end gap-2">
             <Button

@@ -5,7 +5,6 @@ import {
   PlusCircle,
   Search,
   ArrowUpDown,
-  Edit,
   Eye,
   FileText,
   EllipsisVertical,
@@ -286,7 +285,7 @@ export function DocumentsPage() {
                                 onClick={() => handleViewFile(doc.id)}
                               >
                                 <Eye className="mr-2 h-4 w-4" />
-                                Xem
+                                Xem file
                               </DropdownMenuItem>
                               <DropdownMenuItem
                                 onClick={() =>
@@ -295,15 +294,6 @@ export function DocumentsPage() {
                               >
                                 <FileText className="mr-2 h-4 w-4" />
                                 Chi tiết
-                              </DropdownMenuItem>
-                              <DropdownMenuItem
-                                onClick={() => {
-                                  setSelectedDocument(doc);
-                                  setFormDialogOpen(true);
-                                }}
-                              >
-                                <Edit className="mr-2 h-4 w-4" />
-                                Chỉnh sửa
                               </DropdownMenuItem>
                               <DropdownMenuItem
                                 onClick={() => handleDeleteDocument(doc.id)}

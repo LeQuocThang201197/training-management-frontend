@@ -10,6 +10,8 @@ import {
   Tag,
   Link2Off,
   Link2,
+  Edit,
+  Upload,
 } from "lucide-react";
 import {
   Dialog,
@@ -19,6 +21,9 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
+import { DocumentFormDialog } from "@/components/dialogs/DocumentFormDialog";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
 
 interface Document {
   id: number;
@@ -69,6 +74,10 @@ export function DocumentDetailPage() {
     number[]
   >([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isFileDialogOpen, setIsFileDialogOpen] = useState(false);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [uploading, setUploading] = useState(false);
 
   const fetchLinkedConcentrations = useCallback(async () => {
     try {
@@ -107,6 +116,49 @@ export function DocumentDetailPage() {
       console.error(err);
     } finally {
       setLoadingAllConcentrations(false);
+    }
+  };
+
+  const refreshDocument = useCallback(async () => {
+    try {
+      const response = await fetch(`${API_URL}/papers/${id}`, {
+        credentials: "include",
+      });
+      if (!response.ok) throw new Error("Không thể tải thông tin văn bản");
+
+      const data = await response.json();
+      if (data.success) {
+        setDocument(data.data);
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  }, [id]);
+
+  const handleFileUpload = async () => {
+    if (!selectedFile) return;
+
+    try {
+      setUploading(true);
+      const formData = new FormData();
+      formData.append("file", selectedFile);
+
+      const response = await fetch(`${API_URL}/papers/${id}/file`, {
+        method: "PUT",
+        credentials: "include",
+        body: formData,
+      });
+
+      if (!response.ok) throw new Error("Không thể cập nhật file");
+
+      await refreshDocument();
+      setIsFileDialogOpen(false);
+      setSelectedFile(null);
+    } catch (err) {
+      console.error("Upload file error:", err);
+      alert("Không thể cập nhật file");
+    } finally {
+      setUploading(false);
     }
   };
 
@@ -256,10 +308,20 @@ export function DocumentDetailPage() {
             {document.type} - Số: {document.number}/{document.code}
           </h1>
           <div className="flex gap-2">
+            <Button variant="outline" onClick={() => setIsFileDialogOpen(true)}>
+              <Upload className="h-4 w-4 mr-2" />
+              Cập nhật file
+            </Button>
             <Button variant="outline" onClick={handleViewFile}>
               Xem file
             </Button>
-            <Button onClick={handleDownloadFile}>Tải xuống</Button>
+            <Button variant="outline" onClick={handleDownloadFile}>
+              Tải xuống
+            </Button>
+            <Button onClick={() => setIsEditDialogOpen(true)}>
+              <Edit className="h-4 w-4 mr-2" />
+              Chỉnh sửa
+            </Button>
           </div>
         </div>
 
@@ -466,6 +528,61 @@ export function DocumentDetailPage() {
           )}
         </CardContent>
       </Card>
+
+      <DocumentFormDialog
+        document={document}
+        open={isEditDialogOpen}
+        onOpenChange={setIsEditDialogOpen}
+        onSuccess={refreshDocument}
+      />
+
+      <Dialog open={isFileDialogOpen} onOpenChange={setIsFileDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Cập nhật file đính kèm</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label>File hiện tại</Label>
+              <p className="text-sm text-muted-foreground">
+                {document.file_name}
+              </p>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="file">Chọn file mới</Label>
+              <Input
+                id="file"
+                type="file"
+                onChange={(e) => setSelectedFile(e.target.files?.[0] || null)}
+                accept=".pdf,.doc,.docx"
+              />
+              {selectedFile && (
+                <p className="text-sm text-muted-foreground">
+                  File đã chọn: {selectedFile.name}
+                </p>
+              )}
+            </div>
+            <div className="flex justify-end gap-2">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setIsFileDialogOpen(false);
+                  setSelectedFile(null);
+                }}
+                disabled={uploading}
+              >
+                Hủy
+              </Button>
+              <Button
+                onClick={handleFileUpload}
+                disabled={!selectedFile || uploading}
+              >
+                {uploading ? "Đang tải lên..." : "Cập nhật"}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

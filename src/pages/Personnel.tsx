@@ -9,6 +9,7 @@ import {
   Pencil,
   Trash2,
   Eye,
+  Check,
 } from "lucide-react";
 import {
   Table,
@@ -68,6 +69,93 @@ interface ApiResponse {
     totalPages: number;
   };
 }
+
+const formatDate = (dateString: string) => {
+  return new Date(dateString).toLocaleDateString("vi-VN", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+  });
+};
+
+const PersonTableRow = ({
+  person,
+  onEdit,
+  onDelete,
+  onViewDetail,
+  formatDate,
+}: {
+  person: Person;
+  onEdit: (person: Person) => void;
+  onDelete: (id: number) => void;
+  onViewDetail: (id: number) => void;
+  formatDate: (date: string) => string;
+}) => (
+  <TableRow key={person.id}>
+    <TableCell className="font-medium">{person.name}</TableCell>
+    <TableCell className="text-center">
+      <TooltipProvider>
+        <Tooltip delayDuration={0}>
+          <TooltipTrigger className="inline-flex">
+            {person.identity_number ? (
+              <Check className="h-5 w-5 text-green-600" />
+            ) : (
+              <span className="text-gray-400">-</span>
+            )}
+          </TooltipTrigger>
+          <TooltipContent>
+            <p>{person.identity_number || "Chưa cập nhật"}</p>
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+    </TableCell>
+    <TableCell className="text-center">
+      <TooltipProvider>
+        <Tooltip delayDuration={0}>
+          <TooltipTrigger className="inline-flex">
+            {person.social_insurance ? (
+              <Check className="h-5 w-5 text-green-600" />
+            ) : (
+              <span className="text-gray-400">-</span>
+            )}
+          </TooltipTrigger>
+          <TooltipContent>
+            <p>{person.social_insurance || "Chưa cập nhật"}</p>
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+    </TableCell>
+    <TableCell className="text-center">{person.gender}</TableCell>
+    <TableCell className="text-center">{formatDate(person.birthday)}</TableCell>
+    <TableCell className="text-right">
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="ghost" className="h-8 w-8 p-0">
+            <span className="sr-only">Mở menu</span>
+            <MoreHorizontal className="h-4 w-4" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          <DropdownMenuItem onClick={() => onViewDetail(person.id)}>
+            <Eye className="mr-2 h-4 w-4" />
+            <span>Xem chi tiết</span>
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={() => onEdit(person)}>
+            <Pencil className="mr-2 h-4 w-4" />
+            <span>Chỉnh sửa</span>
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            onClick={() => onDelete(person.id)}
+            className="text-red-600"
+          >
+            <Trash2 className="mr-2 h-4 w-4" />
+            <span>Xóa</span>
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+    </TableCell>
+  </TableRow>
+);
 
 export function PersonnelPage() {
   const [personnel, setPersonnel] = useState<Person[]>([]);
@@ -254,14 +342,6 @@ export function PersonnelPage() {
     navigate(`/management/personnel/${personId}`);
   };
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString("vi-VN", {
-      day: "2-digit",
-      month: "2-digit",
-      year: "numeric",
-    });
-  };
-
   const toggleSort = (field: "name" | "birthday") => {
     if (sortField === field) {
       const newDirection = sortDirection === "asc" ? "desc" : "asc";
@@ -355,7 +435,7 @@ export function PersonnelPage() {
               <TableRow>
                 <TableHead>
                   <TooltipProvider>
-                    <Tooltip>
+                    <Tooltip delayDuration={0}>
                       <TooltipTrigger>
                         <div
                           className="flex items-center gap-2 cursor-pointer text-blue-600 hover:text-blue-800"
@@ -379,12 +459,12 @@ export function PersonnelPage() {
                     </Tooltip>
                   </TooltipProvider>
                 </TableHead>
-                <TableHead>CCCD/CMND</TableHead>
-                <TableHead>Bảo hiểm XH</TableHead>
-                <TableHead>Giới tính</TableHead>
-                <TableHead>
+                <TableHead className="text-center">CCCD/CMND</TableHead>
+                <TableHead className="text-center">Bảo hiểm XH</TableHead>
+                <TableHead className="text-center">Giới tính</TableHead>
+                <TableHead className="text-center">
                   <TooltipProvider>
-                    <Tooltip>
+                    <Tooltip delayDuration={0}>
                       <TooltipTrigger>
                         <div
                           className="flex items-center gap-2 cursor-pointer text-blue-600 hover:text-blue-800"
@@ -412,91 +492,16 @@ export function PersonnelPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {searchTerm
-                ? searchResults.map((person) => (
-                    <TableRow key={person.id}>
-                      <TableCell className="font-medium">
-                        {person.name}
-                      </TableCell>
-                      <TableCell>{person.identity_number}</TableCell>
-                      <TableCell>{person.social_insurance}</TableCell>
-                      <TableCell>{person.gender}</TableCell>
-                      <TableCell>{formatDate(person.birthday)}</TableCell>
-                      <TableCell className="text-right">
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" className="h-8 w-8 p-0">
-                              <span className="sr-only">Mở menu</span>
-                              <MoreHorizontal className="h-4 w-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem
-                              onClick={() => handleViewDetail(person.id)}
-                            >
-                              <Eye className="mr-2 h-4 w-4" />
-                              <span>Xem chi tiết</span>
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                              onClick={() => handleEdit(person)}
-                            >
-                              <Pencil className="mr-2 h-4 w-4" />
-                              <span>Chỉnh sửa</span>
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                              onClick={() => handleDelete(person.id)}
-                              className="text-red-600"
-                            >
-                              <Trash2 className="mr-2 h-4 w-4" />
-                              <span>Xóa</span>
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </TableCell>
-                    </TableRow>
-                  ))
-                : personnel.map((person) => (
-                    <TableRow key={person.id}>
-                      <TableCell className="font-medium">
-                        {person.name}
-                      </TableCell>
-                      <TableCell>{person.identity_number}</TableCell>
-                      <TableCell>{person.social_insurance}</TableCell>
-                      <TableCell>{person.gender}</TableCell>
-                      <TableCell>{formatDate(person.birthday)}</TableCell>
-                      <TableCell className="text-right">
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" className="h-8 w-8 p-0">
-                              <span className="sr-only">Mở menu</span>
-                              <MoreHorizontal className="h-4 w-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem
-                              onClick={() => handleViewDetail(person.id)}
-                            >
-                              <Eye className="mr-2 h-4 w-4" />
-                              <span>Xem chi tiết</span>
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                              onClick={() => handleEdit(person)}
-                            >
-                              <Pencil className="mr-2 h-4 w-4" />
-                              <span>Chỉnh sửa</span>
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                              onClick={() => handleDelete(person.id)}
-                              className="text-red-600"
-                            >
-                              <Trash2 className="mr-2 h-4 w-4" />
-                              <span>Xóa</span>
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </TableCell>
-                    </TableRow>
-                  ))}
+              {(searchTerm ? searchResults : personnel).map((person) => (
+                <PersonTableRow
+                  key={person.id}
+                  person={person}
+                  onEdit={handleEdit}
+                  onDelete={handleDelete}
+                  onViewDetail={handleViewDetail}
+                  formatDate={formatDate}
+                />
+              ))}
             </TableBody>
           </Table>
         </div>

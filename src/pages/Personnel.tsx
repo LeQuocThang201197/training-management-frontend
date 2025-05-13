@@ -44,19 +44,39 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useNavigate } from "react-router-dom";
 
+interface Team {
+  type: string;
+  gender: string;
+}
+
+interface Concentration {
+  location: string;
+  startDate: string;
+  endDate: string;
+}
+
+interface LatestParticipation {
+  role: string;
+  sport: string;
+  team: Team;
+  concentration: Concentration;
+}
+
 interface Person {
   id: number;
   name: string;
-  identity_number: string;
-  identity_date: string;
-  identity_place: string;
-  social_insurance: string;
+  identity_number: string | null;
+  identity_date: string | null;
+  identity_place: string | null;
+  social_insurance: string | null;
   birthday: string;
   gender: string;
-  phone: string;
-  email: string;
+  phone: string | null;
+  email: string | null;
   createdAt: string;
   updatedAt: string;
+  created_by: number;
+  latest_participation?: LatestParticipation;
 }
 
 interface ApiResponse {
@@ -78,6 +98,29 @@ const formatDate = (dateString: string) => {
   });
 };
 
+const getTeamStyle = (participation?: LatestParticipation) => {
+  if (!participation) return "text-gray-600";
+
+  const today = new Date();
+  const endDate = new Date(participation.concentration.endDate);
+  endDate.setHours(23, 59, 59, 999);
+
+  // Nếu đã kết thúc, trả về màu xám
+  if (today > endDate) return "text-gray-600";
+
+  // Nếu đang diễn ra, trả về màu theo loại đội
+  switch (participation.team.type) {
+    case "Trẻ":
+      return "text-emerald-700";
+    case "Người khuyết tật":
+      return "text-purple-700";
+    case "Tuyển":
+      return "text-red-700";
+    default:
+      return "text-primary";
+  }
+};
+
 const PersonTableRow = ({
   person,
   onEdit,
@@ -90,72 +133,122 @@ const PersonTableRow = ({
   onDelete: (id: number) => void;
   onViewDetail: (id: number) => void;
   formatDate: (date: string) => string;
-}) => (
-  <TableRow key={person.id}>
-    <TableCell className="font-medium">{person.name}</TableCell>
-    <TableCell className="text-center">
-      <TooltipProvider>
-        <Tooltip delayDuration={0}>
-          <TooltipTrigger className="inline-flex">
-            {person.identity_number ? (
-              <Check className="h-5 w-5 text-green-600" />
-            ) : (
-              <span className="text-gray-400">-</span>
-            )}
-          </TooltipTrigger>
-          <TooltipContent>
-            <p>{person.identity_number || "Chưa cập nhật"}</p>
-          </TooltipContent>
-        </Tooltip>
-      </TooltipProvider>
-    </TableCell>
-    <TableCell className="text-center">
-      <TooltipProvider>
-        <Tooltip delayDuration={0}>
-          <TooltipTrigger className="inline-flex">
-            {person.social_insurance ? (
-              <Check className="h-5 w-5 text-green-600" />
-            ) : (
-              <span className="text-gray-400">-</span>
-            )}
-          </TooltipTrigger>
-          <TooltipContent>
-            <p>{person.social_insurance || "Chưa cập nhật"}</p>
-          </TooltipContent>
-        </Tooltip>
-      </TooltipProvider>
-    </TableCell>
-    <TableCell className="text-center">{person.gender}</TableCell>
-    <TableCell className="text-center">{formatDate(person.birthday)}</TableCell>
-    <TableCell className="text-right">
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button variant="ghost" className="h-8 w-8 p-0">
-            <span className="sr-only">Mở menu</span>
-            <MoreHorizontal className="h-4 w-4" />
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end">
-          <DropdownMenuItem onClick={() => onViewDetail(person.id)}>
-            <Eye className="mr-2 h-4 w-4" />
-            <span>Xem chi tiết</span>
-          </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => onEdit(person)}>
-            <Pencil className="mr-2 h-4 w-4" />
-            <span>Chỉnh sửa</span>
-          </DropdownMenuItem>
-          <DropdownMenuItem
-            onClick={() => onDelete(person.id)}
-            className="text-red-600"
-          >
-            <Trash2 className="mr-2 h-4 w-4" />
-            <span>Xóa</span>
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
-    </TableCell>
-  </TableRow>
-);
+}) => {
+  const participation = person.latest_participation;
+  const teamStyle = getTeamStyle(participation);
+
+  return (
+    <TableRow key={person.id}>
+      <TableCell className="font-medium">{person.name}</TableCell>
+      <TableCell className="text-center">
+        <TooltipProvider>
+          <Tooltip delayDuration={0}>
+            <TooltipTrigger className="inline-flex">
+              {person.identity_number ? (
+                <Check className="h-5 w-5 text-green-600" />
+              ) : (
+                <span className="text-gray-400">-</span>
+              )}
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>{person.identity_number || "Chưa cập nhật"}</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      </TableCell>
+      <TableCell className="text-center">
+        <TooltipProvider>
+          <Tooltip delayDuration={0}>
+            <TooltipTrigger className="inline-flex">
+              {person.social_insurance ? (
+                <Check className="h-5 w-5 text-green-600" />
+              ) : (
+                <span className="text-gray-400">-</span>
+              )}
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>{person.social_insurance || "Chưa cập nhật"}</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      </TableCell>
+      <TableCell className="text-center">{person.gender}</TableCell>
+      <TableCell className="text-center">
+        {formatDate(person.birthday)}
+      </TableCell>
+      <TableCell className="text-center">
+        <TooltipProvider>
+          <Tooltip delayDuration={0}>
+            <TooltipTrigger className="inline-flex">
+              <div className="flex flex-col items-center">
+                <span className={cn("text-sm font-medium", teamStyle)}>
+                  {participation
+                    ? `${participation.team.type} ${participation.sport} ${
+                        participation.team.gender === "Hỗn hợp"
+                          ? ""
+                          : participation.team.gender
+                      }`
+                    : "-"}
+                </span>
+                {participation && (
+                  <span className="text-xs text-gray-500">
+                    {new Date(participation.concentration.endDate) > new Date()
+                      ? "(Đang tập trung)"
+                      : "(Gần nhất)"}
+                  </span>
+                )}
+              </div>
+            </TooltipTrigger>
+            <TooltipContent>
+              {participation ? (
+                <div>
+                  <p>Địa điểm: {participation.concentration.location}</p>
+                  <p>
+                    {formatDate(participation.concentration.startDate)}
+                    {" - "}
+                    {formatDate(participation.concentration.endDate)}
+                  </p>
+                </div>
+              ) : (
+                <p>Chưa tham gia đội nào</p>
+              )}
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      </TableCell>
+      <TableCell className="text-center">
+        {participation?.role || "-"}
+      </TableCell>
+      <TableCell className="text-right">
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" className="h-8 w-8 p-0">
+              <span className="sr-only">Mở menu</span>
+              <MoreHorizontal className="h-4 w-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem onClick={() => onViewDetail(person.id)}>
+              <Eye className="mr-2 h-4 w-4" />
+              <span>Xem chi tiết</span>
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => onEdit(person)}>
+              <Pencil className="mr-2 h-4 w-4" />
+              <span>Chỉnh sửa</span>
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={() => onDelete(person.id)}
+              className="text-red-600"
+            >
+              <Trash2 className="mr-2 h-4 w-4" />
+              <span>Xóa</span>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </TableCell>
+    </TableRow>
+  );
+};
 
 export function PersonnelPage() {
   const [personnel, setPersonnel] = useState<Person[]>([]);
@@ -300,14 +393,14 @@ export function PersonnelPage() {
     setEditingPerson(person);
     setFormData({
       name: person.name,
-      identity_number: person.identity_number,
+      identity_number: person.identity_number || "",
       identity_date: person.identity_date?.split("T")[0] || "",
-      identity_place: person.identity_place,
-      social_insurance: person.social_insurance,
+      identity_place: person.identity_place || "",
+      social_insurance: person.social_insurance || "",
       birthday: person.birthday?.split("T")[0] || "",
       gender: person.gender,
-      phone: person.phone,
-      email: person.email,
+      phone: person.phone || "",
+      email: person.email || "",
     });
     setIsDialogOpen(true);
   };
@@ -488,6 +581,8 @@ export function PersonnelPage() {
                     </Tooltip>
                   </TooltipProvider>
                 </TableHead>
+                <TableHead className="text-center">Đội</TableHead>
+                <TableHead className="text-center">Vai trò</TableHead>
                 <TableHead className="text-right">Thao tác</TableHead>
               </TableRow>
             </TableHeader>

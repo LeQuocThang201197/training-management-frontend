@@ -43,16 +43,11 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useNavigate } from "react-router-dom";
+import { Concentration } from "@/types/concentration";
 
 interface Team {
   type: string;
   gender: string;
-}
-
-interface Concentration {
-  location: string;
-  startDate: string;
-  endDate: string;
 }
 
 interface LatestParticipation {
@@ -180,24 +175,32 @@ const PersonTableRow = ({
         <TooltipProvider>
           <Tooltip delayDuration={0}>
             <TooltipTrigger className="inline-flex">
-              <div className="flex flex-col items-center">
-                <span className={cn("text-sm font-medium", teamStyle)}>
-                  {participation
-                    ? `${participation.team.type} ${participation.sport} ${
-                        participation.team.gender === "Hỗn hợp"
-                          ? ""
-                          : participation.team.gender
-                      }`
-                    : "-"}
-                </span>
-                {participation && (
+              {participation?.concentration ? (
+                <a
+                  href={`/management/concentrations/${participation.concentration.id}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={cn(
+                    "flex flex-col items-center hover:underline",
+                    teamStyle
+                  )}
+                >
+                  <span className="text-sm font-medium">
+                    {`${participation.team.type} ${participation.sport} ${
+                      participation.team.gender === "Hỗn hợp"
+                        ? ""
+                        : participation.team.gender
+                    }`}
+                  </span>
                   <span className="text-xs text-gray-500">
                     {new Date(participation.concentration.endDate) > new Date()
                       ? "(Đang tập trung)"
                       : "(Gần nhất)"}
                   </span>
-                )}
-              </div>
+                </a>
+              ) : (
+                <span className="text-gray-500">-</span>
+              )}
             </TooltipTrigger>
             <TooltipContent>
               {participation ? (

@@ -35,6 +35,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { HoverCard } from "@/components/cards/HoverCard";
+import { useToast } from "@/hooks/use-toast";
 
 interface Tag {
   id: string;
@@ -59,6 +60,7 @@ interface TagFormData {
 }
 
 export function TagsPage() {
+  const { toast } = useToast();
   const [tags, setTags] = useState<Tag[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -112,24 +114,6 @@ export function TagsPage() {
     setCurrentPage(1);
   }, [searchTerm]);
 
-  // Loading state
-  if (loading) {
-    return (
-      <div className="flex justify-center items-center min-h-[400px]">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-      </div>
-    );
-  }
-
-  // Error state
-  if (error) {
-    return (
-      <div className="flex justify-center items-center min-h-[400px] text-red-500">
-        <p>Lỗi: {error}</p>
-      </div>
-    );
-  }
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -140,7 +124,10 @@ export function TagsPage() {
 
     if (isExist) {
       // Hiển thị thông báo lỗi
-      alert("Thẻ này đã tồn tại!"); // Hoặc dùng toast/alert đẹp hơn
+      toast({
+        title: "Thẻ đã tồn tại",
+        description: "Thẻ này đã tồn tại trong hệ thống",
+      });
       return;
     }
 
@@ -179,7 +166,10 @@ export function TagsPage() {
     );
 
     if (isExist) {
-      alert("Thẻ này đã tồn tại!"); // Hoặc dùng toast/alert đẹp hơn
+      toast({
+        title: "Thẻ đã tồn tại",
+        description: "Thẻ này đã tồn tại trong hệ thống",
+      });
       return;
     }
 
@@ -241,54 +231,6 @@ export function TagsPage() {
       console.error("Lỗi xóa thẻ:", err);
     }
   };
-
-  // Nếu không có tags
-  if (tags.length === 0) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-[400px] gap-4">
-        <p className="text-gray-500">Chưa có thẻ nào</p>
-        <PermissionGate permission="CREATE_TAG">
-          <Dialog open={isDialogOpen} onOpenChange={handleOpenChange}>
-            <DialogTrigger asChild>
-              <Button>
-                <Plus className="mr-2 h-4 w-4" />
-                Thêm thẻ mới
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Tạo thẻ mới</DialogTitle>
-              </DialogHeader>
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="name">Tên thẻ</Label>
-                  <Input
-                    id="name"
-                    value={formData.name}
-                    onChange={(e) =>
-                      setFormData({ ...formData, name: e.target.value })
-                    }
-                    placeholder="Nhập tên thẻ..."
-                    required
-                  />
-                </div>
-                <div className="flex justify-end gap-2">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => setIsDialogOpen(false)}
-                  >
-                    Hủy
-                  </Button>
-                  <Button type="submit">Tạo thẻ</Button>
-                </div>
-              </form>
-            </DialogContent>
-          </Dialog>
-        </PermissionGate>
-      </div>
-    );
-  }
 
   const filteredTags = tags.filter((tag) =>
     tag.name.toLowerCase().includes(searchTerm.toLowerCase().trim())
@@ -387,6 +329,7 @@ export function TagsPage() {
           className="pl-10"
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
+          clearable
         />
       </div>
 
@@ -397,79 +340,93 @@ export function TagsPage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {sortedAndPaginatedTags.map((tag) => (
-          <HoverCard
-            key={tag.id}
-            id={tag.id}
-            title={tag.name}
-            onEdit={() => openEditForm(tag)}
-            onDelete={() => setTagToDelete(tag)}
-          />
-        ))}
-      </div>
-
-      {/* Pagination */}
-      {totalPages > 1 && (
-        <div className="mt-6 flex items-center justify-center gap-2">
-          <Button
-            variant="outline"
-            size="icon"
-            onClick={() => handlePageChange(currentPage - 1)}
-            disabled={currentPage === 1}
-          >
-            <ChevronLeft className="h-4 w-4" />
-          </Button>
-
-          {/* Hiển thị các nút số trang */}
-          {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-            <Button
-              key={page}
-              variant={currentPage === page ? "default" : "outline"}
-              size="icon"
-              onClick={() => handlePageChange(page)}
-              className="w-8 h-8"
-            >
-              {page}
-            </Button>
-          ))}
-
-          <Button
-            variant="outline"
-            size="icon"
-            onClick={() => handlePageChange(currentPage + 1)}
-            disabled={currentPage === totalPages}
-          >
-            <ChevronRight className="h-4 w-4" />
-          </Button>
+      {loading ? (
+        <div className="flex justify-center py-8">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900" />
         </div>
-      )}
+      ) : error ? (
+        <div className="flex justify-center items-center min-h-[400px] text-red-500">
+          <p>Error: {error}</p>
+        </div>
+      ) : (
+        <>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {sortedAndPaginatedTags.map((tag) => (
+              <HoverCard
+                key={tag.id}
+                id={tag.id}
+                title={tag.name}
+                onEdit={() => openEditForm(tag)}
+                onDelete={() => setTagToDelete(tag)}
+              />
+            ))}
+          </div>
 
-      <AlertDialog
-        open={!!tagToDelete}
-        onOpenChange={(open) => !open && setTagToDelete(null)}
-      >
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Bạn có chắc chắn muốn xóa?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Thẻ "{tagToDelete?.name}" sẽ bị xóa vĩnh viễn và không thể khôi
-              phục.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter className="sm:space-x-4">
-            <AlertDialogCancel className="w-full sm:w-32 bg-gray-100 hover:bg-gray-200 border-none text-gray-900">
-              Không
-            </AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleDelete}
-              className="w-full sm:w-32 bg-red-500 hover:bg-red-600 text-white border-none"
-            >
-              Có, xóa thẻ
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="mt-6 flex items-center justify-center gap-2">
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => handlePageChange(currentPage - 1)}
+                disabled={currentPage === 1}
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+
+              {/* Hiển thị các nút số trang */}
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map(
+                (page) => (
+                  <Button
+                    key={page}
+                    variant={currentPage === page ? "default" : "outline"}
+                    size="icon"
+                    onClick={() => handlePageChange(page)}
+                    className="w-8 h-8"
+                  >
+                    {page}
+                  </Button>
+                )
+              )}
+
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => handlePageChange(currentPage + 1)}
+                disabled={currentPage === totalPages}
+              >
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </div>
+          )}
+
+          <AlertDialog
+            open={!!tagToDelete}
+            onOpenChange={(open) => !open && setTagToDelete(null)}
+          >
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Bạn có chắc chắn muốn xóa?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Thẻ "{tagToDelete?.name}" sẽ bị xóa vĩnh viễn và không thể
+                  khôi phục.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter className="sm:space-x-4">
+                <AlertDialogCancel className="w-full sm:w-32 bg-gray-100 hover:bg-gray-200 border-none text-gray-900">
+                  Không
+                </AlertDialogCancel>
+                <AlertDialogAction
+                  onClick={handleDelete}
+                  className="w-full sm:w-32 bg-red-500 hover:bg-red-600 text-white border-none"
+                >
+                  Có, xóa thẻ
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        </>
+      )}
     </div>
   );
 }

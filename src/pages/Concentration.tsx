@@ -299,6 +299,7 @@ export function ConcentrationPage() {
           className="pl-10"
           value={searchTerm}
           onChange={(e) => handleFilterChange.search(e.target.value)}
+          clearable
         />
       </div>
 

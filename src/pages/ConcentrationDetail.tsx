@@ -1356,6 +1356,7 @@ export function ConcentrationDetailPage() {
                   className="pl-10"
                   value={participantSearchTerm}
                   onChange={(e) => setParticipantSearchTerm(e.target.value)}
+                  clearable
                 />
               </div>
 

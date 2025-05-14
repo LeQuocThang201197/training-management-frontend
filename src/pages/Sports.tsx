@@ -35,6 +35,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { HoverCard } from "@/components/cards/HoverCard";
+import { useToast } from "@/hooks/use-toast";
 
 interface Sport {
   id: number;
@@ -60,30 +61,9 @@ const sortOptions: SortOption[] = [
   { field: "name", direction: "desc", label: "Tên (Z-A)" },
 ];
 
-// Thêm dữ liệu mẫu
-const MOCK_SPORTS: Sport[] = [
-  {
-    id: 1,
-    name: "Aerobic",
-    createdAt: "2024-01-16T02:05:23.950Z",
-    updatedAt: "2024-01-16T02:05:23.950Z",
-  },
-  {
-    id: 2,
-    name: "Bóng đá",
-    createdAt: "2024-01-16T02:05:23.950Z",
-    updatedAt: "2024-01-16T02:05:23.950Z",
-  },
-  {
-    id: 3,
-    name: "Bơi lội",
-    createdAt: "2024-01-16T02:05:23.950Z",
-    updatedAt: "2024-01-16T02:05:23.950Z",
-  },
-];
-
 export function SportsPage() {
-  const [sports, setSports] = useState<Sport[]>(MOCK_SPORTS);
+  const { toast } = useToast();
+  const [sports, setSports] = useState<Sport[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
@@ -143,24 +123,6 @@ export function SportsPage() {
     fetchSports();
   }, []);
 
-  // Loading state
-  if (loading) {
-    return (
-      <div className="flex justify-center items-center min-h-[400px]">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-      </div>
-    );
-  }
-
-  // Error state
-  if (error) {
-    return (
-      <div className="flex justify-center items-center min-h-[400px] text-red-500">
-        <p>Error: {error}</p>
-      </div>
-    );
-  }
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
@@ -185,7 +147,11 @@ export function SportsPage() {
       }
     } catch (err) {
       console.error("Create sport error:", err);
-      alert(err instanceof Error ? err.message : "Lỗi khi tạo môn thể thao");
+      toast({
+        variant: "destructive",
+        description:
+          err instanceof Error ? err.message : "Lỗi khi tạo môn thể thao",
+      });
     }
   };
 
@@ -197,39 +163,33 @@ export function SportsPage() {
       const response = await fetch(`${API_URL}/sports/${editingSport.id}`, {
         method: "PUT",
         credentials: "include",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name: formData.name }),
       });
 
-      if (!response.ok) {
-        throw new Error("Không thể cập nhật môn thể thao");
-      }
+      if (!response.ok) throw new Error("Không thể cập nhật môn thể thao");
 
       const data = await response.json();
       if (data.success) {
         setSports(
-          sports.map((sport) =>
-            sport.id === editingSport.id ? data.data : sport
+          sports.map((s) =>
+            s.id === editingSport.id ? { ...s, name: formData.name } : s
           )
         );
         setIsDialogOpen(false);
-        setEditingSport(null);
       }
     } catch (err) {
-      console.error("Update sport error:", err);
-      alert(
-        err instanceof Error ? err.message : "Lỗi khi cập nhật môn thể thao"
-      );
+      toast({
+        variant: "destructive",
+        description:
+          err instanceof Error ? err.message : "Lỗi khi cập nhật môn thể thao",
+      });
     }
   };
 
   const openEditForm = (sport: Sport) => {
     setEditingSport(sport);
-    setFormData({
-      name: sport.name,
-    });
+    setFormData({ name: sport.name });
     setIsDialogOpen(true);
   };
 
@@ -253,50 +213,13 @@ export function SportsPage() {
       setSportToDelete(null);
     } catch (err) {
       console.error("Delete sport error:", err);
-      alert(err instanceof Error ? err.message : "Lỗi khi xóa môn thể thao");
+      toast({
+        variant: "destructive",
+        description:
+          err instanceof Error ? err.message : "Lỗi khi xóa môn thể thao",
+      });
     }
   };
-
-  // Nếu không có sports
-  if (sports.length === 0) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-[400px] gap-4">
-        <p className="text-gray-500">Chưa có môn thể thao nào</p>
-        <PermissionGate permission="CREATE_TAG">
-          <Dialog open={isDialogOpen} onOpenChange={handleOpenChange}>
-            <DialogTrigger asChild>
-              <Button>
-                <Plus className="mr-2 h-4 w-4" />
-                Thêm môn thể thao
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Thêm môn thể thao mới</DialogTitle>
-              </DialogHeader>
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="name">Tên môn thể thao</Label>
-                  <Input
-                    id="name"
-                    value={formData.name}
-                    onChange={(e) =>
-                      setFormData({ ...formData, name: e.target.value })
-                    }
-                    placeholder="Nhập tên môn thể thao..."
-                    required
-                  />
-                </div>
-                <Button type="submit" className="w-full">
-                  Thêm mới
-                </Button>
-              </form>
-            </DialogContent>
-          </Dialog>
-        </PermissionGate>
-      </div>
-    );
-  }
 
   const filteredSports = sports.filter((sport) =>
     sport.name.toLowerCase().includes(searchTerm.toLowerCase().trim())
@@ -388,62 +311,81 @@ export function SportsPage() {
           className="pl-10"
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
+          clearable
         />
       </div>
 
-      <div className="flex justify-between items-center text-sm text-gray-500">
-        <div>
-          Hiển thị {sortedAndPaginatedSports.length} / {filteredSports.length}{" "}
-          môn thể thao
-          {searchTerm ? " (đã lọc)" : ""}
+      {loading ? (
+        <div className="flex justify-center py-8">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900" />
         </div>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {sortedAndPaginatedSports.map((sport) => (
-          <HoverCard
-            key={sport.id}
-            id={sport.id}
-            title={sport.name}
-            onEdit={() => openEditForm(sport)}
-            onDelete={() => setSportToDelete(sport)}
-          />
-        ))}
-      </div>
-
-      {/* Pagination */}
-      {totalPages > 1 && (
-        <div className="mt-6 flex items-center justify-center gap-2">
-          <Button
-            variant="outline"
-            size="icon"
-            onClick={() => handlePageChange(currentPage - 1)}
-            disabled={currentPage === 1}
-          >
-            <ChevronLeft className="h-4 w-4" />
-          </Button>
-
-          {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-            <Button
-              key={page}
-              variant={currentPage === page ? "default" : "outline"}
-              size="icon"
-              onClick={() => handlePageChange(page)}
-              className="w-8 h-8"
-            >
-              {page}
-            </Button>
-          ))}
-
-          <Button
-            variant="outline"
-            size="icon"
-            onClick={() => handlePageChange(currentPage + 1)}
-            disabled={currentPage === totalPages}
-          >
-            <ChevronRight className="h-4 w-4" />
-          </Button>
+      ) : error ? (
+        <div className="flex justify-center items-center min-h-[400px] text-red-500">
+          <p>Error: {error}</p>
         </div>
+      ) : sports.length === 0 ? (
+        <div className="flex flex-col items-center justify-center min-h-[400px] gap-4">
+          <p className="text-gray-500">Chưa có môn thể thao nào</p>
+        </div>
+      ) : (
+        <>
+          <div className="flex justify-between items-center text-sm text-gray-500">
+            <div>
+              Hiển thị {sortedAndPaginatedSports.length} /{" "}
+              {filteredSports.length} môn thể thao
+              {searchTerm ? " (đã lọc)" : ""}
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {sortedAndPaginatedSports.map((sport) => (
+              <HoverCard
+                key={sport.id}
+                id={sport.id}
+                title={sport.name}
+                onEdit={() => openEditForm(sport)}
+                onDelete={() => setSportToDelete(sport)}
+              />
+            ))}
+          </div>
+
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="mt-6 flex items-center justify-center gap-2">
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => handlePageChange(currentPage - 1)}
+                disabled={currentPage === 1}
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map(
+                (page) => (
+                  <Button
+                    key={page}
+                    variant={currentPage === page ? "default" : "outline"}
+                    size="icon"
+                    onClick={() => handlePageChange(page)}
+                    className="w-8 h-8"
+                  >
+                    {page}
+                  </Button>
+                )
+              )}
+
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => handlePageChange(currentPage + 1)}
+                disabled={currentPage === totalPages}
+              >
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </div>
+          )}
+        </>
       )}
 
       <AlertDialog

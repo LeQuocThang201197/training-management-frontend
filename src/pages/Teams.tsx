@@ -417,6 +417,7 @@ export function TeamsPage() {
                 className="pl-10"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
+                clearable
               />
             </div>
             <div className="w-64">

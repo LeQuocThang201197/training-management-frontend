@@ -10,6 +10,8 @@ import {
   Trash2,
   Eye,
   Check,
+  Mars,
+  Venus,
 } from "lucide-react";
 import {
   Table,
@@ -134,7 +136,10 @@ const PersonTableRow = ({
   const participation = person.latest_participation;
   const teamStyle = getTeamStyle(participation);
 
-  const copyToClipboard = (text: string | null, type: "CCCD" | "BHXH") => {
+  const copyToClipboard = (
+    text: string | null,
+    type: "CCCD" | "BHXH" | "SĐT" | "Email"
+  ) => {
     if (!text) return;
 
     navigator.clipboard
@@ -142,7 +147,13 @@ const PersonTableRow = ({
       .then(() => {
         toast({
           description: `Đã sao chép ${
-            type === "CCCD" ? "CCCD/CMND" : "Bảo hiểm xã hội"
+            type === "CCCD"
+              ? "CCCD/CMND"
+              : type === "BHXH"
+              ? "Bảo hiểm xã hội"
+              : type === "SĐT"
+              ? "SĐT"
+              : "Email"
           }: ${text}`,
           duration: 2000, // Will auto-dismiss after 2 seconds
           className: "bg-green-50 text-green-900 border-green-200",
@@ -160,7 +171,25 @@ const PersonTableRow = ({
 
   return (
     <TableRow key={person.id}>
-      <TableCell className="font-medium">{person.name}</TableCell>
+      <TableCell className="font-medium">
+        <TooltipProvider>
+          <Tooltip delayDuration={0}>
+            <TooltipTrigger className="block w-full truncate text-left">
+              <div className="flex items-center gap-2">
+                <span className="truncate">{person.name}</span>
+                {person.gender === "Nam" ? (
+                  <Mars className="h-4 w-4 text-blue-500" />
+                ) : (
+                  <Venus className="h-4 w-4 text-pink-500" />
+                )}
+              </div>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>{person.name}</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      </TableCell>
       <TableCell className="text-center">
         <TooltipProvider>
           <Tooltip delayDuration={0}>
@@ -203,7 +232,44 @@ const PersonTableRow = ({
           </Tooltip>
         </TooltipProvider>
       </TableCell>
-      <TableCell className="text-center">{person.gender}</TableCell>
+      <TableCell className="text-center">
+        <TooltipProvider>
+          <Tooltip delayDuration={0}>
+            <TooltipTrigger className="inline-flex">
+              {person.phone ? (
+                <Check
+                  className="h-5 w-5 text-green-600 cursor-pointer hover:text-green-700"
+                  onClick={() => copyToClipboard(person.phone, "SĐT")}
+                />
+              ) : (
+                <span className="text-gray-400">-</span>
+              )}
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>{person.phone || "Chưa cập nhật"}</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      </TableCell>
+      <TableCell className="text-center">
+        <TooltipProvider>
+          <Tooltip delayDuration={0}>
+            <TooltipTrigger className="inline-flex">
+              {person.email ? (
+                <Check
+                  className="h-5 w-5 text-green-600 cursor-pointer hover:text-green-700"
+                  onClick={() => copyToClipboard(person.email, "Email")}
+                />
+              ) : (
+                <span className="text-gray-400">-</span>
+              )}
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>{person.email || "Chưa cập nhật"}</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      </TableCell>
       <TableCell className="text-center">
         {formatDate(person.birthday)}
       </TableCell>
@@ -241,6 +307,7 @@ const PersonTableRow = ({
             <TooltipContent>
               {participation ? (
                 <div>
+                  <p>Vai trò: {participation.role}</p>
                   <p>Địa điểm: {participation.concentration.location}</p>
                   <p>
                     {formatDate(participation.concentration.startDate)}
@@ -255,9 +322,7 @@ const PersonTableRow = ({
           </Tooltip>
         </TooltipProvider>
       </TableCell>
-      <TableCell className="text-center">
-        {participation?.role || "-"}
-      </TableCell>
+
       <TableCell className="text-right">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -555,14 +620,14 @@ export function PersonnelPage() {
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900" />
         </div>
       ) : (
-        <div className="rounded-md border">
-          <Table>
+        <div className="rounded-md border overflow-x-auto">
+          <Table className="w-full table-fixed">
             <TableHeader>
               <TableRow>
-                <TableHead>
+                <TableHead className="w-[25%]">
                   <TooltipProvider>
                     <Tooltip delayDuration={0}>
-                      <TooltipTrigger>
+                      <TooltipTrigger className="w-full">
                         <div
                           className="flex items-center gap-2 cursor-pointer text-blue-600 hover:text-blue-800"
                           onClick={() => toggleSort("name")}
@@ -585,10 +650,13 @@ export function PersonnelPage() {
                     </Tooltip>
                   </TooltipProvider>
                 </TableHead>
-                <TableHead className="text-center">CCCD/CMND</TableHead>
-                <TableHead className="text-center">Bảo hiểm XH</TableHead>
-                <TableHead className="text-center">Giới tính</TableHead>
-                <TableHead className="text-center">
+                <TableHead className="text-center w-[10%]">CCCD/CMND</TableHead>
+                <TableHead className="text-center w-[10%]">
+                  Bảo hiểm XH
+                </TableHead>
+                <TableHead className="text-center w-[10%]">SĐT</TableHead>
+                <TableHead className="text-center w-[10%]">Email</TableHead>
+                <TableHead className="text-center w-[12%]">
                   <TooltipProvider>
                     <Tooltip delayDuration={0}>
                       <TooltipTrigger>
@@ -614,9 +682,8 @@ export function PersonnelPage() {
                     </Tooltip>
                   </TooltipProvider>
                 </TableHead>
-                <TableHead className="text-center">Đội</TableHead>
-                <TableHead className="text-center">Vai trò</TableHead>
-                <TableHead className="text-right">Thao tác</TableHead>
+                <TableHead className="text-center w-[10%]">Đội</TableHead>
+                <TableHead className="text-right w-[10%]">Thao tác</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>

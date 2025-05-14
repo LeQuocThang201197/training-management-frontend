@@ -206,7 +206,18 @@ const PersonTableRow = ({
               )}
             </TooltipTrigger>
             <TooltipContent>
-              <p>{person.identity_number || "Chưa cập nhật"}</p>
+              {person.identity_number ? (
+                <div className="space-y-1">
+                  <p>{person.identity_number}</p>
+                  {person.identity_date && (
+                    <p className="text-sm text-gray-500">
+                      Ngày cấp: {formatDate(person.identity_date)}
+                    </p>
+                  )}
+                </div>
+              ) : (
+                <p>Chưa cập nhật</p>
+              )}
             </TooltipContent>
           </Tooltip>
         </TooltipProvider>

@@ -9,6 +9,11 @@ export interface InputProps
 
 const Input = React.forwardRef<HTMLInputElement, InputProps>(
   ({ className, type, clearable, ...props }, ref) => {
+    const inputRef = React.useRef<HTMLInputElement>(null);
+
+    // Đồng bộ ref được truyền vào với inputRef local
+    React.useImperativeHandle(ref, () => inputRef.current as HTMLInputElement);
+
     return (
       <div className="relative">
         <input
@@ -18,16 +23,17 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
             clearable && "pr-8",
             className
           )}
-          ref={ref}
+          ref={inputRef}
           {...props}
         />
         {clearable && props.value && (
           <button
-            onClick={() =>
+            onClick={() => {
               props.onChange?.({
                 target: { value: "" },
-              } as React.ChangeEvent<HTMLInputElement>)
-            }
+              } as React.ChangeEvent<HTMLInputElement>);
+              inputRef.current?.focus();
+            }}
             className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
           >
             <X className="h-4 w-4" />

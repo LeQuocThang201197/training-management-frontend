@@ -20,6 +20,7 @@ import { UserManagementPage } from "@/pages/UserManagement";
 import { RoleManagementPage } from "./pages/RoleManagement";
 import { PermissionManagementPage } from "./pages/PermissionManagement";
 import { PersonnelDetailPage } from "./pages/PersonnelDetail";
+import { Toaster } from "@/components/ui/toaster";
 
 function App() {
   return (
@@ -169,6 +170,7 @@ function App() {
             }
           />
         </Routes>
+        <Toaster />
       </BrowserRouter>
     </AuthProvider>
   );

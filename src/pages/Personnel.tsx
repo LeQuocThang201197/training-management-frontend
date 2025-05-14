@@ -44,6 +44,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useNavigate } from "react-router-dom";
 import { Concentration } from "@/types/concentration";
+import { useToast } from "@/hooks/use-toast";
 
 interface Team {
   type: string;
@@ -129,8 +130,33 @@ const PersonTableRow = ({
   onViewDetail: (id: number) => void;
   formatDate: (date: string) => string;
 }) => {
+  const { toast } = useToast();
   const participation = person.latest_participation;
   const teamStyle = getTeamStyle(participation);
+
+  const copyToClipboard = (text: string | null, type: "CCCD" | "BHXH") => {
+    if (!text) return;
+
+    navigator.clipboard
+      .writeText(text)
+      .then(() => {
+        toast({
+          description: `Đã sao chép ${
+            type === "CCCD" ? "CCCD/CMND" : "Bảo hiểm xã hội"
+          }: ${text}`,
+          duration: 2000, // Will auto-dismiss after 2 seconds
+          className: "bg-green-50 text-green-900 border-green-200",
+        });
+      })
+      .catch((err) => {
+        console.error("Failed to copy:", err);
+        toast({
+          variant: "destructive",
+          description: "Không thể sao chép, vui lòng thử lại",
+          duration: 2000,
+        });
+      });
+  };
 
   return (
     <TableRow key={person.id}>
@@ -140,7 +166,12 @@ const PersonTableRow = ({
           <Tooltip delayDuration={0}>
             <TooltipTrigger className="inline-flex">
               {person.identity_number ? (
-                <Check className="h-5 w-5 text-green-600" />
+                <Check
+                  className="h-5 w-5 text-green-600 cursor-pointer hover:text-green-700"
+                  onClick={() =>
+                    copyToClipboard(person.identity_number, "CCCD")
+                  }
+                />
               ) : (
                 <span className="text-gray-400">-</span>
               )}
@@ -156,7 +187,12 @@ const PersonTableRow = ({
           <Tooltip delayDuration={0}>
             <TooltipTrigger className="inline-flex">
               {person.social_insurance ? (
-                <Check className="h-5 w-5 text-green-600" />
+                <Check
+                  className="h-5 w-5 text-green-600 cursor-pointer hover:text-green-700"
+                  onClick={() =>
+                    copyToClipboard(person.social_insurance, "BHXH")
+                  }
+                />
               ) : (
                 <span className="text-gray-400">-</span>
               )}

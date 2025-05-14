@@ -276,38 +276,31 @@ export function PersonnelPage() {
     total: 0,
     limit: 10,
   });
-  const [searchResults, setSearchResults] = useState<Person[]>([]);
   const navigate = useNavigate();
 
   const fetchPersonnel = useCallback(
     async (page: number, search?: string) => {
       try {
         setLoading(true);
-        const sortQuery = `&sortBy=${sortField}&order=${sortDirection}`;
-        const url = search
-          ? `${API_URL}/persons/search?q=${encodeURIComponent(
-              search
-            )}${sortQuery}`
-          : `${API_URL}/persons?page=${page}&limit=${pagination.limit}${sortQuery}`;
+        const sortQuery = `sortBy=${sortField}&order=${sortDirection}`;
+        const searchQuery = search ? `&q=${encodeURIComponent(search)}` : "";
+
+        const url = `${API_URL}/persons?page=${page}&limit=${pagination.limit}&${sortQuery}${searchQuery}`;
 
         const response = await fetch(url, {
           credentials: "include",
         });
+
         if (!response.ok) throw new Error("Không thể tải danh sách nhân sự");
 
         const data: ApiResponse = await response.json();
         if (data.success) {
-          if (search) {
-            setSearchResults(data.data);
-            setTotalPages(1);
-          } else {
-            setPersonnel(data.data);
-            setTotalPages(data.pagination.totalPages);
-            setPagination({
-              total: data.pagination.total,
-              limit: data.pagination.limit,
-            });
-          }
+          setPersonnel(data.data);
+          setTotalPages(data.pagination.totalPages);
+          setPagination({
+            total: data.pagination.total,
+            limit: data.pagination.limit,
+          });
         }
       } catch (err) {
         console.error(err);
@@ -421,7 +414,7 @@ export function PersonnelPage() {
       const data = await response.json();
       if (data.success) {
         if (searchTerm) {
-          setSearchResults((prev) => prev.filter((p) => p.id !== personId));
+          setPersonnel((prev) => prev.filter((p) => p.id !== personId));
         } else {
           setPersonnel((prev) => prev.filter((p) => p.id !== personId));
         }
@@ -587,7 +580,7 @@ export function PersonnelPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {(searchTerm ? searchResults : personnel).map((person) => (
+              {personnel.map((person) => (
                 <PersonTableRow
                   key={person.id}
                   person={person}
@@ -605,15 +598,11 @@ export function PersonnelPage() {
       <div className="mt-4">
         <Pagination
           currentPage={currentPage}
-          totalPages={
-            searchTerm
-              ? Math.ceil(searchResults.length / pagination.limit)
-              : totalPages
-          }
+          totalPages={totalPages}
           onPageChange={setCurrentPage}
           loading={loading}
-          total={searchTerm ? searchResults.length : pagination.total}
-          itemsPerPage={searchTerm ? searchResults.length : personnel.length}
+          total={pagination.total}
+          itemsPerPage={personnel.length}
           itemName="nhân sự"
         />
       </div>

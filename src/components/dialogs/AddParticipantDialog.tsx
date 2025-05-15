@@ -121,7 +121,7 @@ export function AddParticipantDialog({
       setLoading(true);
       try {
         const response = await fetch(
-          `${API_URL}/persons/search?q=${encodeURIComponent(searchTerm)}`,
+          `${API_URL}/persons?q=${encodeURIComponent(searchTerm)}`,
           {
             credentials: "include",
           }

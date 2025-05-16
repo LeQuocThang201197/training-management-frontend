@@ -45,37 +45,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useNavigate } from "react-router-dom";
-import { Concentration } from "@/types/concentration";
+import { Person, LatestParticipation, PersonFormData } from "@/types/personnel";
 import { useToast } from "@/hooks/use-toast";
-
-interface Team {
-  type: string;
-  gender: string;
-}
-
-interface LatestParticipation {
-  role: string;
-  sport: string;
-  team: Team;
-  concentration: Concentration;
-}
-
-interface Person {
-  id: number;
-  name: string;
-  identity_number: string | null;
-  identity_date: string | null;
-  identity_place: string | null;
-  social_insurance: string | null;
-  birthday: string;
-  gender: string;
-  phone: string | null;
-  email: string | null;
-  createdAt: string;
-  updatedAt: string;
-  created_by: number;
-  latest_participation?: LatestParticipation;
-}
 
 interface ApiResponse {
   success: boolean;
@@ -370,17 +341,6 @@ export function PersonnelPage() {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [formData, setFormData] = useState({
-    name: "",
-    identity_number: "",
-    identity_date: "",
-    identity_place: "",
-    social_insurance: "",
-    birthday: "",
-    gender: "",
-    phone: "",
-    email: "",
-  });
   const [editingPerson, setEditingPerson] = useState<Person | null>(null);
   const [sortField, setSortField] = useState<"name" | "birthday">("name");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
@@ -441,7 +401,7 @@ export function PersonnelPage() {
     setCurrentPage(1);
   }, [searchTerm]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent, formData: PersonFormData) => {
     e.preventDefault();
     try {
       const response = await fetch(
@@ -468,17 +428,6 @@ export function PersonnelPage() {
           setPersonnel((prev) => [...prev, data.data]);
         }
         setIsDialogOpen(false);
-        setFormData({
-          name: "",
-          identity_number: "",
-          identity_date: "",
-          identity_place: "",
-          social_insurance: "",
-          birthday: "",
-          gender: "",
-          phone: "",
-          email: "",
-        });
         setEditingPerson(null);
         if (searchTerm) {
           fetchPersonnel(1, searchTerm);
@@ -489,22 +438,6 @@ export function PersonnelPage() {
     } catch (err) {
       console.error("Save person error:", err);
     }
-  };
-
-  const handleEdit = (person: Person) => {
-    setEditingPerson(person);
-    setFormData({
-      name: person.name,
-      identity_number: person.identity_number || "",
-      identity_date: person.identity_date?.split("T")[0] || "",
-      identity_place: person.identity_place || "",
-      social_insurance: person.social_insurance || "",
-      birthday: person.birthday?.split("T")[0] || "",
-      gender: person.gender,
-      phone: person.phone || "",
-      email: person.email || "",
-    });
-    setIsDialogOpen(true);
   };
 
   const handleDelete = async (personId: number) => {
@@ -567,17 +500,6 @@ export function PersonnelPage() {
             setIsDialogOpen(open);
             if (!open) {
               setEditingPerson(null);
-              setFormData({
-                name: "",
-                identity_number: "",
-                identity_date: "",
-                identity_place: "",
-                social_insurance: "",
-                birthday: "",
-                gender: "",
-                phone: "",
-                email: "",
-              });
             }
           }}
         >
@@ -596,8 +518,7 @@ export function PersonnelPage() {
               </DialogTitle>
             </DialogHeader>
             <PersonForm
-              formData={formData}
-              setFormData={setFormData}
+              editingPerson={editingPerson}
               onSubmit={handleSubmit}
               onCancel={() => {
                 setIsDialogOpen(false);
@@ -696,7 +617,10 @@ export function PersonnelPage() {
                 <PersonTableRow
                   key={person.id}
                   person={person}
-                  onEdit={handleEdit}
+                  onEdit={(p) => {
+                    setEditingPerson(p);
+                    setIsDialogOpen(true);
+                  }}
                   onDelete={handleDelete}
                   onViewDetail={handleViewDetail}
                   formatDate={formatDate}

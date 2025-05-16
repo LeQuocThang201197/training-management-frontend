@@ -8,36 +8,47 @@ import {
   SelectItem,
   SelectContent,
 } from "@/components/ui/select";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { PersonFormData, Person } from "@/types/personnel";
 
-interface FormData {
-  name: string;
-  identity_number: string | null;
-  identity_date: string | null;
-  identity_place: string | null;
-  social_insurance: string | null;
-  birthday: string;
-  gender: string;
-  phone: string | null;
-  email: string | null;
-}
+const initialFormData: PersonFormData = {
+  name: "",
+  identity_number: null,
+  identity_date: null,
+  identity_place: null,
+  social_insurance: null,
+  birthday: "",
+  gender: "",
+  phone: null,
+  email: null,
+};
 
 interface PersonFormProps {
-  formData: FormData;
-  setFormData: (data: FormData) => void;
-  onSubmit: (e: React.FormEvent) => void;
+  onSubmit: (e: React.FormEvent, formData: PersonFormData) => void;
   onCancel: () => void;
   submitLabel: string;
+  editingPerson: Person | null;
 }
 
-export function PersonForm({
-  formData,
-  setFormData,
-  onSubmit,
-  onCancel,
-  submitLabel,
-}: PersonFormProps) {
+export function PersonForm({ editingPerson, ...props }: PersonFormProps) {
+  const [formData, setFormData] = useState(initialFormData);
   const [errors, setErrors] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    if (editingPerson) {
+      setFormData({
+        name: editingPerson.name,
+        identity_number: editingPerson.identity_number || null,
+        identity_date: editingPerson.identity_date?.split("T")[0] || null,
+        identity_place: editingPerson.identity_place || null,
+        social_insurance: editingPerson.social_insurance || null,
+        birthday: editingPerson.birthday.split("T")[0],
+        gender: editingPerson.gender,
+        phone: editingPerson.phone || null,
+        email: editingPerson.email || null,
+      });
+    }
+  }, [editingPerson]);
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
@@ -59,7 +70,7 @@ export function PersonForm({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!validateForm()) return;
-    onSubmit(e);
+    props.onSubmit(e, formData);
   };
 
   return (
@@ -186,10 +197,10 @@ export function PersonForm({
       </div>
 
       <div className="flex justify-end gap-2">
-        <Button type="button" variant="outline" onClick={onCancel}>
+        <Button type="button" variant="outline" onClick={props.onCancel}>
           Hủy
         </Button>
-        <Button type="submit">{submitLabel}</Button>
+        <Button type="submit">{props.submitLabel}</Button>
       </div>
     </form>
   );

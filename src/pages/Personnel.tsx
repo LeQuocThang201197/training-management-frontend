@@ -386,7 +386,6 @@ export function PersonnelPage() {
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
-  const [isSearching, setIsSearching] = useState(false);
   const [pagination, setPagination] = useState({
     total: 0,
     limit: 10,
@@ -421,7 +420,6 @@ export function PersonnelPage() {
         console.error(err);
       } finally {
         setLoading(false);
-        setIsSearching(false);
       }
     },
     [sortField, sortDirection, pagination.limit]
@@ -430,10 +428,8 @@ export function PersonnelPage() {
   useEffect(() => {
     const timeoutId = setTimeout(() => {
       if (searchTerm) {
-        setIsSearching(true);
         fetchPersonnel(currentPage, searchTerm);
       } else {
-        setIsSearching(false);
         fetchPersonnel(currentPage);
       }
     }, 500);
@@ -441,7 +437,6 @@ export function PersonnelPage() {
     return () => clearTimeout(timeoutId);
   }, [searchTerm, currentPage, fetchPersonnel]);
 
-  // Luôn reset page khi searchTerm thay đổi
   useEffect(() => {
     setCurrentPage(1);
   }, [searchTerm]);

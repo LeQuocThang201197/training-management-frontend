@@ -12,14 +12,14 @@ import { useState } from "react";
 
 interface FormData {
   name: string;
-  identity_number: string;
-  identity_date: string;
-  identity_place: string;
-  social_insurance: string;
+  identity_number: string | null;
+  identity_date: string | null;
+  identity_place: string | null;
+  social_insurance: string | null;
   birthday: string;
   gender: string;
-  phone: string;
-  email: string;
+  phone: string | null;
+  email: string | null;
 }
 
 interface PersonFormProps {
@@ -123,7 +123,7 @@ export function PersonForm({
         <div className="space-y-2">
           <Label>CCCD/CMND</Label>
           <Input
-            value={formData.identity_number}
+            value={formData.identity_number ?? ""}
             onChange={(e) =>
               setFormData({ ...formData, identity_number: e.target.value })
             }
@@ -134,7 +134,7 @@ export function PersonForm({
           <Label>Ngày cấp</Label>
           <Input
             type="date"
-            value={formData.identity_date}
+            value={formData.identity_date ?? ""}
             onChange={(e) =>
               setFormData({ ...formData, identity_date: e.target.value })
             }
@@ -145,7 +145,7 @@ export function PersonForm({
       <div className="space-y-2">
         <Label>Nơi cấp</Label>
         <Input
-          value={formData.identity_place}
+          value={formData.identity_place ?? ""}
           onChange={(e) =>
             setFormData({ ...formData, identity_place: e.target.value })
           }
@@ -155,7 +155,7 @@ export function PersonForm({
       <div className="space-y-2">
         <Label>Số BHXH</Label>
         <Input
-          value={formData.social_insurance}
+          value={formData.social_insurance ?? ""}
           onChange={(e) =>
             setFormData({ ...formData, social_insurance: e.target.value })
           }
@@ -166,7 +166,7 @@ export function PersonForm({
         <div className="space-y-2">
           <Label>Số điện thoại</Label>
           <Input
-            value={formData.phone}
+            value={formData.phone ?? ""}
             onChange={(e) =>
               setFormData({ ...formData, phone: e.target.value })
             }
@@ -177,7 +177,7 @@ export function PersonForm({
           <Label>Email</Label>
           <Input
             type="email"
-            value={formData.email}
+            value={formData.email ?? ""}
             onChange={(e) =>
               setFormData({ ...formData, email: e.target.value })
             }

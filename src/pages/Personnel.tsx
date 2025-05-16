@@ -431,9 +431,9 @@ export function PersonnelPage() {
     const timeoutId = setTimeout(() => {
       if (searchTerm) {
         setIsSearching(true);
-        setCurrentPage(1);
-        fetchPersonnel(1, searchTerm);
+        fetchPersonnel(currentPage, searchTerm);
       } else {
+        setIsSearching(false);
         fetchPersonnel(currentPage);
       }
     }, 500);
@@ -441,11 +441,10 @@ export function PersonnelPage() {
     return () => clearTimeout(timeoutId);
   }, [searchTerm, currentPage, fetchPersonnel]);
 
+  // Luôn reset page khi searchTerm thay đổi
   useEffect(() => {
-    if (!searchTerm && !isSearching) {
-      fetchPersonnel(currentPage);
-    }
-  }, [currentPage, searchTerm, isSearching, fetchPersonnel]);
+    setCurrentPage(1);
+  }, [searchTerm]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

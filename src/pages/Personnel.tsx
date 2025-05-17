@@ -6,7 +6,6 @@ import {
   PlusCircle,
   ArrowUpDown,
   MoreHorizontal,
-  Pencil,
   Trash2,
   Eye,
   Check,
@@ -92,7 +91,6 @@ const getTeamStyle = (participation?: LatestParticipation) => {
 
 const PersonTableRow = ({
   person,
-  onEdit,
   onDelete,
   onViewDetail,
   formatDate,
@@ -317,10 +315,6 @@ const PersonTableRow = ({
             <DropdownMenuItem onClick={() => onViewDetail(person.id)}>
               <Eye className="mr-2 h-4 w-4" />
               <span>Xem chi tiết</span>
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => onEdit(person)}>
-              <Pencil className="mr-2 h-4 w-4" />
-              <span>Chỉnh sửa</span>
             </DropdownMenuItem>
             <DropdownMenuItem
               onClick={() => onDelete(person.id)}

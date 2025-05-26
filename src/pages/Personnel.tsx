@@ -7,7 +7,6 @@ import {
   ArrowUpDown,
   MoreHorizontal,
   Trash2,
-  Eye,
   Check,
   Mars,
   Venus,
@@ -92,7 +91,6 @@ const getTeamStyle = (participation?: LatestParticipation) => {
 const PersonTableRow = ({
   person,
   onDelete,
-  onViewDetail,
   formatDate,
 }: {
   person: Person;
@@ -144,17 +142,20 @@ const PersonTableRow = ({
         <TooltipProvider>
           <Tooltip delayDuration={0}>
             <TooltipTrigger className="block w-full truncate text-left">
-              <div className="flex items-center gap-2">
+              <a
+                href={`/management/personnel/${person.id}`}
+                className="flex items-center gap-2 hover:text-primary hover:underline"
+              >
                 <span className="truncate">{person.name}</span>
                 {person.gender === "Nam" ? (
                   <Mars className="h-4 w-4 text-blue-500" />
                 ) : (
                   <Venus className="h-4 w-4 text-pink-500" />
                 )}
-              </div>
+              </a>
             </TooltipTrigger>
             <TooltipContent>
-              <p>{person.name}</p>
+              <p>Nhấn để xem chi tiết</p>
             </TooltipContent>
           </Tooltip>
         </TooltipProvider>
@@ -312,10 +313,6 @@ const PersonTableRow = ({
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            <DropdownMenuItem onClick={() => onViewDetail(person.id)}>
-              <Eye className="mr-2 h-4 w-4" />
-              <span>Xem chi tiết</span>
-            </DropdownMenuItem>
             <DropdownMenuItem
               onClick={() => onDelete(person.id)}
               className="text-red-600"

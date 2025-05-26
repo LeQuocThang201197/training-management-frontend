@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { API_URL } from "@/config/api";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -13,11 +13,10 @@ import {
   MapPin,
   Shield,
   Users,
-  Briefcase,
   History,
   GraduationCap,
-  FileText,
   Pencil,
+  ArrowLeft,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -27,11 +26,12 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { PersonForm } from "@/components/dialogs/AddPersonDialog";
-import { Person, PersonFormData } from "@/types/personnel";
+import { PersonDetail, PersonFormData } from "@/types/personnel";
 
 export function PersonnelDetailPage() {
   const { id } = useParams();
-  const [person, setPerson] = useState<Person | null>(null);
+  const navigate = useNavigate();
+  const [person, setPerson] = useState<PersonDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
@@ -102,6 +102,16 @@ export function PersonnelDetailPage() {
       <Tabs defaultValue="info" className="space-y-6">
         <Card className="mb-8 overflow-hidden">
           <div className="relative h-48 bg-gradient-to-r from-blue-500 to-purple-600">
+            <div className="absolute top-6 left-6">
+              <Button
+                variant="ghost"
+                className="flex items-center gap-2 text-white hover:bg-white/20"
+                onClick={() => navigate("/management/personnel")}
+              >
+                <ArrowLeft className="w-4 h-4" />
+                Quay lại Danh sách
+              </Button>
+            </div>
             <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-white dark:from-background" />
           </div>
           <CardContent className="relative -mt-16 px-6">
@@ -165,13 +175,6 @@ export function PersonnelDetailPage() {
                   Thông tin cá nhân
                 </TabsTrigger>
                 <TabsTrigger
-                  value="work"
-                  className="flex items-center gap-2 data-[state=active]:bg-transparent data-[state=active]:text-primary"
-                >
-                  <Briefcase className="w-4 h-4" />
-                  Công việc
-                </TabsTrigger>
-                <TabsTrigger
                   value="education"
                   className="flex items-center gap-2 data-[state=active]:bg-transparent data-[state=active]:text-primary"
                 >
@@ -184,13 +187,6 @@ export function PersonnelDetailPage() {
                 >
                   <History className="w-4 h-4" />
                   Lịch sử hoạt động
-                </TabsTrigger>
-                <TabsTrigger
-                  value="documents"
-                  className="flex items-center gap-2 data-[state=active]:bg-transparent data-[state=active]:text-primary"
-                >
-                  <FileText className="w-4 h-4" />
-                  Tài liệu
                 </TabsTrigger>
               </TabsList>
             </div>
@@ -311,51 +307,6 @@ export function PersonnelDetailPage() {
           </div>
         </TabsContent>
 
-        <TabsContent value="work">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <Card className="md:col-span-2">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Briefcase className="w-5 h-5" />
-                  Thông tin công việc
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-6">
-                  <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg">
-                    <h3 className="font-semibold mb-2">Vị trí hiện tại</h3>
-                    <p className="text-gray-600 dark:text-gray-400">
-                      Chưa cập nhật
-                    </p>
-                  </div>
-                  <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg">
-                    <h3 className="font-semibold mb-2">Phòng ban</h3>
-                    <p className="text-gray-600 dark:text-gray-400">
-                      Chưa cập nhật
-                    </p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>Thống kê công việc</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div className="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
-                    <p className="text-sm text-gray-600 dark:text-gray-400">
-                      Dự án tham gia
-                    </p>
-                    <p className="text-lg font-medium">0 dự án</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        </TabsContent>
-
         <TabsContent value="education">
           <Card>
             <CardHeader>
@@ -391,22 +342,6 @@ export function PersonnelDetailPage() {
                     </p>
                   </div>
                 </div>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="documents">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <FileText className="w-5 h-5" />
-                Tài liệu
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-center py-8 text-gray-500">
-                Chưa có tài liệu nào
               </div>
             </CardContent>
           </Card>

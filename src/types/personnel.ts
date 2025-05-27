@@ -1,5 +1,3 @@
-import { Concentration } from "./concentration";
-
 // Base interfaces for both list and detail
 interface Team {
   id: number;
@@ -31,6 +29,53 @@ interface Organization {
   updatedAt: string;
 }
 
+interface Activity {
+  id: number;
+  type: "TRAINING" | "COMPETITION";
+  name: string;
+  startDate: string;
+  endDate: string;
+  createdAt: string;
+  updatedAt: string;
+  location: string;
+  result?: string;
+}
+
+interface Creator {
+  id: number;
+  name: string;
+}
+
+interface Training {
+  id: number;
+  name: string;
+  location: string;
+  startDate: string;
+  endDate: string;
+  note?: string;
+}
+
+interface Competition {
+  id: number;
+  name: string;
+  location: string;
+  startDate: string;
+  endDate: string;
+  isForeign: boolean;
+  is_confirmed: boolean;
+  note?: string;
+}
+
+interface Concentration {
+  id: number;
+  location: string;
+  startDate: string;
+  endDate: string;
+  team: Team;
+  trainings: Training[];
+  competitions: Competition[];
+}
+
 interface DetailParticipation {
   id: number;
   person_id: number;
@@ -41,9 +86,10 @@ interface DetailParticipation {
   updatedAt: string;
   organization_id: number;
   assigned_by: number;
-  concentration: Concentration & { team: Team };
+  concentration: Concentration;
   role: Role;
   organization: Organization;
+  activities?: Activity[];
 }
 
 // For personnel list view
@@ -74,6 +120,7 @@ export interface Person {
 
 // Extended person interface for detail view
 export interface PersonDetail extends Person {
+  creator: Creator;
   participations: DetailParticipation[];
 }
 

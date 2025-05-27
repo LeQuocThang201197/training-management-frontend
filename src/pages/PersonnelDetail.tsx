@@ -28,6 +28,7 @@ import {
 } from "@/components/ui/dialog";
 import { PersonForm } from "@/components/dialogs/AddPersonDialog";
 import { PersonDetail, PersonFormData } from "@/types/personnel";
+import { cn } from "@/lib/utils";
 
 export function PersonnelDetailPage() {
   const { id } = useParams();
@@ -334,119 +335,135 @@ export function PersonnelDetailPage() {
             </CardHeader>
             <CardContent>
               <div className="space-y-6">
-                {person.participations?.map((participation) => (
-                  <div key={participation.id} className="space-y-4">
-                    {/* Đợt tập trung */}
-                    <div className="relative pl-6 pb-6 border-l-2 border-blue-200">
-                      <div className="absolute -left-[9px] top-0 w-4 h-4 rounded-full bg-blue-500" />
-                      <div className="space-y-2">
-                        <div className="flex items-center gap-2 text-blue-600 font-medium">
-                          <Users className="w-4 h-4" />
-                          <span>Đợt tập trung</span>
-                        </div>
-                        <p className="text-sm text-gray-600">
-                          {new Date(
-                            participation.concentration.startDate
-                          ).toLocaleDateString("vi-VN")}{" "}
-                          -{" "}
-                          {new Date(
-                            participation.concentration.endDate
-                          ).toLocaleDateString("vi-VN")}
-                        </p>
-                        <div className="flex flex-wrap gap-2 text-sm">
-                          <span className="px-2 py-1 bg-gray-100 rounded-full">
-                            {participation.role.name}
-                          </span>
-                          <span className="px-2 py-1 bg-gray-100 rounded-full">
-                            {participation.concentration.team.sport}{" "}
-                            {participation.concentration.team.type}
-                          </span>
-                          <span className="px-2 py-1 bg-gray-100 rounded-full">
-                            {participation.concentration.location}
-                          </span>
-                          <span className="px-2 py-1 bg-gray-100 rounded-full">
-                            {participation.organization.name}
-                          </span>
-                        </div>
+                {/* Sắp xếp participations theo startDate của concentration */}
+                {person.participations
+                  ?.sort(
+                    (a, b) =>
+                      new Date(a.concentration.startDate).getTime() -
+                      new Date(b.concentration.startDate).getTime()
+                  )
+                  .map((participation) => {
+                    // Gộp và sắp xếp các hoạt động theo startDate
+                    const activities = [
+                      ...participation.concentration.trainings.map(
+                        (training) => ({
+                          ...training,
+                          type: "TRAINING" as const,
+                        })
+                      ),
+                      ...participation.concentration.competitions.map(
+                        (competition) => ({
+                          ...competition,
+                          type: "COMPETITION" as const,
+                        })
+                      ),
+                    ].sort(
+                      (a, b) =>
+                        new Date(a.startDate).getTime() -
+                        new Date(b.startDate).getTime()
+                    );
 
-                        {/* Tập huấn */}
-                        {participation.concentration.trainings.map(
-                          (training) => (
-                            <div
-                              key={training.id}
-                              className="relative pl-6 mt-4 border-l-2 border-gray-200"
-                            >
-                              <div className="absolute -left-[9px] top-0 w-4 h-4 rounded-full bg-emerald-500" />
-                              <div className="space-y-2">
-                                <div className="flex items-center gap-2 font-medium">
-                                  <GraduationCap className="w-4 h-4 text-emerald-600" />
-                                  <span className="text-emerald-600">
-                                    Tập huấn
-                                  </span>
-                                </div>
-                                <p className="text-sm">{training.name}</p>
-                                <p className="text-sm text-gray-600">
-                                  {new Date(
-                                    training.startDate
-                                  ).toLocaleDateString("vi-VN")}{" "}
-                                  -{" "}
-                                  {new Date(
-                                    training.endDate
-                                  ).toLocaleDateString("vi-VN")}
-                                </p>
-                                <div className="flex flex-wrap gap-2 text-sm">
-                                  <span className="px-2 py-1 bg-gray-100 rounded-full">
-                                    {training.location}
-                                  </span>
-                                </div>
+                    return (
+                      <div key={participation.id} className="space-y-4">
+                        {/* Đợt tập trung */}
+                        <div className="relative pl-6 pb-6 border-l-2 border-blue-200">
+                          <div className="absolute -left-[9px] top-0 w-4 h-4 rounded-full bg-blue-500" />
+                          <div className="space-y-4">
+                            {/* Thông tin đợt tập trung */}
+                            <div className="space-y-2">
+                              <div className="flex items-center gap-2 text-blue-600 font-medium">
+                                <Users className="w-4 h-4" />
+                                <span>Đợt tập trung</span>
+                              </div>
+                              <p className="text-sm text-gray-600">
+                                {new Date(
+                                  participation.concentration.startDate
+                                ).toLocaleDateString("vi-VN")}{" "}
+                                -{" "}
+                                {new Date(
+                                  participation.concentration.endDate
+                                ).toLocaleDateString("vi-VN")}
+                              </p>
+                              <div className="flex flex-wrap gap-2 text-sm">
+                                <span className="px-2 py-1 bg-gray-100 rounded-full">
+                                  {participation.role.name}
+                                </span>
+                                <span className="px-2 py-1 bg-gray-100 rounded-full">
+                                  {participation.concentration.team.sport}{" "}
+                                  {participation.concentration.team.type}
+                                </span>
+                                <span className="px-2 py-1 bg-gray-100 rounded-full">
+                                  {participation.concentration.location}
+                                </span>
+                                <span className="px-2 py-1 bg-gray-100 rounded-full">
+                                  {participation.organization.name}
+                                </span>
                               </div>
                             </div>
-                          )
-                        )}
 
-                        {/* Thi đấu */}
-                        {participation.concentration.competitions.map(
-                          (competition) => (
-                            <div
-                              key={competition.id}
-                              className="relative pl-6 mt-4 border-l-2 border-gray-200"
-                            >
-                              <div className="absolute -left-[9px] top-0 w-4 h-4 rounded-full bg-amber-500" />
-                              <div className="space-y-2">
-                                <div className="flex items-center gap-2 font-medium">
-                                  <Trophy className="w-4 h-4 text-amber-600" />
-                                  <span className="text-amber-600">
-                                    Thi đấu
-                                  </span>
+                            {/* Container cho các hoạt động */}
+                            <div className="ml-4 space-y-4 border-l-2 border-gray-100">
+                              {activities.map((activity) => (
+                                <div
+                                  key={activity.id}
+                                  className="relative pl-6"
+                                >
+                                  <div
+                                    className={cn(
+                                      "absolute -left-[9px] top-0 w-4 h-4 rounded-full",
+                                      activity.type === "TRAINING"
+                                        ? "bg-emerald-500"
+                                        : "bg-amber-500"
+                                    )}
+                                  />
+                                  <div className="space-y-2">
+                                    <div className="flex items-center gap-2 font-medium">
+                                      {activity.type === "TRAINING" ? (
+                                        <>
+                                          <GraduationCap className="w-4 h-4 text-emerald-600" />
+                                          <span className="text-emerald-600">
+                                            Tập huấn
+                                          </span>
+                                        </>
+                                      ) : (
+                                        <>
+                                          <Trophy className="w-4 h-4 text-amber-600" />
+                                          <span className="text-amber-600">
+                                            Thi đấu
+                                          </span>
+                                        </>
+                                      )}
+                                    </div>
+                                    <p className="text-sm">{activity.name}</p>
+                                    <p className="text-sm text-gray-600">
+                                      {new Date(
+                                        activity.startDate
+                                      ).toLocaleDateString("vi-VN")}{" "}
+                                      -{" "}
+                                      {new Date(
+                                        activity.endDate
+                                      ).toLocaleDateString("vi-VN")}
+                                    </p>
+                                    <div className="flex flex-wrap gap-2 text-sm">
+                                      <span className="px-2 py-1 bg-gray-100 rounded-full">
+                                        {activity.location}
+                                      </span>
+                                      {activity.type === "COMPETITION" &&
+                                        activity.isForeign && (
+                                          <span className="px-2 py-1 bg-blue-50 text-blue-700 rounded-full">
+                                            Quốc tế
+                                          </span>
+                                        )}
+                                    </div>
+                                  </div>
                                 </div>
-                                <p className="text-sm">{competition.name}</p>
-                                <p className="text-sm text-gray-600">
-                                  {new Date(
-                                    competition.startDate
-                                  ).toLocaleDateString("vi-VN")}{" "}
-                                  -{" "}
-                                  {new Date(
-                                    competition.endDate
-                                  ).toLocaleDateString("vi-VN")}
-                                </p>
-                                <div className="flex flex-wrap gap-2 text-sm">
-                                  <span className="px-2 py-1 bg-gray-100 rounded-full">
-                                    {competition.location}
-                                  </span>
-                                  {competition.isForeign && (
-                                    <span className="px-2 py-1 bg-blue-50 text-blue-700 rounded-full">
-                                      Quốc tế
-                                    </span>
-                                  )}
-                                </div>
-                              </div>
+                              ))}
                             </div>
-                          )
-                        )}
+                          </div>
+                        </div>
                       </div>
-                    </div>
-                  </div>
-                ))}
+                    );
+                  })}
 
                 {/* Hiển thị khi không có hoạt động */}
                 {!person.participations?.length && (

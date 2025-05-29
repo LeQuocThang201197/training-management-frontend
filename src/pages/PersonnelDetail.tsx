@@ -93,14 +93,26 @@ export function PersonnelDetailPage() {
     }
   };
 
-  const copyToClipboard = (text: string | null, type: "CCCD" | "BHXH") => {
+  const copyToClipboard = (
+    text: string | null,
+    type: "CCCD" | "BHXH" | "Email" | "SĐT"
+  ) => {
     if (!text) return;
 
     navigator.clipboard.writeText(text).then(
       () => {
         toast({
-          description: `Đã sao chép ${type === "CCCD" ? "CCCD/CMND" : "BHXH"}`,
+          description: `Đã sao chép ${
+            type === "CCCD"
+              ? "CCCD/CMND"
+              : type === "BHXH"
+              ? "BHXH"
+              : type === "Email"
+              ? "Email"
+              : "SĐT"
+          }`,
           duration: 2000,
+          className: "bg-green-50 text-green-900 border-green-200",
         });
       },
       () => {
@@ -108,6 +120,7 @@ export function PersonnelDetailPage() {
           variant: "destructive",
           description: "Không thể sao chép, vui lòng thử lại",
           duration: 2000,
+          className: "bg-red-50 text-red-900 border-red-200",
         });
       }
     );
@@ -157,14 +170,45 @@ export function PersonnelDetailPage() {
               <div className="flex flex-col md:flex-row items-center md:items-start gap-4 flex-1">
                 <div className="text-center md:text-left flex-1">
                   <h1 className="text-3xl font-bold mb-2">{person.name}</h1>
-                  <div className="flex flex-wrap gap-4 text-gray-600 dark:text-gray-400">
-                    <div className="flex items-center gap-2">
-                      <Mail className="w-4 h-4" />
-                      <span>{person.email || <EmptyValue />}</span>
+                  <div className="flex flex-wrap items-center gap-6 text-gray-600 dark:text-gray-400">
+                    {/* Email */}
+                    <div className="group relative flex items-center gap-2 pr-8">
+                      <Mail className="w-4 h-4 shrink-0" />
+                      <span className="truncate">
+                        {person.email || <EmptyValue />}
+                      </span>
+                      {person.email && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity absolute right-0"
+                          onClick={() => copyToClipboard(person.email, "Email")}
+                        >
+                          <Copy className="h-3 w-3" />
+                          <span className="sr-only">Sao chép email</span>
+                        </Button>
+                      )}
                     </div>
-                    <div className="flex items-center gap-2">
-                      <Phone className="w-4 h-4" />
-                      <span>{person.phone || <EmptyValue />}</span>
+
+                    {/* Số điện thoại */}
+                    <div className="group relative flex items-center gap-2 pr-8">
+                      <Phone className="w-4 h-4 shrink-0" />
+                      <span className="truncate">
+                        {person.phone || <EmptyValue />}
+                      </span>
+                      {person.phone && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity absolute right-0"
+                          onClick={() => copyToClipboard(person.phone, "SĐT")}
+                        >
+                          <Copy className="h-3 w-3" />
+                          <span className="sr-only">
+                            Sao chép số điện thoại
+                          </span>
+                        </Button>
+                      )}
                     </div>
                   </div>
                 </div>

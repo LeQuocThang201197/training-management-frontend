@@ -18,6 +18,7 @@ import {
   Pencil,
   ArrowLeft,
   Trophy,
+  Copy,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -29,6 +30,12 @@ import {
 import { PersonForm } from "@/components/dialogs/AddPersonDialog";
 import { PersonDetail, PersonFormData } from "@/types/personnel";
 import { cn } from "@/lib/utils";
+import { useToast } from "@/hooks/use-toast";
+
+// Thêm component EmptyValue
+function EmptyValue() {
+  return <span className="text-gray-400 italic">Chưa cập nhật</span>;
+}
 
 export function PersonnelDetailPage() {
   const { id } = useParams();
@@ -36,6 +43,7 @@ export function PersonnelDetailPage() {
   const [person, setPerson] = useState<PersonDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const { toast } = useToast();
 
   useEffect(() => {
     const fetchPersonDetails = async () => {
@@ -85,6 +93,26 @@ export function PersonnelDetailPage() {
     }
   };
 
+  const copyToClipboard = (text: string | null, type: "CCCD" | "BHXH") => {
+    if (!text) return;
+
+    navigator.clipboard.writeText(text).then(
+      () => {
+        toast({
+          description: `Đã sao chép ${type === "CCCD" ? "CCCD/CMND" : "BHXH"}`,
+          duration: 2000,
+        });
+      },
+      () => {
+        toast({
+          variant: "destructive",
+          description: "Không thể sao chép, vui lòng thử lại",
+          duration: 2000,
+        });
+      }
+    );
+  };
+
   if (loading) {
     return (
       <div className="flex justify-center items-center min-h-screen">
@@ -132,11 +160,11 @@ export function PersonnelDetailPage() {
                   <div className="flex flex-wrap gap-4 text-gray-600 dark:text-gray-400">
                     <div className="flex items-center gap-2">
                       <Mail className="w-4 h-4" />
-                      <span>{person.email}</span>
+                      <span>{person.email || <EmptyValue />}</span>
                     </div>
                     <div className="flex items-center gap-2">
                       <Phone className="w-4 h-4" />
-                      <span>{person.phone}</span>
+                      <span>{person.phone || <EmptyValue />}</span>
                     </div>
                   </div>
                 </div>
@@ -209,11 +237,30 @@ export function PersonnelDetailPage() {
                   <div className="space-y-4">
                     <div className="flex items-start gap-3">
                       <CreditCard className="w-5 h-5 text-gray-500 mt-1" />
-                      <div>
+                      <div className="flex-1">
                         <p className="font-medium text-gray-600 dark:text-gray-400">
                           CCCD/CMND
                         </p>
-                        <p className="text-lg">{person.identity_number}</p>
+                        <div className="group relative">
+                          <p className="text-lg pr-8">
+                            {person.identity_number || <EmptyValue />}
+                          </p>
+                          {person.identity_number && (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="absolute right-0 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity"
+                              onClick={() =>
+                                copyToClipboard(person.identity_number, "CCCD")
+                              }
+                            >
+                              <Copy className="h-4 w-4" />
+                              <span className="sr-only">
+                                Sao chép CCCD/CMND
+                              </span>
+                            </Button>
+                          )}
+                        </div>
                       </div>
                     </div>
 
@@ -224,9 +271,13 @@ export function PersonnelDetailPage() {
                           Ngày cấp
                         </p>
                         <p className="text-lg">
-                          {new Date(
-                            person.identity_date ?? ""
-                          ).toLocaleDateString("vi-VN")}
+                          {person.identity_date ? (
+                            new Date(person.identity_date).toLocaleDateString(
+                              "vi-VN"
+                            )
+                          ) : (
+                            <EmptyValue />
+                          )}
                         </p>
                       </div>
                     </div>
@@ -237,7 +288,9 @@ export function PersonnelDetailPage() {
                         <p className="font-medium text-gray-600 dark:text-gray-400">
                           Nơi cấp
                         </p>
-                        <p className="text-lg">{person.identity_place}</p>
+                        <p className="text-lg">
+                          {person.identity_place || <EmptyValue />}
+                        </p>
                       </div>
                     </div>
                   </div>
@@ -245,11 +298,28 @@ export function PersonnelDetailPage() {
                   <div className="space-y-4">
                     <div className="flex items-start gap-3">
                       <Shield className="w-5 h-5 text-gray-500 mt-1" />
-                      <div>
+                      <div className="flex-1">
                         <p className="font-medium text-gray-600 dark:text-gray-400">
                           Bảo hiểm xã hội
                         </p>
-                        <p className="text-lg">{person.social_insurance}</p>
+                        <div className="group relative">
+                          <p className="text-lg pr-8">
+                            {person.social_insurance || <EmptyValue />}
+                          </p>
+                          {person.social_insurance && (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="absolute right-0 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity"
+                              onClick={() =>
+                                copyToClipboard(person.social_insurance, "BHXH")
+                              }
+                            >
+                              <Copy className="h-4 w-4" />
+                              <span className="sr-only">Sao chép BHXH</span>
+                            </Button>
+                          )}
+                        </div>
                       </div>
                     </div>
 

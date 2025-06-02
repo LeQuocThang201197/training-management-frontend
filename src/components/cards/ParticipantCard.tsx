@@ -12,6 +12,8 @@ import {
   History,
   Trophy,
   Dumbbell,
+  ExternalLink,
+  MoreVertical,
 } from "lucide-react";
 import {
   Tooltip,
@@ -19,6 +21,13 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu";
 import { Participant, AbsenceRecord } from "@/types/participant";
 import { useState, useCallback } from "react";
 import { AbsenceHistoryDialog } from "../dialogs/AbsenceHistoryDialog";
@@ -81,6 +90,10 @@ export function ParticipantCard({
 
   const currentAbsence = getCurrentAbsence();
 
+  const handleViewPersonnel = () => {
+    window.open(`/management/personnel/${participant.person.id}`, "_blank");
+  };
+
   return (
     <Card
       className={cn(
@@ -117,42 +130,55 @@ export function ParticipantCard({
                 </TooltipProvider>
               )}
             </div>
-            {(onEdit || onDelete) && (
-              <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => setShowHistory(true)}
-                  className="text-gray-600"
-                >
-                  <History className="h-4 w-4" />
-                </Button>
-                {onEdit && (
+            <div>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
                   <Button
                     variant="ghost"
                     size="icon"
-                    onClick={() => {
-                      console.log(
-                        "Edit button clicked, participant data:",
-                        participant
-                      );
-                      onEdit(participant);
-                    }}
+                    className="text-gray-400 hover:text-gray-700 hover:bg-transparent transition-colors"
                   >
-                    <Pencil className="h-4 w-4" />
+                    <MoreVertical className="h-4 w-4" />
                   </Button>
-                )}
-                {onDelete && (
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => onDelete(participant)}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                )}
-              </div>
-            )}
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-48">
+                  <DropdownMenuItem onClick={handleViewPersonnel}>
+                    <ExternalLink className="h-4 w-4 mr-2" />
+                    Xem chi tiết nhân sự
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setShowHistory(true)}>
+                    <History className="h-4 w-4 mr-2" />
+                    Lịch sử vắng mặt
+                  </DropdownMenuItem>
+                  {onEdit && (
+                    <>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem
+                        onClick={() => {
+                          console.log(
+                            "Edit button clicked, participant data:",
+                            participant
+                          );
+                          onEdit(participant);
+                        }}
+                      >
+                        <Pencil className="h-4 w-4 mr-2" />
+                        Chỉnh sửa
+                      </DropdownMenuItem>
+                    </>
+                  )}
+                  {onDelete && (
+                    <DropdownMenuItem
+                      onClick={() => onDelete(participant)}
+                      className="text-red-600 focus:text-red-600"
+                    >
+                      <Trash2 className="h-4 w-4 mr-2" />
+                      Xóa
+                    </DropdownMenuItem>
+                  )}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
           </div>
           <div className="text-sm text-gray-500 space-y-1">
             <p>{participant.role.name}</p>

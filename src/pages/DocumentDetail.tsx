@@ -214,17 +214,17 @@ export function DocumentDetailPage() {
 
   const handleDownloadFile = async () => {
     try {
-      const response = await fetch(`${API_URL}/papers/${id}/file`, {
+      const response = await fetch(`${API_URL}/papers/${id}/download`, {
         credentials: "include",
       });
 
       if (!response.ok) throw new Error("Không thể tải file");
 
       const data = await response.json();
-      if (data.success && data.url && typeof window !== "undefined") {
+      if (data.success && data.downloadUrl && typeof window !== "undefined") {
         const link = window.document.createElement("a");
-        link.href = data.url;
-        link.download = document?.file_name || "document";
+        link.href = data.downloadUrl;
+        link.download = data.fileName || document?.file_name || "document";
         window.document.body.appendChild(link);
         link.click();
         window.document.body.removeChild(link);

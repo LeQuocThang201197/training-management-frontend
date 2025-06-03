@@ -34,7 +34,7 @@ interface Props {
 // Thêm hàm khởi tạo formData
 const getInitialFormData = (doc?: Document | null) => ({
   number: doc?.number || null,
-  code: doc?.code || "",
+  code: doc?.code || null,
   publisher: doc?.publisher || "",
   type: doc?.type || "",
   content: doc?.content || "",
@@ -171,11 +171,11 @@ export function DocumentFormDialog({
               <Label htmlFor="code">Ký hiệu</Label>
               <Input
                 id="code"
-                value={formData.code}
+                value={formData.code || ""}
                 onChange={(e) =>
                   setFormData((prev) => ({
                     ...prev,
-                    code: e.target.value,
+                    code: e.target.value === "" ? null : e.target.value,
                   }))
                 }
                 placeholder="VD: QĐ-TCTDTT"

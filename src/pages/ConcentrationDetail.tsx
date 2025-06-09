@@ -1218,11 +1218,56 @@ export function ConcentrationDetailPage() {
     });
   };
 
-  // Thêm handler cho dialog mới (tạm thời empty)
-  const handleAddParticipantMulti = (data: unknown) => {
+  // Thêm handler cho dialog mới
+  const handleAddParticipantMulti = async (data: unknown) => {
     console.log("Multi dialog data:", data);
-    // TODO: Implement logic sau
-    setIsAddParticipantMultiDialogOpen(false);
+
+    if (
+      data &&
+      typeof data === "object" &&
+      "type" in data &&
+      data.type === "new-person"
+    ) {
+      // Xử lý thêm nhân sự mới vào đợt tập trung
+      const participantData = data as unknown as {
+        personId: string;
+        roleId: string;
+        organizationId: string;
+        note: string;
+      };
+      try {
+        const response = await fetch(
+          `${API_URL}/concentrations/${id}/participants`,
+          {
+            method: "POST",
+            credentials: "include",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              personId: participantData.personId,
+              roleId: participantData.roleId,
+              organizationId: participantData.organizationId,
+              note: participantData.note,
+            }),
+          }
+        );
+
+        if (!response.ok) throw new Error("Không thể thêm thành viên");
+
+        const result = await response.json();
+        if (result.success) {
+          setParticipants((prev) => [...prev, result.data]);
+          fetchParticipantStats();
+          setIsAddParticipantMultiDialogOpen(false);
+          alert("Đã tạo nhân sự mới và thêm vào đợt tập trung thành công!");
+        }
+      } catch (err) {
+        console.error("Add participant error:", err);
+        alert("Có lỗi xảy ra khi thêm thành viên");
+      }
+    } else {
+      // TODO: Implement cho các tab khác
+      setIsAddParticipantMultiDialogOpen(false);
+    }
   };
 
   if (loading) {

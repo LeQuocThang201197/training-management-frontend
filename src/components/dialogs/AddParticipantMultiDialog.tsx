@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
@@ -29,6 +29,9 @@ import {
   AlertCircle,
   CheckCircle,
 } from "lucide-react";
+import { API_URL } from "@/config/api";
+import { PersonFormData } from "@/types/personnel";
+import { Role, Organization } from "@/types/participant";
 
 interface AddParticipantMultiDialogProps {
   isOpen: boolean;
@@ -43,10 +46,155 @@ export function AddParticipantMultiDialog({
 }: AddParticipantMultiDialogProps) {
   const [activeTab, setActiveTab] = useState("from-concentration");
 
+  // State cho tab "Thêm nhân sự mới"
+  const [newPersonFormData, setNewPersonFormData] = useState<PersonFormData>({
+    name: "",
+    identity_number: null,
+    identity_date: null,
+    identity_place: null,
+    social_insurance: null,
+    birthday: "",
+    gender: "",
+    phone: null,
+    email: null,
+  });
+
+  const [participationFormData, setParticipationFormData] = useState({
+    roleId: "",
+    organizationId: "",
+    note: "",
+  });
+
+  const [roles, setRoles] = useState<Role[]>([]);
+  const [organizations, setOrganizations] = useState<Organization[]>([]);
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [loading, setLoading] = useState(false);
+
+  // Fetch roles và organizations
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [rolesResponse, orgsResponse] = await Promise.all([
+          fetch(`${API_URL}/person-roles`, { credentials: "include" }),
+          fetch(`${API_URL}/organizations/all`, { credentials: "include" }),
+        ]);
+
+        if (rolesResponse.ok) {
+          const rolesData = await rolesResponse.json();
+          if (rolesData.success) setRoles(rolesData.data);
+        }
+
+        if (orgsResponse.ok) {
+          const orgsData = await orgsResponse.json();
+          if (orgsData.success) setOrganizations(orgsData.data);
+        }
+      } catch (err) {
+        console.error("Fetch data error:", err);
+      }
+    };
+
+    if (isOpen) {
+      fetchData();
+    }
+  }, [isOpen]);
+
+  // Reset form khi đóng dialog
+  useEffect(() => {
+    if (!isOpen) {
+      setNewPersonFormData({
+        name: "",
+        identity_number: null,
+        identity_date: null,
+        identity_place: null,
+        social_insurance: null,
+        birthday: "",
+        gender: "",
+        phone: null,
+        email: null,
+      });
+      setParticipationFormData({
+        roleId: "",
+        organizationId: "",
+        note: "",
+      });
+      setErrors({});
+      setActiveTab("from-concentration");
+    }
+  }, [isOpen]);
+
+  // Validate form
+  const validateNewPersonForm = () => {
+    const newErrors: Record<string, string> = {};
+
+    if (!newPersonFormData.name.trim()) {
+      newErrors.name = "Vui lòng nhập họ và tên";
+    }
+    if (!newPersonFormData.birthday) {
+      newErrors.birthday = "Vui lòng nhập ngày sinh";
+    }
+    if (!newPersonFormData.gender) {
+      newErrors.gender = "Vui lòng chọn giới tính";
+    }
+    if (!participationFormData.roleId) {
+      newErrors.roleId = "Vui lòng chọn vai trò";
+    }
+    if (!participationFormData.organizationId) {
+      newErrors.organizationId = "Vui lòng chọn đơn vị";
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  // Handle submit cho tab "Thêm nhân sự mới"
+  const handleSubmitNewPerson = async () => {
+    if (!validateNewPersonForm()) return;
+
+    setLoading(true);
+    try {
+      // Tạo nhân sự mới trước
+      const personResponse = await fetch(`${API_URL}/persons`, {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(newPersonFormData),
+      });
+
+      if (!personResponse.ok) throw new Error("Không thể tạo nhân sự mới");
+
+      const personData = await personResponse.json();
+      if (personData.success) {
+        // Gọi onSubmit với dữ liệu để thêm vào đợt tập trung
+        onSubmit?.({
+          type: "new-person",
+          personId: personData.data.id.toString(),
+          roleId: participationFormData.roleId,
+          organizationId: participationFormData.organizationId,
+          note: participationFormData.note,
+        });
+      }
+    } catch (err) {
+      console.error("Create new person error:", err);
+      alert("Có lỗi xảy ra khi tạo nhân sự mới");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Handle submit chung
+  const handleSubmit = () => {
+    if (activeTab === "new-person") {
+      handleSubmitNewPerson();
+    } else {
+      // TODO: Implement cho các tab khác
+      onSubmit?.({ type: activeTab });
+    }
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden">
-        <DialogHeader>
+      <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col">
+        <DialogHeader className="flex-shrink-0">
           <DialogTitle className="flex items-center gap-2">
             <Users className="h-5 w-5" />
             Thêm thành viên
@@ -56,8 +204,12 @@ export function AddParticipantMultiDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full">
-          <TabsList className="grid w-full grid-cols-3">
+        <Tabs
+          value={activeTab}
+          onValueChange={setActiveTab}
+          className="flex flex-col flex-1 min-h-0"
+        >
+          <TabsList className="grid w-full grid-cols-3 flex-shrink-0">
             <TabsTrigger
               value="from-concentration"
               className="flex items-center gap-2"
@@ -78,7 +230,7 @@ export function AddParticipantMultiDialog({
           {/* Tab 1: Từ đợt tập trung khác */}
           <TabsContent
             value="from-concentration"
-            className="space-y-4 h-[500px] overflow-y-auto"
+            className="space-y-4 flex-1 overflow-y-auto"
           >
             <div className="space-y-4">
               {/* Chọn đợt tập trung */}
@@ -195,7 +347,7 @@ export function AddParticipantMultiDialog({
           {/* Tab 2: Từ danh sách */}
           <TabsContent
             value="from-list"
-            className="space-y-4 h-[500px] overflow-y-auto"
+            className="space-y-4 flex-1 overflow-y-auto"
           >
             <div className="space-y-4">
               {/* Tìm kiếm */}
@@ -302,7 +454,7 @@ export function AddParticipantMultiDialog({
           {/* Tab 3: Thêm nhân sự mới */}
           <TabsContent
             value="new-person"
-            className="space-y-4 h-[500px] overflow-y-auto"
+            className="space-y-4 flex-1 overflow-y-auto"
           >
             <div className="space-y-4">
               {/* Thông báo */}
@@ -325,49 +477,121 @@ export function AddParticipantMultiDialog({
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label>Họ và tên *</Label>
-                    <Input placeholder="Nhập họ và tên" />
+                    <Input
+                      placeholder="Nhập họ và tên"
+                      value={newPersonFormData.name}
+                      onChange={(e) =>
+                        setNewPersonFormData((prev) => ({
+                          ...prev,
+                          name: e.target.value,
+                        }))
+                      }
+                    />
+                    {errors.name && (
+                      <p className="text-sm text-red-500">{errors.name}</p>
+                    )}
                   </div>
                   <div className="space-y-2">
                     <Label>Giới tính *</Label>
-                    <Select>
+                    <Select
+                      value={newPersonFormData.gender}
+                      onValueChange={(value) =>
+                        setNewPersonFormData((prev) => ({
+                          ...prev,
+                          gender: value,
+                        }))
+                      }
+                    >
                       <SelectTrigger>
                         <SelectValue placeholder="Chọn giới tính" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="male">Nam</SelectItem>
-                        <SelectItem value="female">Nữ</SelectItem>
+                        <SelectItem value="Nam">Nam</SelectItem>
+                        <SelectItem value="Nữ">Nữ</SelectItem>
                       </SelectContent>
                     </Select>
+                    {errors.gender && (
+                      <p className="text-sm text-red-500">{errors.gender}</p>
+                    )}
                   </div>
                 </div>
 
                 <div className="space-y-2">
                   <Label>Ngày sinh *</Label>
-                  <Input type="date" />
+                  <Input
+                    type="date"
+                    value={newPersonFormData.birthday}
+                    onChange={(e) =>
+                      setNewPersonFormData((prev) => ({
+                        ...prev,
+                        birthday: e.target.value,
+                      }))
+                    }
+                  />
                   <p className="text-sm text-gray-500 italic">
                     * Nếu chỉ biết năm sinh, vui lòng nhập ngày 01 tháng 01
                   </p>
+                  {errors.birthday && (
+                    <p className="text-sm text-red-500">{errors.birthday}</p>
+                  )}
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label>CCCD/CMND</Label>
-                    <Input placeholder="Nhập số CCCD/CMND" />
+                    <Input
+                      placeholder="Nhập số CCCD/CMND"
+                      value={newPersonFormData.identity_number || ""}
+                      onChange={(e) =>
+                        setNewPersonFormData((prev) => ({
+                          ...prev,
+                          identity_number: e.target.value || null,
+                        }))
+                      }
+                    />
                   </div>
                   <div className="space-y-2">
                     <Label>Số BHXH</Label>
-                    <Input placeholder="Nhập số BHXH" />
+                    <Input
+                      placeholder="Nhập số BHXH"
+                      value={newPersonFormData.social_insurance || ""}
+                      onChange={(e) =>
+                        setNewPersonFormData((prev) => ({
+                          ...prev,
+                          social_insurance: e.target.value || null,
+                        }))
+                      }
+                    />
                   </div>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label>Số điện thoại</Label>
-                    <Input placeholder="Nhập số điện thoại" />
+                    <Input
+                      placeholder="Nhập số điện thoại"
+                      value={newPersonFormData.phone || ""}
+                      onChange={(e) =>
+                        setNewPersonFormData((prev) => ({
+                          ...prev,
+                          phone: e.target.value || null,
+                        }))
+                      }
+                    />
                   </div>
                   <div className="space-y-2">
                     <Label>Email</Label>
-                    <Input type="email" placeholder="Nhập email" />
+                    <Input
+                      type="email"
+                      placeholder="Nhập email"
+                      value={newPersonFormData.email || ""}
+                      onChange={(e) =>
+                        setNewPersonFormData((prev) => ({
+                          ...prev,
+                          email: e.target.value || null,
+                        }))
+                      }
+                    />
                   </div>
                 </div>
               </div>
@@ -380,33 +604,71 @@ export function AddParticipantMultiDialog({
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label>Vai trò *</Label>
-                    <Select>
+                    <Select
+                      value={participationFormData.roleId}
+                      onValueChange={(value) =>
+                        setParticipationFormData((prev) => ({
+                          ...prev,
+                          roleId: value,
+                        }))
+                      }
+                    >
                       <SelectTrigger>
                         <SelectValue placeholder="Chọn vai trò" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="athlete">Vận động viên</SelectItem>
-                        <SelectItem value="coach">Huấn luyện viên</SelectItem>
-                        <SelectItem value="specialist">Chuyên gia</SelectItem>
+                        {roles.map((role) => (
+                          <SelectItem key={role.id} value={role.id.toString()}>
+                            {role.name}
+                          </SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
+                    {errors.roleId && (
+                      <p className="text-sm text-red-500">{errors.roleId}</p>
+                    )}
                   </div>
                   <div className="space-y-2">
                     <Label>Đơn vị *</Label>
-                    <Select>
+                    <Select
+                      value={participationFormData.organizationId}
+                      onValueChange={(value) =>
+                        setParticipationFormData((prev) => ({
+                          ...prev,
+                          organizationId: value,
+                        }))
+                      }
+                    >
                       <SelectTrigger>
                         <SelectValue placeholder="Chọn đơn vị" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="hanoi">Sở VH-TT Hà Nội</SelectItem>
-                        <SelectItem value="hcm">Sở VH-TT TP.HCM</SelectItem>
+                        {organizations.map((org) => (
+                          <SelectItem key={org.id} value={org.id.toString()}>
+                            {org.name}
+                          </SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
+                    {errors.organizationId && (
+                      <p className="text-sm text-red-500">
+                        {errors.organizationId}
+                      </p>
+                    )}
                   </div>
                 </div>
                 <div className="space-y-2">
                   <Label>Ghi chú</Label>
-                  <Textarea placeholder="Nhập ghi chú (nếu có)..." />
+                  <Textarea
+                    placeholder="Nhập ghi chú (nếu có)..."
+                    value={participationFormData.note}
+                    onChange={(e) =>
+                      setParticipationFormData((prev) => ({
+                        ...prev,
+                        note: e.target.value,
+                      }))
+                    }
+                  />
                 </div>
               </div>
             </div>
@@ -414,14 +676,20 @@ export function AddParticipantMultiDialog({
         </Tabs>
 
         {/* Footer */}
-        <div className="flex justify-end gap-2 pt-4 border-t">
+        <div className="flex justify-end gap-2 pt-4 border-t flex-shrink-0 bg-white">
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Hủy
           </Button>
-          <Button onClick={() => onSubmit?.({})}>
-            {activeTab === "from-concentration" && "Thêm từ đợt tập trung"}
-            {activeTab === "from-list" && "Thêm từ danh sách"}
-            {activeTab === "new-person" && "Tạo và thêm vào đợt tập trung"}
+          <Button onClick={handleSubmit} disabled={loading}>
+            {loading ? (
+              "Đang xử lý..."
+            ) : (
+              <>
+                {activeTab === "from-concentration" && "Thêm từ đợt tập trung"}
+                {activeTab === "from-list" && "Thêm từ danh sách"}
+                {activeTab === "new-person" && "Tạo và thêm vào đợt tập trung"}
+              </>
+            )}
           </Button>
         </div>
       </DialogContent>

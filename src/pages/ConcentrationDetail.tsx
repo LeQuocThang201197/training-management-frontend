@@ -61,6 +61,7 @@ import {
 import { CompetitionDialog } from "@/components/dialogs/CompetitionDialog";
 import { AddCompetitionParticipantDialog } from "@/components/dialogs/AddCompetitionParticipantDialog";
 import { ParticipantFormData } from "@/types/participant";
+import { AddParticipantMultiDialog } from "@/components/dialogs/AddParticipantMultiDialog";
 
 interface Paper {
   id: number;
@@ -200,6 +201,9 @@ export function ConcentrationDetailPage() {
     total: 0,
     totalPages: 1,
   });
+  // Thêm state cho dialog mới
+  const [isAddParticipantMultiDialogOpen, setIsAddParticipantMultiDialogOpen] =
+    useState(false);
 
   const fetchConcentration = useCallback(async () => {
     try {
@@ -1214,6 +1218,13 @@ export function ConcentrationDetailPage() {
     });
   };
 
+  // Thêm handler cho dialog mới (tạm thời empty)
+  const handleAddParticipantMulti = (data: unknown) => {
+    console.log("Multi dialog data:", data);
+    // TODO: Implement logic sau
+    setIsAddParticipantMultiDialogOpen(false);
+  };
+
   if (loading) {
     return <div>Đang tải...</div>;
   }
@@ -1337,15 +1348,25 @@ export function ConcentrationDetailPage() {
             <CardHeader>
               <div className="flex items-center justify-between">
                 <CardTitle>Danh sách đội</CardTitle>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="gap-2"
-                  onClick={() => setIsAddParticipantDialogOpen(true)}
-                >
-                  <Plus className="h-4 w-4" />
-                  <span>Thêm thành viên</span>
-                </Button>
+                <div className="flex gap-2">
+                  {/* Nút cũ */}
+                  <Button
+                    onClick={() => setIsAddParticipantDialogOpen(true)}
+                    className="bg-blue-600 hover:bg-blue-700"
+                  >
+                    <Plus className="mr-2 h-4 w-4" />
+                    Thêm thành viên (Cũ)
+                  </Button>
+
+                  {/* Nút mới */}
+                  <Button
+                    onClick={() => setIsAddParticipantMultiDialogOpen(true)}
+                    className="bg-green-600 hover:bg-green-700"
+                  >
+                    <Plus className="mr-2 h-4 w-4" />
+                    Thêm thành viên (Mới)
+                  </Button>
+                </div>
               </div>
             </CardHeader>
             <CardContent>
@@ -2509,6 +2530,13 @@ export function ConcentrationDetailPage() {
         }
         competition={managingCompetition!}
         onParticipantSelect={setCompetitionParticipantIds}
+      />
+
+      {/* Dialog mới */}
+      <AddParticipantMultiDialog
+        isOpen={isAddParticipantMultiDialogOpen}
+        onOpenChange={setIsAddParticipantMultiDialogOpen}
+        onSubmit={handleAddParticipantMulti}
       />
     </div>
   );

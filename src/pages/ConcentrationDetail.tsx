@@ -1264,8 +1264,50 @@ export function ConcentrationDetailPage() {
         console.error("Add participant error:", err);
         alert("Có lỗi xảy ra khi thêm thành viên");
       }
+    } else if (
+      data &&
+      typeof data === "object" &&
+      "type" in data &&
+      data.type === "from-list"
+    ) {
+      // Xử lý thêm từ danh sách
+      const listData = data as unknown as {
+        personId: string;
+        roleId: string;
+        organizationId: string;
+        note: string;
+      };
+      try {
+        const response = await fetch(
+          `${API_URL}/concentrations/${id}/participants`,
+          {
+            method: "POST",
+            credentials: "include",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              personId: listData.personId,
+              roleId: listData.roleId,
+              organizationId: listData.organizationId,
+              note: listData.note,
+            }),
+          }
+        );
+
+        if (!response.ok) throw new Error("Không thể thêm thành viên");
+
+        const result = await response.json();
+        if (result.success) {
+          setParticipants((prev) => [...prev, result.data]);
+          fetchParticipantStats();
+          setIsAddParticipantMultiDialogOpen(false);
+          alert("Đã thêm thành viên từ danh sách thành công!");
+        }
+      } catch (err) {
+        console.error("Add participant from list error:", err);
+        alert("Có lỗi xảy ra khi thêm thành viên");
+      }
     } else {
-      // TODO: Implement cho các tab khác
+      // TODO: Implement cho tab khác
       setIsAddParticipantMultiDialogOpen(false);
     }
   };
@@ -2582,6 +2624,7 @@ export function ConcentrationDetailPage() {
         isOpen={isAddParticipantMultiDialogOpen}
         onOpenChange={setIsAddParticipantMultiDialogOpen}
         onSubmit={handleAddParticipantMulti}
+        existingParticipants={participants}
       />
     </div>
   );

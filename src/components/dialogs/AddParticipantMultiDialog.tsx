@@ -31,18 +31,20 @@ import {
 } from "lucide-react";
 import { API_URL } from "@/config/api";
 import { PersonFormData } from "@/types/personnel";
-import { Role, Organization } from "@/types/participant";
+import { Role, Organization, Person } from "@/types/participant";
 
 interface AddParticipantMultiDialogProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
   onSubmit?: (data: unknown) => void;
+  existingParticipants?: { person: { id: number } }[];
 }
 
 export function AddParticipantMultiDialog({
   isOpen,
   onOpenChange,
   onSubmit,
+  existingParticipants = [],
 }: AddParticipantMultiDialogProps) {
   const [activeTab, setActiveTab] = useState("from-concentration");
 
@@ -69,6 +71,17 @@ export function AddParticipantMultiDialog({
   const [organizations, setOrganizations] = useState<Organization[]>([]);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
+
+  // State cho tab "Từ danh sách"
+  const [searchTerm, setSearchTerm] = useState("");
+  const [searchResults, setSearchResults] = useState<Person[]>([]);
+  const [searchLoading, setSearchLoading] = useState(false);
+  const [selectedPersonId, setSelectedPersonId] = useState("");
+  const [fromListFormData, setFromListFormData] = useState({
+    roleId: "",
+    organizationId: "",
+    note: "",
+  });
 
   // Fetch roles và organizations
   useEffect(() => {
@@ -117,10 +130,56 @@ export function AddParticipantMultiDialog({
         organizationId: "",
         note: "",
       });
+      setSearchTerm("");
+      setSearchResults([]);
+      setSelectedPersonId("");
+      setFromListFormData({
+        roleId: "",
+        organizationId: "",
+        note: "",
+      });
       setErrors({});
       setActiveTab("from-concentration");
     }
   }, [isOpen]);
+
+  // Search people cho tab "Từ danh sách"
+  useEffect(() => {
+    const searchPeople = async () => {
+      if (!searchTerm.trim()) {
+        setSearchResults([]);
+        return;
+      }
+
+      setSearchLoading(true);
+      try {
+        const response = await fetch(
+          `${API_URL}/persons?q=${encodeURIComponent(searchTerm)}`,
+          {
+            credentials: "include",
+          }
+        );
+        if (!response.ok) throw new Error("Không thể tìm kiếm");
+
+        const data = await response.json();
+        if (data.success) {
+          setSearchResults(data.data);
+        }
+      } catch (err) {
+        console.error("Search error:", err);
+      } finally {
+        setSearchLoading(false);
+      }
+    };
+
+    const timeoutId = setTimeout(searchPeople, 300);
+    return () => clearTimeout(timeoutId);
+  }, [searchTerm]);
+
+  // Kiểm tra người đã tồn tại trong đợt tập trung
+  const isPersonInConcentration = (personId: number) => {
+    return existingParticipants.some((p) => p.person.id === personId);
+  };
 
   // Validate form
   const validateNewPersonForm = () => {
@@ -139,6 +198,24 @@ export function AddParticipantMultiDialog({
       newErrors.roleId = "Vui lòng chọn vai trò";
     }
     if (!participationFormData.organizationId) {
+      newErrors.organizationId = "Vui lòng chọn đơn vị";
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  // Validate form cho tab "Từ danh sách"
+  const validateFromListForm = () => {
+    const newErrors: Record<string, string> = {};
+
+    if (!selectedPersonId) {
+      newErrors.personId = "Vui lòng chọn người tham gia";
+    }
+    if (!fromListFormData.roleId) {
+      newErrors.roleId = "Vui lòng chọn vai trò";
+    }
+    if (!fromListFormData.organizationId) {
       newErrors.organizationId = "Vui lòng chọn đơn vị";
     }
 
@@ -181,12 +258,27 @@ export function AddParticipantMultiDialog({
     }
   };
 
+  // Handle submit cho tab "Từ danh sách"
+  const handleSubmitFromList = () => {
+    if (!validateFromListForm()) return;
+
+    onSubmit?.({
+      type: "from-list",
+      personId: selectedPersonId,
+      roleId: fromListFormData.roleId,
+      organizationId: fromListFormData.organizationId,
+      note: fromListFormData.note,
+    });
+  };
+
   // Handle submit chung
   const handleSubmit = () => {
     if (activeTab === "new-person") {
       handleSubmitNewPerson();
+    } else if (activeTab === "from-list") {
+      handleSubmitFromList();
     } else {
-      // TODO: Implement cho các tab khác
+      // TODO: Implement cho tab khác
       onSubmit?.({ type: activeTab });
     }
   };
@@ -351,66 +443,97 @@ export function AddParticipantMultiDialog({
           >
             <div className="space-y-4">
               {/* Tìm kiếm */}
-              <div className="space-y-2">
+              <div className="space-y-2 px-4">
                 <Label>Tìm kiếm nhân sự</Label>
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                   <Input
                     placeholder="Nhập tên, CCCD, số điện thoại..."
                     className="pl-10"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
                   />
+                  {searchLoading && (
+                    <div className="text-sm text-gray-500 mt-2">
+                      Đang tìm kiếm...
+                    </div>
+                  )}
                 </div>
-              </div>
-
-              {/* Bộ lọc nhanh */}
-              <div className="flex items-center gap-2 flex-wrap">
-                <span className="text-sm font-medium">Lọc nhanh:</span>
-                <Button variant="outline" size="sm">
-                  Chưa từng tham gia
-                </Button>
-                <Button variant="outline" size="sm">
-                  Tham gia gần đây
-                </Button>
-                <Button variant="outline" size="sm">
-                  Cùng đơn vị
-                </Button>
               </div>
 
               {/* Kết quả tìm kiếm */}
               <div className="space-y-2">
-                <Label>Kết quả tìm kiếm (25 người)</Label>
+                <Label>Kết quả tìm kiếm ({searchResults.length} người)</Label>
                 <div className="border rounded-lg max-h-64 overflow-y-auto">
-                  {[1, 2, 3, 4].map((item) => (
-                    <div
-                      key={item}
-                      className="flex items-center gap-3 p-3 border-b last:border-b-0 hover:bg-gray-50 cursor-pointer"
-                    >
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2">
-                          <span className="font-medium">Trần Thị B</span>
-                          {item === 1 ? (
-                            <Badge variant="outline" className="text-xs">
-                              Chưa tham gia
-                            </Badge>
-                          ) : (
-                            <Badge variant="secondary" className="text-xs">
-                              Đã tham gia 2 đợt
-                            </Badge>
-                          )}
+                  {searchResults.length > 0 ? (
+                    searchResults.map((person) => {
+                      const isAlreadyInConcentration = isPersonInConcentration(
+                        person.id
+                      );
+                      return (
+                        <div
+                          key={person.id}
+                          className={`flex items-center gap-3 p-3 border-b last:border-b-0 ${
+                            isAlreadyInConcentration
+                              ? "opacity-50 cursor-not-allowed"
+                              : "hover:bg-gray-50 cursor-pointer"
+                          } ${
+                            selectedPersonId === person.id.toString()
+                              ? "bg-blue-50 border-blue-200"
+                              : ""
+                          }`}
+                          onClick={() => {
+                            if (!isAlreadyInConcentration) {
+                              setSelectedPersonId(person.id.toString());
+                            }
+                          }}
+                        >
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2">
+                              <span className="font-medium">{person.name}</span>
+                              <Badge variant="outline" className="text-xs">
+                                {person.gender} •{" "}
+                                {new Date(person.birthday).getFullYear()}
+                              </Badge>
+                              {isAlreadyInConcentration && (
+                                <Badge
+                                  variant="destructive"
+                                  className="text-xs"
+                                >
+                                  Đã tham gia
+                                </Badge>
+                              )}
+                            </div>
+                          </div>
+                          <Button
+                            variant={
+                              selectedPersonId === person.id.toString()
+                                ? "default"
+                                : "outline"
+                            }
+                            size="sm"
+                            disabled={isAlreadyInConcentration}
+                          >
+                            {isAlreadyInConcentration
+                              ? "Đã tham gia"
+                              : selectedPersonId === person.id.toString()
+                              ? "Đã chọn"
+                              : "Chọn"}
+                          </Button>
                         </div>
-                        <div className="text-sm text-gray-500">
-                          Nữ • 1998 • 0987654321 • tran.b@email.com
-                        </div>
-                        <div className="text-sm text-gray-500">
-                          Sở Văn hóa Thể thao TP.HCM
-                        </div>
-                      </div>
-                      <Button variant="outline" size="sm">
-                        Chọn
-                      </Button>
+                      );
+                    })
+                  ) : (
+                    <div className="text-center py-4 text-gray-500">
+                      {searchTerm
+                        ? "Không tìm thấy người nào"
+                        : "Nhập từ khóa để tìm kiếm"}
                     </div>
-                  ))}
+                  )}
                 </div>
+                {errors.personId && (
+                  <p className="text-sm text-red-500">{errors.personId}</p>
+                )}
               </div>
 
               {/* Form thông tin tham gia */}
@@ -419,33 +542,71 @@ export function AddParticipantMultiDialog({
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label>Vai trò *</Label>
-                    <Select>
+                    <Select
+                      value={fromListFormData.roleId}
+                      onValueChange={(value) =>
+                        setFromListFormData((prev) => ({
+                          ...prev,
+                          roleId: value,
+                        }))
+                      }
+                    >
                       <SelectTrigger>
                         <SelectValue placeholder="Chọn vai trò" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="athlete">Vận động viên</SelectItem>
-                        <SelectItem value="coach">Huấn luyện viên</SelectItem>
-                        <SelectItem value="specialist">Chuyên gia</SelectItem>
+                        {roles.map((role) => (
+                          <SelectItem key={role.id} value={role.id.toString()}>
+                            {role.name}
+                          </SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
+                    {errors.roleId && (
+                      <p className="text-sm text-red-500">{errors.roleId}</p>
+                    )}
                   </div>
                   <div className="space-y-2">
                     <Label>Đơn vị *</Label>
-                    <Select>
+                    <Select
+                      value={fromListFormData.organizationId}
+                      onValueChange={(value) =>
+                        setFromListFormData((prev) => ({
+                          ...prev,
+                          organizationId: value,
+                        }))
+                      }
+                    >
                       <SelectTrigger>
                         <SelectValue placeholder="Chọn đơn vị" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="hanoi">Sở VH-TT Hà Nội</SelectItem>
-                        <SelectItem value="hcm">Sở VH-TT TP.HCM</SelectItem>
+                        {organizations.map((org) => (
+                          <SelectItem key={org.id} value={org.id.toString()}>
+                            {org.name}
+                          </SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
+                    {errors.organizationId && (
+                      <p className="text-sm text-red-500">
+                        {errors.organizationId}
+                      </p>
+                    )}
                   </div>
                 </div>
                 <div className="space-y-2">
                   <Label>Ghi chú</Label>
-                  <Textarea placeholder="Nhập ghi chú (nếu có)..." />
+                  <Textarea
+                    placeholder="Nhập ghi chú (nếu có)..."
+                    value={fromListFormData.note}
+                    onChange={(e) =>
+                      setFromListFormData((prev) => ({
+                        ...prev,
+                        note: e.target.value,
+                      }))
+                    }
+                  />
                 </div>
               </div>
             </div>

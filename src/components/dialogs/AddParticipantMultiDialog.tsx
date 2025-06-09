@@ -31,7 +31,19 @@ import {
 } from "lucide-react";
 import { API_URL } from "@/config/api";
 import { PersonFormData } from "@/types/personnel";
-import { Role, Organization, Person } from "@/types/participant";
+import { Role, Organization, Person, Participant } from "@/types/participant";
+
+interface ConcentrationOption {
+  id: number;
+  startDate: string;
+  endDate: string;
+  location: string;
+  team: {
+    sport: string;
+    gender: string;
+    type: string;
+  };
+}
 
 interface AddParticipantMultiDialogProps {
   isOpen: boolean;
@@ -82,6 +94,32 @@ export function AddParticipantMultiDialog({
     organizationId: "",
     note: "",
   });
+
+  // State cho tab "Từ đợt tập trung khác"
+  const [concentrations, setConcentrations] = useState<ConcentrationOption[]>(
+    []
+  );
+  const [selectedConcentrationId, setSelectedConcentrationId] = useState("");
+  const [concentrationParticipants, setConcentrationParticipants] = useState<
+    Participant[]
+  >([]);
+  const [selectedParticipantIds, setSelectedParticipantIds] = useState<
+    number[]
+  >([]);
+  const [statusFilter, setStatusFilter] = useState("completed");
+  const [roleFilter, setRoleFilter] = useState("all-roles");
+  const [loadingConcentrations, setLoadingConcentrations] = useState(false);
+  const [loadingParticipants, setLoadingParticipants] = useState(false);
+  const [concentrationSearchTerm, setConcentrationSearchTerm] = useState("");
+  const [concentrationPage, setConcentrationPage] = useState(1);
+  const [concentrationPagination, setConcentrationPagination] = useState({
+    total: 0,
+    totalPages: 1,
+  });
+  const [yearFilter, setYearFilter] = useState(
+    new Date().getFullYear().toString()
+  );
+  const [teamTypeFilter, setTeamTypeFilter] = useState("all-types");
 
   // Fetch roles và organizations
   useEffect(() => {
@@ -138,10 +176,122 @@ export function AddParticipantMultiDialog({
         organizationId: "",
         note: "",
       });
+      setSelectedConcentrationId("");
+      setConcentrationParticipants([]);
+      setSelectedParticipantIds([]);
+      setStatusFilter("completed");
+      setRoleFilter("all-roles");
+      setConcentrationSearchTerm("");
+      setYearFilter(new Date().getFullYear().toString());
+      setTeamTypeFilter("all-types");
+      setConcentrationPage(1);
       setErrors({});
       setActiveTab("from-concentration");
     }
   }, [isOpen]);
+
+  // Fetch concentrations với search API
+  useEffect(() => {
+    const fetchConcentrations = async () => {
+      if (!isOpen) return;
+
+      try {
+        setLoadingConcentrations(true);
+
+        // Build query parameters
+        const params = new URLSearchParams();
+        if (concentrationSearchTerm.trim()) {
+          params.append("q", concentrationSearchTerm.trim());
+        }
+        if (yearFilter) {
+          params.append("year", yearFilter);
+        }
+        if (statusFilter !== "all-status") {
+          params.append("status", statusFilter);
+        }
+        if (teamTypeFilter !== "all-types") {
+          params.append("teamType", teamTypeFilter);
+        }
+        params.append("page", concentrationPage.toString());
+        params.append("limit", "10");
+
+        const response = await fetch(
+          `${API_URL}/concentrations/search?${params}`,
+          {
+            credentials: "include",
+          }
+        );
+
+        if (!response.ok)
+          throw new Error("Không thể tải danh sách đợt tập trung");
+
+        const data = await response.json();
+        if (data.success) {
+          setConcentrations(data.data);
+          setConcentrationPagination({
+            total: data.pagination.total,
+            totalPages: data.pagination.totalPages,
+          });
+        }
+      } catch (err) {
+        console.error("Fetch concentrations error:", err);
+      } finally {
+        setLoadingConcentrations(false);
+      }
+    };
+
+    // Debounce API call
+    const timeoutId = setTimeout(fetchConcentrations, 300);
+    return () => clearTimeout(timeoutId);
+  }, [
+    isOpen,
+    concentrationSearchTerm,
+    yearFilter,
+    statusFilter,
+    teamTypeFilter,
+    concentrationPage,
+  ]);
+
+  // Reset page when filters change
+  useEffect(() => {
+    setConcentrationPage(1);
+  }, [concentrationSearchTerm, yearFilter, statusFilter, teamTypeFilter]);
+
+  // Fetch participants khi chọn concentration
+  useEffect(() => {
+    const fetchConcentrationParticipants = async () => {
+      if (!selectedConcentrationId) {
+        setConcentrationParticipants([]);
+        return;
+      }
+
+      try {
+        setLoadingParticipants(true);
+        const response = await fetch(
+          `${API_URL}/concentrations/${selectedConcentrationId}/participants`,
+          {
+            credentials: "include",
+          }
+        );
+
+        if (!response.ok) throw new Error("Không thể tải danh sách thành viên");
+
+        const data = await response.json();
+        if (data.success) {
+          setConcentrationParticipants(data.data);
+        }
+      } catch (err) {
+        console.error("Fetch concentration participants error:", err);
+      } finally {
+        setLoadingParticipants(false);
+      }
+    };
+
+    fetchConcentrationParticipants();
+  }, [selectedConcentrationId]);
+
+  // Không cần client-side filtering nữa vì đã có server-side search
+  const filteredConcentrations = concentrations;
 
   // Search people cho tab "Từ danh sách"
   useEffect(() => {
@@ -271,12 +421,28 @@ export function AddParticipantMultiDialog({
     });
   };
 
+  // Handle submit cho tab "Từ đợt tập trung khác"
+  const handleSubmitFromConcentration = () => {
+    if (selectedParticipantIds.length === 0) {
+      alert("Vui lòng chọn ít nhất một thành viên");
+      return;
+    }
+
+    onSubmit?.({
+      type: "from-concentration",
+      selectedParticipantIds,
+      sourceConcentrationId: selectedConcentrationId,
+    });
+  };
+
   // Handle submit chung
   const handleSubmit = () => {
     if (activeTab === "new-person") {
       handleSubmitNewPerson();
     } else if (activeTab === "from-list") {
       handleSubmitFromList();
+    } else if (activeTab === "from-concentration") {
+      handleSubmitFromConcentration();
     } else {
       // TODO: Implement cho tab khác
       onSubmit?.({ type: activeTab });
@@ -325,59 +491,241 @@ export function AddParticipantMultiDialog({
             className="space-y-4 flex-1 overflow-y-auto"
           >
             <div className="space-y-4">
-              {/* Chọn đợt tập trung */}
-              <div className="space-y-2">
-                <Label>Chọn đợt tập trung</Label>
-                <Select>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Chọn đợt tập trung để copy thành viên" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="concentration-1">
-                      <div className="flex items-center justify-between w-full">
-                        <span>Đội tuyển Bóng đá Nam - Hà Nội</span>
-                        <Badge variant="secondary" className="ml-2">
-                          Đang diễn ra
-                        </Badge>
+              {/* Tìm kiếm và filter đợt tập trung */}
+              <div className="space-y-4">
+                {/* Search box */}
+                <div className="space-y-2">
+                  <Label>Tìm kiếm đợt tập trung</Label>
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                    <Input
+                      placeholder="Nhập tên môn thể thao hoặc địa điểm..."
+                      className="pl-10"
+                      value={concentrationSearchTerm}
+                      onChange={(e) =>
+                        setConcentrationSearchTerm(e.target.value)
+                      }
+                      clearable
+                    />
+                  </div>
+                </div>
+
+                {/* Filters */}
+                <div className="flex items-center gap-4 p-3 bg-gray-50 rounded-lg">
+                  <div className="flex items-center gap-2">
+                    <Filter className="h-4 w-4 text-gray-500" />
+                    <span className="text-sm font-medium">Lọc:</span>
+                  </div>
+
+                  <Input
+                    type="number"
+                    placeholder="Năm (VD: 2025)"
+                    className="w-36"
+                    value={yearFilter}
+                    onChange={(e) => setYearFilter(e.target.value)}
+                  />
+
+                  <Select value={statusFilter} onValueChange={setStatusFilter}>
+                    <SelectTrigger className="w-36">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all-status">
+                        Tất cả tình trạng
+                      </SelectItem>
+                      <SelectItem value="upcoming">Chưa diễn ra</SelectItem>
+                      <SelectItem value="active">Đang diễn ra</SelectItem>
+                      <SelectItem value="completed">Đã kết thúc</SelectItem>
+                    </SelectContent>
+                  </Select>
+
+                  <Select
+                    value={teamTypeFilter}
+                    onValueChange={setTeamTypeFilter}
+                  >
+                    <SelectTrigger className="w-32">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all-types">Tất cả loại</SelectItem>
+                      <SelectItem value="ADULT">Tuyển</SelectItem>
+                      <SelectItem value="JUNIOR">Trẻ</SelectItem>
+                      <SelectItem value="DISABILITY">
+                        Người khuyết tật
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Danh sách đợt tập trung */}
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <Label>
+                      Chọn đợt tập trung (Trang {concentrationPage}/
+                      {concentrationPagination.totalPages} -{" "}
+                      {concentrationPagination.total} đợt)
+                    </Label>
+                  </div>
+                  <div className="border rounded-lg max-h-48 overflow-y-auto">
+                    {loadingConcentrations ? (
+                      <div className="flex justify-center py-8">
+                        <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
                       </div>
-                    </SelectItem>
-                    <SelectItem value="concentration-2">
-                      <div className="flex items-center justify-between w-full">
-                        <span>Đội tuyển Bóng chuyền Nữ - TP.HCM</span>
-                        <Badge variant="outline" className="ml-2">
-                          Đã kết thúc
-                        </Badge>
+                    ) : filteredConcentrations.length > 0 ? (
+                      filteredConcentrations.map((concentration) => {
+                        const getStatus = () => {
+                          const now = new Date();
+                          const start = new Date(concentration.startDate);
+                          const end = new Date(concentration.endDate);
+                          end.setHours(23, 59, 59, 999);
+
+                          if (now < start)
+                            return {
+                              label: "Chưa diễn ra",
+                              variant: "outline" as const,
+                            };
+                          if (now > end)
+                            return {
+                              label: "Đã kết thúc",
+                              variant: "secondary" as const,
+                            };
+                          return {
+                            label: "Đang diễn ra",
+                            variant: "default" as const,
+                          };
+                        };
+
+                        const status = getStatus();
+                        const isSelected =
+                          selectedConcentrationId ===
+                          concentration.id.toString();
+
+                        return (
+                          <div
+                            key={concentration.id}
+                            className={`p-3 border-b last:border-b-0 cursor-pointer hover:bg-gray-50 ${
+                              isSelected ? "bg-blue-50 border-blue-200" : ""
+                            }`}
+                            onClick={() =>
+                              setSelectedConcentrationId(
+                                concentration.id.toString()
+                              )
+                            }
+                          >
+                            <div className="flex items-start justify-between">
+                              <div className="flex-1">
+                                <div className="flex items-center gap-2 mb-1">
+                                  <span className="font-medium">
+                                    Đội tuyển {concentration.team.sport}{" "}
+                                    {concentration.team.gender !==
+                                    "Cả nam và nữ"
+                                      ? concentration.team.gender.toLowerCase()
+                                      : ""}
+                                  </span>
+                                  <Badge
+                                    variant={status.variant}
+                                    className="text-xs"
+                                  >
+                                    {status.label}
+                                  </Badge>
+                                </div>
+                                <div className="text-sm text-gray-600">
+                                  📍 {concentration.location}
+                                </div>
+                                <div className="text-xs text-gray-500 mt-1">
+                                  {new Date(
+                                    concentration.startDate
+                                  ).toLocaleDateString("vi-VN")}{" "}
+                                  -{" "}
+                                  {new Date(
+                                    concentration.endDate
+                                  ).toLocaleDateString("vi-VN")}
+                                </div>
+                              </div>
+                              {isSelected && (
+                                <CheckCircle className="h-5 w-5 text-blue-600 mt-1" />
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })
+                    ) : (
+                      <div className="text-center py-8 text-gray-500">
+                        {concentrationSearchTerm ||
+                        yearFilter !== new Date().getFullYear().toString() ||
+                        statusFilter !== "completed" ||
+                        teamTypeFilter !== "all-types"
+                          ? "Không tìm thấy đợt tập trung nào phù hợp"
+                          : "Không có đợt tập trung nào"}
                       </div>
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
+                    )}
+                  </div>
+
+                  {/* Pagination Controls */}
+                  {concentrationPagination.totalPages > 1 && (
+                    <div className="flex items-center justify-between p-3 border-t">
+                      <div className="text-sm text-gray-600">
+                        Hiển thị {Math.min(10, concentrationPagination.total)} /{" "}
+                        {concentrationPagination.total} đợt
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() =>
+                            setConcentrationPage((p) => Math.max(1, p - 1))
+                          }
+                          disabled={
+                            concentrationPage === 1 || loadingConcentrations
+                          }
+                        >
+                          ‹ Trước
+                        </Button>
+                        <span className="text-sm px-2">
+                          {concentrationPage} /{" "}
+                          {concentrationPagination.totalPages}
+                        </span>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() =>
+                            setConcentrationPage((p) =>
+                              Math.min(
+                                concentrationPagination.totalPages,
+                                p + 1
+                              )
+                            )
+                          }
+                          disabled={
+                            concentrationPage ===
+                              concentrationPagination.totalPages ||
+                            loadingConcentrations
+                          }
+                        >
+                          Sau ›
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
 
-              {/* Bộ lọc */}
+              {/* Bộ lọc participant - giữ nguyên cho phần participants */}
               <div className="flex items-center gap-4 p-3 bg-gray-50 rounded-lg">
                 <div className="flex items-center gap-2">
                   <Filter className="h-4 w-4 text-gray-500" />
-                  <span className="text-sm font-medium">Lọc:</span>
+                  <span className="text-sm font-medium">Lọc thành viên:</span>
                 </div>
-                <Select defaultValue="all-status">
-                  <SelectTrigger className="w-32">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all-status">Tất cả</SelectItem>
-                    <SelectItem value="active">Đang hoạt động</SelectItem>
-                    <SelectItem value="completed">Đã hoàn thành</SelectItem>
-                  </SelectContent>
-                </Select>
-                <Select defaultValue="all-roles">
-                  <SelectTrigger className="w-32">
+                <Select value={roleFilter} onValueChange={setRoleFilter}>
+                  <SelectTrigger className="w-36">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all-roles">Tất cả vai trò</SelectItem>
-                    <SelectItem value="athlete">Vận động viên</SelectItem>
-                    <SelectItem value="coach">Huấn luyện viên</SelectItem>
                     <SelectItem value="specialist">Chuyên gia</SelectItem>
+                    <SelectItem value="coach">Huấn luyện viên</SelectItem>
+                    <SelectItem value="athlete">Vận động viên</SelectItem>
+                    <SelectItem value="other">Khác</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -385,38 +733,104 @@ export function AddParticipantMultiDialog({
               {/* Danh sách thành viên */}
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <Label>Danh sách thành viên (12 người)</Label>
-                  <Button variant="outline" size="sm">
-                    Chọn tất cả
+                  <Label>
+                    Danh sách thành viên ({concentrationParticipants.length}{" "}
+                    người)
+                  </Label>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      if (
+                        selectedParticipantIds.length ===
+                        concentrationParticipants.length
+                      ) {
+                        setSelectedParticipantIds([]);
+                      } else {
+                        setSelectedParticipantIds(
+                          concentrationParticipants.map((p) => p.id)
+                        );
+                      }
+                    }}
+                  >
+                    {selectedParticipantIds.length ===
+                    concentrationParticipants.length
+                      ? "Bỏ chọn tất cả"
+                      : "Chọn tất cả"}
                   </Button>
                 </div>
                 <div className="border rounded-lg max-h-64 overflow-y-auto">
-                  {/* Mock data */}
-                  {[1, 2, 3, 4, 5].map((item) => (
-                    <div
-                      key={item}
-                      className="flex items-center gap-3 p-3 border-b last:border-b-0 hover:bg-gray-50"
-                    >
-                      <Checkbox />
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2">
-                          <span className="font-medium">Nguyễn Văn A</span>
-                          <Badge variant="secondary" className="text-xs">
-                            VĐV
-                          </Badge>
-                          {item === 1 && (
-                            <Badge variant="destructive" className="text-xs">
-                              <AlertCircle className="h-3 w-3 mr-1" />
-                              Đang tham gia đợt khác
-                            </Badge>
-                          )}
-                        </div>
-                        <div className="text-sm text-gray-500">
-                          Sở Văn hóa Thể thao Hà Nội • Nam • 1995
-                        </div>
-                      </div>
+                  {loadingParticipants ? (
+                    <div className="flex justify-center py-8">
+                      <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
                     </div>
-                  ))}
+                  ) : concentrationParticipants.length > 0 ? (
+                    concentrationParticipants.map((participant) => {
+                      const isAlreadyInCurrentConcentration =
+                        isPersonInConcentration(participant.person.id);
+                      const isSelected = selectedParticipantIds.includes(
+                        participant.id
+                      );
+
+                      return (
+                        <div
+                          key={participant.id}
+                          className={`flex items-center gap-3 p-3 border-b last:border-b-0 hover:bg-gray-50 ${
+                            isAlreadyInCurrentConcentration ? "opacity-50" : ""
+                          }`}
+                        >
+                          <Checkbox
+                            checked={isSelected}
+                            onCheckedChange={(checked) => {
+                              if (checked) {
+                                setSelectedParticipantIds((prev) => [
+                                  ...prev,
+                                  participant.id,
+                                ]);
+                              } else {
+                                setSelectedParticipantIds((prev) =>
+                                  prev.filter((id) => id !== participant.id)
+                                );
+                              }
+                            }}
+                            disabled={isAlreadyInCurrentConcentration}
+                          />
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2">
+                              <span className="font-medium">
+                                {participant.person.name}
+                              </span>
+                              <Badge variant="secondary" className="text-xs">
+                                {participant.role.name}
+                              </Badge>
+                              {isAlreadyInCurrentConcentration && (
+                                <Badge
+                                  variant="destructive"
+                                  className="text-xs"
+                                >
+                                  <AlertCircle className="h-3 w-3 mr-1" />
+                                  Đang tham gia đợt hiện tại
+                                </Badge>
+                              )}
+                            </div>
+                            <div className="text-sm text-gray-500">
+                              {participant.organization.name} •{" "}
+                              {participant.person.gender} •{" "}
+                              {new Date(
+                                participant.person.birthday
+                              ).getFullYear()}
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })
+                  ) : (
+                    <div className="text-center py-8 text-gray-500">
+                      {selectedConcentrationId
+                        ? "Đợt tập trung này chưa có thành viên"
+                        : "Chọn đợt tập trung để xem danh sách thành viên"}
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -452,6 +866,7 @@ export function AddParticipantMultiDialog({
                     className="pl-10"
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
+                    clearable
                   />
                   {searchLoading && (
                     <div className="text-sm text-gray-500 mt-2">
@@ -538,7 +953,9 @@ export function AddParticipantMultiDialog({
 
               {/* Form thông tin tham gia */}
               <div className="space-y-4 p-4 border rounded-lg bg-gray-50">
-                <h4 className="font-medium">Thông tin tham gia</h4>
+                <h4 className="font-medium">
+                  Thông tin tham gia đợt tập trung
+                </h4>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label>Vai trò *</Label>

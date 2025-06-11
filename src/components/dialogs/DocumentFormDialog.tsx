@@ -178,7 +178,7 @@ export function DocumentFormDialog({
                     code: e.target.value === "" ? null : e.target.value,
                   }))
                 }
-                placeholder="VD: QĐ-TCTDTT"
+                placeholder="VD: QĐ-TDTTVN"
               />
             </div>
 

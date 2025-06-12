@@ -1306,8 +1306,50 @@ export function ConcentrationDetailPage() {
         console.error("Add participant from list error:", err);
         alert("Có lỗi xảy ra khi thêm thành viên");
       }
+    } else if (
+      data &&
+      typeof data === "object" &&
+      "type" in data &&
+      data.type === "from-concentration"
+    ) {
+      // Xử lý thêm từ đợt tập trung khác
+      const concentrationData = data as unknown as {
+        selectedParticipantIds: number[];
+        sourceConcentrationId: string;
+      };
+
+      try {
+        const response = await fetch(
+          `${API_URL}/concentrations/${id}/participants/copy`,
+          {
+            method: "POST",
+            credentials: "include",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              sourceConcentrationId: concentrationData.sourceConcentrationId,
+              participantIds: concentrationData.selectedParticipantIds,
+            }),
+          }
+        );
+
+        if (!response.ok) throw new Error("Không thể copy thành viên");
+
+        const result = await response.json();
+        if (result.success) {
+          // Refresh participant list
+          await fetchParticipants();
+          fetchParticipantStats();
+          setIsAddParticipantMultiDialogOpen(false);
+          alert(
+            `Đã copy ${concentrationData.selectedParticipantIds.length} thành viên thành công!`
+          );
+        }
+      } catch (err) {
+        console.error("Copy participants error:", err);
+        alert("Có lỗi xảy ra khi copy thành viên từ đợt tập trung khác");
+      }
     } else {
-      // TODO: Implement cho tab khác
+      // Unknown type
       setIsAddParticipantMultiDialogOpen(false);
     }
   };
@@ -1436,22 +1478,13 @@ export function ConcentrationDetailPage() {
               <div className="flex items-center justify-between">
                 <CardTitle>Danh sách đội</CardTitle>
                 <div className="flex gap-2">
-                  {/* Nút cũ */}
-                  <Button
-                    onClick={() => setIsAddParticipantDialogOpen(true)}
-                    className="bg-blue-600 hover:bg-blue-700"
-                  >
-                    <Plus className="mr-2 h-4 w-4" />
-                    Thêm thành viên (Cũ)
-                  </Button>
-
                   {/* Nút mới */}
                   <Button
                     onClick={() => setIsAddParticipantMultiDialogOpen(true)}
-                    className="bg-green-600 hover:bg-green-700"
+                    className="bg-blue-600 hover:bg-blue-700"
                   >
                     <Plus className="mr-2 h-4 w-4" />
-                    Thêm thành viên (Mới)
+                    Thêm thành viên
                   </Button>
                 </div>
               </div>

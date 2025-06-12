@@ -443,9 +443,6 @@ export function AddParticipantMultiDialog({
       handleSubmitFromList();
     } else if (activeTab === "from-concentration") {
       handleSubmitFromConcentration();
-    } else {
-      // TODO: Implement cho tab khác
-      onSubmit?.({ type: activeTab });
     }
   };
 

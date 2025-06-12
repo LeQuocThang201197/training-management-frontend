@@ -3,13 +3,14 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
   Search,
-  PlusCircle,
   ArrowUpDown,
   MoreHorizontal,
   Trash2,
   Check,
   Mars,
   Venus,
+  Info,
+  ExternalLink,
 } from "lucide-react";
 import {
   Table,
@@ -19,15 +20,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
 import { API_URL } from "@/config/api";
-import { PersonForm } from "@/components/dialogs/AddPersonDialog";
 import { cn } from "@/lib/utils";
 import {
   Tooltip,
@@ -43,8 +36,9 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useNavigate } from "react-router-dom";
-import { Person, LatestParticipation, PersonFormData } from "@/types/personnel";
+import { Person, LatestParticipation } from "@/types/personnel";
 import { useToast } from "@/hooks/use-toast";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface ApiResponse {
   success: boolean;
@@ -94,12 +88,11 @@ const PersonTableRow = ({
   formatDate,
 }: {
   person: Person;
-  onEdit: (person: Person) => void;
   onDelete: (id: number) => void;
-  onViewDetail: (id: number) => void;
   formatDate: (date: string) => string;
 }) => {
   const { toast } = useToast();
+  const navigate = useNavigate();
   const participation = person.latest_participation;
   const teamStyle = getTeamStyle(participation);
 
@@ -142,9 +135,9 @@ const PersonTableRow = ({
         <TooltipProvider>
           <Tooltip delayDuration={0}>
             <TooltipTrigger className="block w-full truncate text-left">
-              <a
-                href={`/management/personnel/${person.id}`}
-                className="flex items-center gap-2 hover:text-primary hover:underline"
+              <button
+                onClick={() => navigate(`/management/personnel/${person.id}`)}
+                className="flex items-center gap-2 hover:text-primary hover:underline w-full text-left"
               >
                 <span className="truncate">{person.name}</span>
                 {person.gender === "Nam" ? (
@@ -152,7 +145,7 @@ const PersonTableRow = ({
                 ) : (
                   <Venus className="h-4 w-4 text-pink-500" />
                 )}
-              </a>
+              </button>
             </TooltipTrigger>
             <TooltipContent>
               <p>Nhấn để xem chi tiết</p>
@@ -331,8 +324,6 @@ export function PersonnelPage() {
   const [personnel, setPersonnel] = useState<Person[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [editingPerson, setEditingPerson] = useState<Person | null>(null);
   const [sortField, setSortField] = useState<"name" | "birthday">("name");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
   const [currentPage, setCurrentPage] = useState(1);
@@ -392,45 +383,6 @@ export function PersonnelPage() {
     setCurrentPage(1);
   }, [searchTerm]);
 
-  const handleSubmit = async (e: React.FormEvent, formData: PersonFormData) => {
-    e.preventDefault();
-    try {
-      const response = await fetch(
-        `${API_URL}/persons${editingPerson ? `/${editingPerson.id}` : ""}`,
-        {
-          method: editingPerson ? "PUT" : "POST",
-          credentials: "include",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(formData),
-        }
-      );
-
-      if (!response.ok) throw new Error("Không thể lưu thông tin nhân sự");
-
-      const data = await response.json();
-      if (data.success) {
-        if (editingPerson) {
-          setPersonnel((prev) =>
-            prev.map((p) => (p.id === editingPerson.id ? data.data : p))
-          );
-        } else {
-          setPersonnel((prev) => [...prev, data.data]);
-        }
-        setIsDialogOpen(false);
-        setEditingPerson(null);
-        if (searchTerm) {
-          fetchPersonnel(1, searchTerm);
-        } else {
-          fetchPersonnel(currentPage);
-        }
-      }
-    } catch (err) {
-      console.error("Save person error:", err);
-    }
-  };
-
   const handleDelete = async (personId: number) => {
     if (!window.confirm("Bạn có chắc chắn muốn xóa nhân sự này?")) {
       return;
@@ -457,10 +409,6 @@ export function PersonnelPage() {
     }
   };
 
-  const handleViewDetail = (personId: number) => {
-    navigate(`/management/personnel/${personId}`);
-  };
-
   const toggleSort = (field: "name" | "birthday") => {
     if (sortField === field) {
       const newDirection = sortDirection === "asc" ? "desc" : "asc";
@@ -485,41 +433,30 @@ export function PersonnelPage() {
     <div className="container mx-auto p-6 bg-white rounded-lg shadow">
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold">Quản lý nhân sự</h1>
-        <Dialog
-          open={isDialogOpen}
-          onOpenChange={(open) => {
-            setIsDialogOpen(open);
-            if (!open) {
-              setEditingPerson(null);
-            }
-          }}
-        >
-          <DialogTrigger asChild>
-            <Button>
-              <PlusCircle className="mr-2 h-4 w-4" />
-              Thêm nhân sự
-            </Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>
-                {editingPerson
-                  ? "Chỉnh sửa thông tin nhân sự"
-                  : "Thêm nhân sự mới"}
-              </DialogTitle>
-            </DialogHeader>
-            <PersonForm
-              editingPerson={editingPerson}
-              onSubmit={handleSubmit}
-              onCancel={() => {
-                setIsDialogOpen(false);
-                setEditingPerson(null);
-              }}
-              submitLabel={editingPerson ? "Cập nhật" : "Thêm mới"}
-            />
-          </DialogContent>
-        </Dialog>
       </div>
+
+      {/* Thông báo hướng dẫn */}
+      <Alert className="mb-6 border-blue-200 bg-blue-50">
+        <Info className="h-4 w-4 text-blue-600" />
+        <AlertDescription className="text-blue-800">
+          <div className="flex items-center justify-between">
+            <span>
+              Để thêm nhân sự mới, vui lòng truy cập vào{" "}
+              <strong>Đợt tập trung</strong> cụ thể và sử dụng tính năng{" "}
+              <strong>"Thêm thành viên"</strong>.
+            </span>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => navigate("/management/concentrations")}
+              className="ml-4 border-blue-300 text-blue-700 hover:bg-blue-100"
+            >
+              <ExternalLink className="mr-2 h-4 w-4" />
+              Đến trang Tập trung
+            </Button>
+          </div>
+        </AlertDescription>
+      </Alert>
 
       <div className="flex items-center gap-3 mb-6">
         <Search className="h-5 w-5 text-gray-500" />
@@ -608,12 +545,7 @@ export function PersonnelPage() {
                 <PersonTableRow
                   key={person.id}
                   person={person}
-                  onEdit={(p) => {
-                    setEditingPerson(p);
-                    setIsDialogOpen(true);
-                  }}
                   onDelete={handleDelete}
-                  onViewDetail={handleViewDetail}
                   formatDate={formatDate}
                 />
               ))}

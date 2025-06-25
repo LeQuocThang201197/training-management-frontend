@@ -32,6 +32,7 @@ import {
 import { API_URL } from "@/config/api";
 import { PersonFormData } from "@/types/personnel";
 import { Role, Organization, Person, Participant } from "@/types/participant";
+import { DuplicatePersonDialog } from "./DuplicatePersonDialog";
 
 interface ConcentrationOption {
   id: number;
@@ -42,6 +43,18 @@ interface ConcentrationOption {
     sport: string;
     gender: string;
     type: string;
+  };
+}
+
+interface DuplicateInfo {
+  message: string;
+  person: {
+    id: number;
+    name: string;
+    gender: boolean;
+    birthday: string;
+    identity_number: string;
+    social_insurance: string;
   };
 }
 
@@ -121,6 +134,12 @@ export function AddParticipantMultiDialog({
   );
   const [teamTypeFilter, setTeamTypeFilter] = useState("all-types");
 
+  // State cho thông báo trùng lặp
+  const [duplicateInfo, setDuplicateInfo] = useState<DuplicateInfo | null>(
+    null
+  );
+  const [isDuplicateDialogOpen, setIsDuplicateDialogOpen] = useState(false);
+
   // Fetch roles và organizations
   useEffect(() => {
     const fetchData = async () => {
@@ -187,6 +206,9 @@ export function AddParticipantMultiDialog({
       setConcentrationPage(1);
       setErrors({});
       setActiveTab("from-concentration");
+      // Reset state trùng lặp
+      setDuplicateInfo(null);
+      setIsDuplicateDialogOpen(false);
     }
   }, [isOpen]);
 
@@ -387,9 +409,8 @@ export function AddParticipantMultiDialog({
         body: JSON.stringify(newPersonFormData),
       });
 
-      if (!personResponse.ok) throw new Error("Không thể tạo nhân sự mới");
-
       const personData = await personResponse.json();
+
       if (personData.success) {
         // Gọi onSubmit với dữ liệu để thêm vào đợt tập trung
         onSubmit?.({
@@ -399,6 +420,15 @@ export function AddParticipantMultiDialog({
           organizationId: participationFormData.organizationId,
           note: participationFormData.note,
         });
+      } else {
+        // Xử lý trường hợp trùng lặp
+        if (personData.duplicate_info) {
+          setDuplicateInfo(personData.duplicate_info);
+          setIsDuplicateDialogOpen(true);
+        } else {
+          // Lỗi khác
+          alert(personData.message || "Có lỗi xảy ra khi tạo nhân sự mới");
+        }
       }
     } catch (err) {
       console.error("Create new person error:", err);
@@ -1268,6 +1298,13 @@ export function AddParticipantMultiDialog({
           </Button>
         </div>
       </DialogContent>
+
+      {/* Dialog thông báo trùng lặp */}
+      <DuplicatePersonDialog
+        isOpen={isDuplicateDialogOpen}
+        onOpenChange={setIsDuplicateDialogOpen}
+        duplicateInfo={duplicateInfo}
+      />
     </Dialog>
   );
 }

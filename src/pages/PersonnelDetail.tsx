@@ -28,6 +28,8 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { PersonForm } from "@/components/dialogs/AddPersonDialog";
+import { DuplicatePersonDialog } from "@/components/dialogs/DuplicatePersonDialog";
+import type { DuplicateInfo } from "@/components/dialogs/DuplicatePersonDialog";
 import { PersonDetail, PersonFormData } from "@/types/personnel";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
@@ -44,6 +46,12 @@ export function PersonnelDetailPage() {
   const [loading, setLoading] = useState(true);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const { toast } = useToast();
+
+  // State cho dialog trùng lặp
+  const [duplicateInfo, setDuplicateInfo] = useState<DuplicateInfo | null>(
+    null
+  );
+  const [isDuplicateDialogOpen, setIsDuplicateDialogOpen] = useState(false);
 
   useEffect(() => {
     const fetchPersonDetails = async () => {
@@ -81,12 +89,15 @@ export function PersonnelDetailPage() {
         body: JSON.stringify(formData),
       });
 
-      if (!response.ok) throw new Error("Không thể cập nhật thông tin nhân sự");
-
       const data = await response.json();
       if (data.success) {
         setPerson(data.data);
         setIsDialogOpen(false);
+      } else if (data.duplicate_info) {
+        setDuplicateInfo(data.duplicate_info);
+        setIsDuplicateDialogOpen(true);
+      } else {
+        throw new Error(data.message || "Không thể cập nhật thông tin nhân sự");
       }
     } catch (error) {
       console.error("Lỗi khi cập nhật thông tin:", error);
@@ -590,6 +601,11 @@ export function PersonnelDetailPage() {
           </Card>
         </TabsContent>
       </Tabs>
+      <DuplicatePersonDialog
+        isOpen={isDuplicateDialogOpen}
+        onOpenChange={setIsDuplicateDialogOpen}
+        duplicateInfo={duplicateInfo}
+      />
     </div>
   );
 }

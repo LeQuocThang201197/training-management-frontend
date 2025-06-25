@@ -32,7 +32,7 @@ import {
 import { API_URL } from "@/config/api";
 import { PersonFormData } from "@/types/personnel";
 import { Role, Organization, Person, Participant } from "@/types/participant";
-import { DuplicatePersonDialog } from "./DuplicatePersonDialog";
+import { DuplicatePersonDialog, DuplicateInfo } from "./DuplicatePersonDialog";
 
 interface ConcentrationOption {
   id: number;
@@ -43,18 +43,6 @@ interface ConcentrationOption {
     sport: string;
     gender: string;
     type: string;
-  };
-}
-
-interface DuplicateInfo {
-  message: string;
-  person: {
-    id: number;
-    name: string;
-    gender: boolean;
-    birthday: string;
-    identity_number: string;
-    social_insurance: string;
   };
 }
 

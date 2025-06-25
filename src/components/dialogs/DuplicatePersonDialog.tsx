@@ -8,7 +8,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { AlertCircle, ExternalLink, User } from "lucide-react";
 
-interface DuplicatePerson {
+export interface DuplicatePerson {
   id: number;
   name: string;
   gender: boolean;
@@ -17,7 +17,7 @@ interface DuplicatePerson {
   social_insurance: string;
 }
 
-interface DuplicateInfo {
+export interface DuplicateInfo {
   message: string;
   person: DuplicatePerson;
 }

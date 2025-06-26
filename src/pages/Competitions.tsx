@@ -142,6 +142,11 @@ export function CompetitionsPage() {
         params.append("sortBy", currentSort.field);
         params.append("sortOrder", currentSort.direction);
 
+        // Status filter
+        if (statusFilters.length === 1) {
+          params.append("status", statusFilters[0]);
+        }
+
         // Type filter (isForeign)
         if (typeFilters.length === 1) {
           if (typeFilters.includes("foreign")) {
@@ -176,7 +181,14 @@ export function CompetitionsPage() {
     } finally {
       setListLoading(false);
     }
-  }, [currentPage, currentSort, searchTerm, typeFilters, confirmedFilter]);
+  }, [
+    currentPage,
+    currentSort,
+    searchTerm,
+    statusFilters,
+    typeFilters,
+    confirmedFilter,
+  ]);
 
   useEffect(() => {
     fetchStats();
@@ -247,6 +259,90 @@ export function CompetitionsPage() {
     }
   };
 
+  const renderPaginationButtons = () => {
+    const totalPages = pagination.totalPages;
+    const current = currentPage;
+    const delta = 2; // Số trang hiển thị xung quanh trang hiện tại
+
+    let start = Math.max(1, current - delta);
+    let end = Math.min(totalPages, current + delta);
+
+    // Điều chỉnh để luôn hiển thị đủ 5 trang (nếu có thể)
+    if (end - start < 4) {
+      if (start === 1) {
+        end = Math.min(totalPages, start + 4);
+      } else if (end === totalPages) {
+        start = Math.max(1, end - 4);
+      }
+    }
+
+    const pages = [];
+
+    // Thêm nút trang đầu nếu cần
+    if (start > 1) {
+      pages.push(
+        <Button
+          key={1}
+          variant="outline"
+          size="icon"
+          onClick={() => setCurrentPage(1)}
+          className="w-8 h-8"
+        >
+          1
+        </Button>
+      );
+
+      // Thêm ellipsis nếu có khoảng trống
+      if (start > 2) {
+        pages.push(
+          <span key="ellipsis-start" className="px-2 text-gray-500">
+            ...
+          </span>
+        );
+      }
+    }
+
+    // Thêm các trang trong khoảng
+    for (let i = start; i <= end; i++) {
+      pages.push(
+        <Button
+          key={i}
+          variant={current === i ? "default" : "outline"}
+          size="icon"
+          onClick={() => setCurrentPage(i)}
+          className="w-8 h-8"
+        >
+          {i}
+        </Button>
+      );
+    }
+
+    // Thêm ellipsis và nút trang cuối nếu cần
+    if (end < totalPages) {
+      if (end < totalPages - 1) {
+        pages.push(
+          <span key="ellipsis-end" className="px-2 text-gray-500">
+            ...
+          </span>
+        );
+      }
+
+      pages.push(
+        <Button
+          key={totalPages}
+          variant="outline"
+          size="icon"
+          onClick={() => setCurrentPage(totalPages)}
+          className="w-8 h-8"
+        >
+          {totalPages}
+        </Button>
+      );
+    }
+
+    return pages;
+  };
+
   if (error) {
     return (
       <div className="flex justify-center items-center min-h-[400px] text-red-500">
@@ -254,26 +350,6 @@ export function CompetitionsPage() {
       </div>
     );
   }
-
-  // Client-side filtering for status (since API doesn't support it)
-  const filteredCompetitions = competitions.filter((competition) => {
-    const today = new Date();
-    const startDate = new Date(competition.startDate);
-    const endDate = new Date(competition.endDate);
-    endDate.setHours(23, 59, 59, 999);
-
-    const status =
-      today < startDate
-        ? "upcoming"
-        : today > endDate
-        ? "completed"
-        : "ongoing";
-
-    const matchesStatus =
-      statusFilters.length === 0 || statusFilters.includes(status);
-
-    return matchesStatus;
-  });
 
   return (
     <div className="container mx-auto p-6 bg-white rounded-lg shadow">
@@ -443,7 +519,7 @@ export function CompetitionsPage() {
         <div className="flex justify-center items-center py-12">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
         </div>
-      ) : filteredCompetitions.length === 0 ? (
+      ) : competitions.length === 0 ? (
         <div className="text-center py-12">
           <Trophy className="h-16 w-16 mx-auto mb-4 text-gray-300" />
           <h3 className="text-lg font-medium text-gray-900 mb-2">
@@ -472,7 +548,7 @@ export function CompetitionsPage() {
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {filteredCompetitions.map((competition) => (
+          {competitions.map((competition) => (
             <CompetitionCard
               key={competition.id}
               competition={competition}
@@ -494,19 +570,7 @@ export function CompetitionsPage() {
             <ChevronLeft className="h-4 w-4" />
           </Button>
 
-          {Array.from({ length: pagination.totalPages }, (_, i) => i + 1).map(
-            (page) => (
-              <Button
-                key={page}
-                variant={currentPage === page ? "default" : "outline"}
-                size="icon"
-                onClick={() => setCurrentPage(page)}
-                className="w-8 h-8"
-              >
-                {page}
-              </Button>
-            )
-          )}
+          {renderPaginationButtons()}
 
           <Button
             variant="outline"

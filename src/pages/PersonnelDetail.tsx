@@ -19,6 +19,7 @@ import {
   ArrowLeft,
   Trophy,
   Copy,
+  ExternalLink,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -499,6 +500,18 @@ export function PersonnelDetailPage() {
                               <div className="flex items-center gap-2 text-blue-600 font-medium">
                                 <Users className="w-4 h-4" />
                                 <span>Đợt tập trung</span>
+                                <a
+                                  href={`/management/concentrations/${participation.concentration.id}`}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="ml-1 inline-flex items-center justify-center rounded p-1 hover:bg-blue-100 focus:outline-none"
+                                  title="Mở trong tab mới"
+                                >
+                                  <ExternalLink className="w-5 h-5" />
+                                  <span className="sr-only">
+                                    Xem chi tiết đợt tập trung
+                                  </span>
+                                </a>
                               </div>
                               <p className="text-sm text-gray-600">
                                 {new Date(

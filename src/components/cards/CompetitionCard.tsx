@@ -2,7 +2,15 @@ import { Competition } from "@/types/competition";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Calendar, MapPin, Users, Trophy, Edit, Trash2 } from "lucide-react";
+import {
+  Calendar,
+  MapPin,
+  Users,
+  Trophy,
+  Edit,
+  Trash2,
+  Target,
+} from "lucide-react";
 import { format } from "date-fns";
 import { vi } from "date-fns/locale";
 import { PermissionGate } from "@/components/PermissionGate";
@@ -35,11 +43,7 @@ export function CompetitionCard({
   };
 
   const status = getStatus();
-  const totalParticipants =
-    competition.participantStats.ATHLETE +
-    competition.participantStats.COACH +
-    competition.participantStats.SPECIALIST +
-    competition.participantStats.OTHER;
+  const totalParticipants = competition.totalParticipants;
 
   return (
     <Card className="hover:shadow-lg transition-shadow duration-200">
@@ -92,6 +96,48 @@ export function CompetitionCard({
             {format(endDate, "dd/MM/yyyy", { locale: vi })}
           </span>
         </div>
+
+        {/* Thông tin đợt tập trung */}
+        {competition.concentrations &&
+          competition.concentrations.length > 0 && (
+            <div className="space-y-2">
+              <div className="flex items-center gap-2 text-sm text-gray-600">
+                <Target className="h-4 w-4" />
+                <span className="font-medium">Đội tham gia:</span>
+              </div>
+              <div className="space-y-1">
+                {competition.concentrations.map((concentrationItem, index) => (
+                  <div key={index} className="text-xs bg-gray-50 p-2 rounded">
+                    <div className="flex justify-between items-start">
+                      <div className="flex-1">
+                        <div className="font-medium text-gray-700">
+                          {concentrationItem.concentration.team.sport.name}
+                        </div>
+                        <div className="text-gray-500">
+                          {concentrationItem.concentration.team.type} -{" "}
+                          {concentrationItem.concentration.team.gender}
+                        </div>
+                        <div className="text-gray-500">
+                          {concentrationItem.concentration.location} •{" "}
+                          {format(
+                            new Date(concentrationItem.concentration.startDate),
+                            "dd/MM/yyyy",
+                            { locale: vi }
+                          )}{" "}
+                          -{" "}
+                          {format(
+                            new Date(concentrationItem.concentration.endDate),
+                            "dd/MM/yyyy",
+                            { locale: vi }
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
         <div className="flex items-center gap-2 text-sm text-gray-600">
           <Users className="h-4 w-4" />

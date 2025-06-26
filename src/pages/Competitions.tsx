@@ -72,7 +72,7 @@ export function CompetitionsPage() {
     ongoing: 0,
     completed: 0,
   });
-  const [loading, setLoading] = useState(true);
+  const [listLoading, setListLoading] = useState(true);
   const [statsLoading, setStatsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
@@ -124,7 +124,7 @@ export function CompetitionsPage() {
 
   const fetchCompetitions = useCallback(async () => {
     try {
-      setLoading(true);
+      setListLoading(true);
 
       const buildApiUrl = () => {
         const params = new URLSearchParams();
@@ -174,7 +174,7 @@ export function CompetitionsPage() {
     } catch (err) {
       setError(err instanceof Error ? err.message : "Lỗi tải dữ liệu");
     } finally {
-      setLoading(false);
+      setListLoading(false);
     }
   }, [currentPage, currentSort, searchTerm, typeFilters, confirmedFilter]);
 
@@ -246,14 +246,6 @@ export function CompetitionsPage() {
       alert(err instanceof Error ? err.message : "Lỗi khi xóa thi đấu");
     }
   };
-
-  if (loading) {
-    return (
-      <div className="flex justify-center items-center min-h-[400px]">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-      </div>
-    );
-  }
 
   if (error) {
     return (
@@ -446,7 +438,12 @@ export function CompetitionsPage() {
         </div>
       </div>
 
-      {filteredCompetitions.length === 0 ? (
+      {/* Danh sách thi đấu */}
+      {listLoading ? (
+        <div className="flex justify-center items-center py-12">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        </div>
+      ) : filteredCompetitions.length === 0 ? (
         <div className="text-center py-12">
           <Trophy className="h-16 w-16 mx-auto mb-4 text-gray-300" />
           <h3 className="text-lg font-medium text-gray-900 mb-2">

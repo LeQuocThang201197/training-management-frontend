@@ -46,7 +46,7 @@ export function CompetitionCard({
   const totalParticipants = competition.totalParticipants;
 
   return (
-    <Card className="hover:shadow-lg transition-shadow duration-200">
+    <Card className="hover:shadow-lg transition-shadow duration-200 flex flex-col h-full">
       <CardHeader className="pb-3">
         <div className="flex justify-between items-start">
           <CardTitle className="text-lg font-semibold line-clamp-2">
@@ -83,103 +83,114 @@ export function CompetitionCard({
           {competition.isForeign && <Badge variant="outline">Quốc tế</Badge>}
         </div>
       </CardHeader>
-      <CardContent className="space-y-3">
-        <div className="flex items-center gap-2 text-sm text-gray-600">
-          <MapPin className="h-4 w-4" />
-          <span className="line-clamp-1">{competition.location}</span>
-        </div>
+      <CardContent className="space-y-3 flex-1 flex flex-col">
+        <div className="space-y-3 flex-1">
+          <div className="flex items-center gap-2 text-sm text-gray-600">
+            <MapPin className="h-4 w-4" />
+            <span className="line-clamp-1">{competition.location}</span>
+          </div>
 
-        <div className="flex items-center gap-2 text-sm text-gray-600">
-          <Calendar className="h-4 w-4" />
-          <span>
-            {format(startDate, "dd/MM/yyyy", { locale: vi })} -{" "}
-            {format(endDate, "dd/MM/yyyy", { locale: vi })}
-          </span>
-        </div>
+          <div className="flex items-center gap-2 text-sm text-gray-600">
+            <Calendar className="h-4 w-4" />
+            <span>
+              {format(startDate, "dd/MM/yyyy", { locale: vi })} -{" "}
+              {format(endDate, "dd/MM/yyyy", { locale: vi })}
+            </span>
+          </div>
 
-        {/* Thông tin đợt tập trung */}
-        {competition.concentrations &&
-          competition.concentrations.length > 0 && (
-            <div className="space-y-2">
-              <div className="flex items-center gap-2 text-sm text-gray-600">
-                <Target className="h-4 w-4" />
-                <span className="font-medium">Đội tham gia:</span>
-              </div>
-              <div className="space-y-1">
-                {competition.concentrations.map((concentrationItem, index) => (
-                  <div key={index} className="text-xs bg-gray-50 p-2 rounded">
-                    <div className="flex justify-between items-start">
-                      <div className="flex-1">
-                        <div className="font-medium text-gray-700">
-                          {concentrationItem.concentration.team.sport.name}
-                        </div>
-                        <div className="text-gray-500">
-                          {concentrationItem.concentration.team.type} -{" "}
-                          {concentrationItem.concentration.team.gender}
-                        </div>
-                        <div className="text-gray-500">
-                          {concentrationItem.concentration.location} •{" "}
-                          {format(
-                            new Date(concentrationItem.concentration.startDate),
-                            "dd/MM/yyyy",
-                            { locale: vi }
-                          )}{" "}
-                          -{" "}
-                          {format(
-                            new Date(concentrationItem.concentration.endDate),
-                            "dd/MM/yyyy",
-                            { locale: vi }
-                          )}
+          {/* Thông tin đợt tập trung */}
+          {competition.concentrations &&
+            competition.concentrations.length > 0 && (
+              <div className="space-y-2">
+                <div className="flex items-center gap-2 text-sm text-gray-600">
+                  <Target className="h-4 w-4" />
+                  <span className="font-medium">Đội tham gia:</span>
+                </div>
+                <div className="space-y-1">
+                  {competition.concentrations.map(
+                    (concentrationItem, index) => (
+                      <div
+                        key={index}
+                        className="text-xs bg-gray-50 p-2 rounded"
+                      >
+                        <div className="flex justify-between items-start">
+                          <div className="flex-1">
+                            <div className="font-medium text-gray-700">
+                              {concentrationItem.concentration.team.sport.name}
+                            </div>
+                            <div className="text-gray-500">
+                              {concentrationItem.concentration.team.type} -{" "}
+                              {concentrationItem.concentration.team.gender}
+                            </div>
+                            <div className="text-gray-500">
+                              {concentrationItem.concentration.location} •{" "}
+                              {format(
+                                new Date(
+                                  concentrationItem.concentration.startDate
+                                ),
+                                "dd/MM/yyyy",
+                                { locale: vi }
+                              )}{" "}
+                              -{" "}
+                              {format(
+                                new Date(
+                                  concentrationItem.concentration.endDate
+                                ),
+                                "dd/MM/yyyy",
+                                { locale: vi }
+                              )}
+                            </div>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  </div>
-                ))}
+                    )
+                  )}
+                </div>
+              </div>
+            )}
+
+          <div className="flex items-center gap-2 text-sm text-gray-600">
+            <Users className="h-4 w-4" />
+            <span>{totalParticipants} người tham gia</span>
+          </div>
+
+          {totalParticipants > 0 && (
+            <div className="grid grid-cols-2 gap-2 text-xs">
+              <div className="flex justify-between">
+                <span>VĐV:</span>
+                <span className="font-medium">
+                  {competition.participantStats.ATHLETE}
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span>HLV:</span>
+                <span className="font-medium">
+                  {competition.participantStats.COACH}
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span>Chuyên gia:</span>
+                <span className="font-medium">
+                  {competition.participantStats.SPECIALIST}
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span>Khác:</span>
+                <span className="font-medium">
+                  {competition.participantStats.OTHER}
+                </span>
               </div>
             </div>
           )}
 
-        <div className="flex items-center gap-2 text-sm text-gray-600">
-          <Users className="h-4 w-4" />
-          <span>{totalParticipants} người tham gia</span>
+          {competition.note && (
+            <div className="text-sm text-gray-600 line-clamp-2">
+              <span className="font-medium">Ghi chú:</span> {competition.note}
+            </div>
+          )}
         </div>
 
-        {totalParticipants > 0 && (
-          <div className="grid grid-cols-2 gap-2 text-xs">
-            <div className="flex justify-between">
-              <span>VĐV:</span>
-              <span className="font-medium">
-                {competition.participantStats.ATHLETE}
-              </span>
-            </div>
-            <div className="flex justify-between">
-              <span>HLV:</span>
-              <span className="font-medium">
-                {competition.participantStats.COACH}
-              </span>
-            </div>
-            <div className="flex justify-between">
-              <span>Chuyên gia:</span>
-              <span className="font-medium">
-                {competition.participantStats.SPECIALIST}
-              </span>
-            </div>
-            <div className="flex justify-between">
-              <span>Khác:</span>
-              <span className="font-medium">
-                {competition.participantStats.OTHER}
-              </span>
-            </div>
-          </div>
-        )}
-
-        {competition.note && (
-          <div className="text-sm text-gray-600 line-clamp-2">
-            <span className="font-medium">Ghi chú:</span> {competition.note}
-          </div>
-        )}
-
-        <div className="flex gap-2 pt-2">
+        <div className="flex gap-2 pt-2 mt-auto">
           <PermissionGate permission="READ_COMPETITION">
             <Button variant="outline" size="sm" className="flex-1" asChild>
               <Link to={`/management/competitions/${competition.id}`}>

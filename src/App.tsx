@@ -20,6 +20,8 @@ import { UserManagementPage } from "@/pages/UserManagement";
 import { RoleManagementPage } from "./pages/RoleManagement";
 import { PermissionManagementPage } from "./pages/PermissionManagement";
 import { PersonnelDetailPage } from "./pages/PersonnelDetail";
+import { CompetitionsPage } from "./pages/Competitions";
+import { CompetitionDetailPage } from "./pages/CompetitionDetail";
 import { Toaster } from "@/components/ui/toaster";
 
 function App() {
@@ -54,7 +56,22 @@ function App() {
                         }
                       />
                       <Route path="trainings" element={<div>Tập huấn</div>} />
-                      <Route path="competitions" element={<div>Thi đấu</div>} />
+                      <Route
+                        path="competitions"
+                        element={
+                          <PermissionGate permission="READ_COMPETITION">
+                            <CompetitionsPage />
+                          </PermissionGate>
+                        }
+                      />
+                      <Route
+                        path="competitions/:id"
+                        element={
+                          <PermissionGate permission="READ_COMPETITION">
+                            <CompetitionDetailPage />
+                          </PermissionGate>
+                        }
+                      />
                       <Route
                         path="personnel"
                         element={

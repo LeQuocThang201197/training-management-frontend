@@ -5,7 +5,7 @@ import {
   // Medal,
   Calendar,
   // Dumbbell,
-  // Trophy,
+  Trophy,
   ChevronDown,
   Settings,
   Tag,
@@ -59,7 +59,7 @@ const menuItems: MenuItem[] = [
         path: "/management/concentrations",
       },
       // { name: "Tập huấn", icon: Dumbbell, path: "/management/trainings" },
-      // { name: "Thi đấu", icon: Trophy, path: "/management/competitions" },
+      { name: "Thi đấu", icon: Trophy, path: "/management/competitions" },
       { name: "Quản lý nhân sự", icon: User, path: "/management/personnel" },
       { name: "Quản lý đội", icon: Users, path: "/management/teams" },
       {

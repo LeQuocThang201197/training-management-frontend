@@ -143,8 +143,8 @@ export function CompetitionsPage() {
         params.append("sortOrder", currentSort.direction);
 
         // Status filter
-        if (statusFilters.length === 1) {
-          params.append("status", statusFilters[0]);
+        if (statusFilters.length > 0) {
+          params.append("status", statusFilters.join(","));
         }
 
         // Type filter (isForeign)

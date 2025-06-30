@@ -136,14 +136,14 @@ export function CompetitionCard({
       <CardContent className="space-y-3 flex-1 flex flex-col">
         <div className="space-y-3 flex-1">
           <div className="flex items-center gap-2 text-sm text-gray-700 bg-white/50 p-2 rounded-lg">
-            <MapPin className={`h-4 w-4 ${status.iconColor}`} />
+            <MapPin className={`h-4 w-4 ${typeColor.iconColor}`} />
             <span className="line-clamp-1 font-medium">
               {competition.location}
             </span>
           </div>
 
           <div className="flex items-center gap-2 text-sm text-gray-700 bg-white/50 p-2 rounded-lg">
-            <Calendar className={`h-4 w-4 ${status.iconColor}`} />
+            <Calendar className={`h-4 w-4 ${typeColor.iconColor}`} />
             <span className="font-medium">
               {format(startDate, "dd/MM/yyyy", { locale: vi })} -{" "}
               {format(endDate, "dd/MM/yyyy", { locale: vi })}
@@ -205,7 +205,7 @@ export function CompetitionCard({
             )}
 
           <div className="flex items-center gap-2 text-sm text-gray-700 bg-white/50 p-2 rounded-lg">
-            <Users className={`h-4 w-4 ${status.iconColor}`} />
+            <Users className={`h-4 w-4 ${typeColor.iconColor}`} />
             <span className="font-medium">
               {totalParticipants} người tham gia
             </span>

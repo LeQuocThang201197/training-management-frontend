@@ -33,13 +33,44 @@ export interface CompetitionConcentration {
     location: string;
     startDate: string;
     endDate: string;
+    room: string;
+    related_year: number;
+    sequence_number: number;
+    note: string;
     team: {
-      sport: {
-        name: string;
-      };
+      id: number;
+      sport: string;
       type: string;
       gender: string;
+      createdAt: string;
+      updatedAt: string;
+      rawData: {
+        sportId: number;
+        type: string;
+        gender: string;
+      };
     };
+    trainings: {
+      id: number;
+      location: string;
+      isForeign: boolean;
+      startDate: string;
+      endDate: string;
+      note: string;
+      participantStats: {
+        ATHLETE: number;
+        COACH: number;
+        SPECIALIST: number;
+        OTHER: number;
+      };
+    }[];
+    participantStats: {
+      ATHLETE: number;
+      COACH: number;
+      SPECIALIST: number;
+      OTHER: number;
+    };
+    competitions: Competition[];
   };
 }
 

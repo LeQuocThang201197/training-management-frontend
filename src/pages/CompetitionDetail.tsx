@@ -27,8 +27,9 @@ import {
 import { format } from "date-fns";
 import { vi } from "date-fns/locale";
 import { API_URL } from "@/config/api";
-import { Competition } from "@/types/competition";
+import { Competition, CompetitionConcentration } from "@/types/competition";
 import { PermissionGate } from "@/components/PermissionGate";
+import { ConcentrationCard } from "@/components/cards/ConcentrationCard";
 
 interface CompetitionParticipant {
   participation_id: number;
@@ -339,6 +340,43 @@ export function CompetitionDetailPage() {
           </Card>
         </div>
       </div>
+
+      {/* Đội tham gia */}
+      <Card className="mb-6">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Trophy className="h-5 w-5" />
+            Đội tham gia thi đấu
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {competition.concentrations &&
+          competition.concentrations.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {competition.concentrations.map(
+                (item: CompetitionConcentration) => (
+                  <ConcentrationCard
+                    key={item.concentration_id}
+                    concentration={{
+                      ...item.concentration,
+                      teamId: item.concentration.team.id,
+                      creator_id: competition.created_by,
+                      createdAt: item.createdAt,
+                      updatedAt: item.createdAt,
+                      creator: { ...competition.creator, email: "" },
+                    }}
+                  />
+                )
+              )}
+            </div>
+          ) : (
+            <div className="text-center py-8 text-gray-500">
+              <Trophy className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+              <p>Chưa có đội tuyển nào tham gia</p>
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
       {/* Thống kê */}
       <Card className="mb-6">

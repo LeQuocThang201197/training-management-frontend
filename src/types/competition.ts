@@ -86,19 +86,74 @@ export interface CompetitionFormData {
 }
 
 export interface CompetitionParticipantDetail {
-  participation_id: number;
+  competition_id: number;
+  person_id: number;
+  role_id: number;
+  concentration_id: number;
+  note: string;
   startDate: string;
   endDate: string;
-  note?: string;
+  created_by: number;
+  createdAt: string;
+  updatedAt: string;
+  person: {
+    id: number;
+    name: string;
+    name_search: string;
+    identity_number: string | null;
+    identity_date: string | null;
+    identity_place: string;
+    social_insurance: string | null;
+    birthday: string;
+    phone: string | null;
+    email: string | null;
+    gender: string;
+    created_by: number;
+    createdAt: string;
+    updatedAt: string;
+  };
+  role: {
+    id: number;
+    name: string;
+    type: string;
+    createdAt: string;
+    updatedAt: string;
+  };
+  concentration: {
+    id: number;
+    teamId: number;
+    location: string;
+    startDate: string;
+    endDate: string;
+    note: string;
+    created_by: number;
+    createdAt: string;
+    updatedAt: string;
+    related_year: number;
+    sequence_number: number;
+    room: string;
+    team: {
+      id: number;
+      sport: string;
+      type: string;
+      gender: string;
+      createdAt: string;
+      updatedAt: string;
+      rawData: {
+        sportId: number;
+        type: string;
+        gender: string;
+      };
+    };
+  };
+  creator: {
+    id: number;
+    name: string;
+  };
 }
 
 export interface CompetitionParticipantResponse {
-  participants: {
-    participation_id: number;
-    startDate: string;
-    endDate: string;
-    note?: string;
-  }[];
+  participants: CompetitionParticipantDetail[];
   stats: {
     ATHLETE: number;
     COACH: number;

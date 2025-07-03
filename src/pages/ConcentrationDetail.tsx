@@ -189,6 +189,8 @@ export function ConcentrationDetailPage() {
   const [participantDates, setParticipantDates] = useState<{
     [key: number]: { startDate: string; endDate: string };
   }>({});
+  const [competitionParticipantDetails, setCompetitionParticipantDetails] =
+    useState<Participant[]>([]);
   const [trainingParticipants, setTrainingParticipants] = useState<{
     [trainingId: number]: number[];
   }>({});
@@ -993,7 +995,7 @@ export function ConcentrationDetailPage() {
           return hasNote || hasDifferentDates;
         })
         .map((id) => ({
-          participation_id: id,
+          person_id: id,
           startDate:
             participantDates[id]?.startDate ||
             managingCompetition.startDate.split("T")[0],
@@ -1054,8 +1056,47 @@ export function ConcentrationDetailPage() {
         const responseData = data.data as CompetitionParticipantResponse;
 
         setCompetitionParticipantIds(
-          responseData.participants.map((p) => p.participation_id)
+          responseData.participants.map((p) => p.person_id)
         );
+
+        // Lưu trữ thông tin chi tiết về người tham gia thi đấu
+        // Chuyển đổi từ CompetitionParticipantDetail sang Participant format
+        const participantDetails: Participant[] = responseData.participants.map(
+          (p) => ({
+            id: p.person_id,
+            person_id: p.person_id,
+            concentration_id: p.concentration_id,
+            role_id: p.role_id,
+            organization_id: p.concentration.team.id,
+            assigned_by: p.created_by,
+            person: {
+              id: p.person.id,
+              name: p.person.name,
+              gender: p.person.gender,
+              code: p.person.identity_number || "",
+              birthday: p.person.birthday,
+            },
+            role: {
+              ...p.role,
+              typeLabel:
+                p.role.type === "ATHLETE"
+                  ? "Vận động viên"
+                  : p.role.type === "COACH"
+                  ? "Huấn luyện viên"
+                  : p.role.type === "SPECIALIST"
+                  ? "Chuyên gia"
+                  : "Khác",
+            },
+            organization: {
+              id: p.concentration.team.id,
+              name: `${p.concentration.team.sport} (${p.concentration.sequence_number}/${p.concentration.related_year})`,
+            },
+            note: p.note,
+            createdAt: p.createdAt,
+            updatedAt: p.updatedAt,
+          })
+        );
+        setCompetitionParticipantDetails(participantDetails);
 
         // Cập nhật stats của competition
         setCompetitions((prev) =>
@@ -1071,9 +1112,9 @@ export function ConcentrationDetailPage() {
           {};
 
         responseData.participants.forEach((p) => {
-          if (p.note) notes[p.participation_id] = p.note;
+          if (p.note) notes[p.person_id] = p.note;
           if (p.startDate || p.endDate) {
-            dates[p.participation_id] = {
+            dates[p.person_id] = {
               startDate: p.startDate,
               endDate: p.endDate,
             };
@@ -2344,7 +2385,6 @@ export function ConcentrationDetailPage() {
                       ? handleEditCompetition
                       : handleAddCompetition
                   }
-                  concentrationId={id || ""}
                   competition={editingCompetition}
                 />
               </Dialog>
@@ -2403,9 +2443,9 @@ export function ConcentrationDetailPage() {
                                   variant="ghost"
                                   size="icon"
                                   className="h-8 w-8"
-                                  onClick={() => {
+                                  onClick={async () => {
                                     setManagingCompetition(competition);
-                                    fetchCompetitionParticipants(
+                                    await fetchCompetitionParticipants(
                                       competition.id
                                     );
                                     setIsAddCompetitionParticipantDialogOpen(
@@ -2606,10 +2646,12 @@ export function ConcentrationDetailPage() {
             setCompetitionParticipantIds([]);
             setParticipantNotes({});
             setParticipantDates({});
+            setCompetitionParticipantDetails([]);
           }
           setIsAddCompetitionParticipantDialogOpen(open);
         }}
         participants={participants}
+        competitionParticipantDetails={competitionParticipantDetails}
         onSubmit={handleUpdateCompetitionParticipants}
         competitionParticipantIds={competitionParticipantIds}
         participantNotes={participantNotes}

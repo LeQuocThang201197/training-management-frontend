@@ -17,6 +17,7 @@ interface AddCompetitionParticipantDialogProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
   participants: Participant[];
+  competitionParticipantDetails: Participant[];
   onSubmit: (selectedIds: number[]) => Promise<void>;
   competitionParticipantIds: number[];
   participantNotes: { [key: number]: string };
@@ -35,6 +36,7 @@ export function AddCompetitionParticipantDialog({
   isOpen,
   onOpenChange,
   participants,
+  competitionParticipantDetails,
   onSubmit,
   competitionParticipantIds,
   participantNotes,
@@ -46,7 +48,17 @@ export function AddCompetitionParticipantDialog({
 }: AddCompetitionParticipantDialogProps) {
   const [searchTerm, setSearchTerm] = useState("");
 
-  const filteredParticipants = participants.filter(
+  // Kết hợp danh sách người trong đợt tập trung hiện tại và người đã được thêm vào thi đấu
+  const allParticipants = [...participants];
+
+  // Thêm những người tham gia thi đấu nhưng không nằm trong đợt tập trung hiện tại
+  competitionParticipantDetails.forEach((compParticipant) => {
+    if (!participants.find((p) => p.person.id === compParticipant.person.id)) {
+      allParticipants.push(compParticipant);
+    }
+  });
+
+  const filteredParticipants = allParticipants.filter(
     (participant) =>
       participant.person.name
         .toLowerCase()
@@ -86,17 +98,19 @@ export function AddCompetitionParticipantDialog({
               >
                 <Checkbox
                   id={`participant-${participant.id}`}
-                  checked={competitionParticipantIds.includes(participant.id)}
+                  checked={competitionParticipantIds.includes(
+                    participant.person.id
+                  )}
                   onCheckedChange={(checked) => {
                     if (checked) {
                       onParticipantSelect([
                         ...competitionParticipantIds,
-                        participant.id,
+                        participant.person.id,
                       ]);
                     } else {
                       onParticipantSelect(
                         competitionParticipantIds.filter(
-                          (id) => id !== participant.id
+                          (id) => id !== participant.person.id
                         )
                       );
                     }
@@ -112,23 +126,31 @@ export function AddCompetitionParticipantDialog({
                   <div className="text-sm text-gray-500">
                     {participant.role.name} - {participant.organization.name}
                   </div>
+                  {!participants.find(
+                    (p) => p.person.id === participant.person.id
+                  ) && (
+                    <div className="text-xs text-blue-600 bg-blue-50 px-2 py-1 rounded mt-1 inline-block">
+                      Từ đợt tập trung khác
+                    </div>
+                  )}
                 </div>
-                {competitionParticipantIds.includes(participant.id) && (
+                {competitionParticipantIds.includes(participant.person.id) && (
                   <div className="flex flex-col gap-2">
                     <div className="flex gap-2">
                       <Input
                         type="date"
                         className="w-32"
                         value={
-                          participantDates[participant.id]?.startDate.split(
-                            "T"
-                          )[0] || competition.startDate.split("T")[0]
+                          participantDates[
+                            participant.person.id
+                          ]?.startDate.split("T")[0] ||
+                          competition.startDate.split("T")[0]
                         }
                         onChange={(e) =>
                           onDateChange(
-                            participant.id,
+                            participant.person.id,
                             e.target.value,
-                            participantDates[participant.id]?.endDate ||
+                            participantDates[participant.person.id]?.endDate ||
                               competition.endDate
                           )
                         }
@@ -137,15 +159,16 @@ export function AddCompetitionParticipantDialog({
                         type="date"
                         className="w-32"
                         value={
-                          participantDates[participant.id]?.endDate.split(
-                            "T"
-                          )[0] || competition.endDate.split("T")[0]
+                          participantDates[
+                            participant.person.id
+                          ]?.endDate.split("T")[0] ||
+                          competition.endDate.split("T")[0]
                         }
                         onChange={(e) =>
                           onDateChange(
-                            participant.id,
-                            participantDates[participant.id]?.startDate ||
-                              competition.startDate,
+                            participant.person.id,
+                            participantDates[participant.person.id]
+                              ?.startDate || competition.startDate,
                             e.target.value
                           )
                         }
@@ -153,9 +176,9 @@ export function AddCompetitionParticipantDialog({
                     </div>
                     <Input
                       placeholder="Ghi chú"
-                      value={participantNotes[participant.id] || ""}
+                      value={participantNotes[participant.person.id] || ""}
                       onChange={(e) =>
-                        onNoteChange(participant.id, e.target.value)
+                        onNoteChange(participant.person.id, e.target.value)
                       }
                     />
                   </div>

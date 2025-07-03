@@ -64,6 +64,8 @@ interface Competition {
   isForeign: boolean;
   is_confirmed: boolean;
   note?: string;
+  role: Role;
+  concentration: Concentration;
 }
 
 interface Concentration {
@@ -73,7 +75,6 @@ interface Concentration {
   endDate: string;
   team: Team;
   trainings: Training[];
-  competitions: Competition[];
 }
 
 interface DetailParticipation {
@@ -122,6 +123,7 @@ export interface Person {
 export interface PersonDetail extends Person {
   creator: Creator;
   participations: DetailParticipation[];
+  competitions: Competition[];
 }
 
 export interface PersonFormData {

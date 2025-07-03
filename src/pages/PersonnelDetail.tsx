@@ -469,20 +469,26 @@ export function PersonnelDetailPage() {
                       new Date(b.concentration.startDate).getTime()
                   )
                   .map((participation) => {
+                    // Lấy các competitions thuộc về concentration này
+                    const concentrationCompetitions =
+                      person.competitions?.filter(
+                        (competition) =>
+                          competition.concentration.id ===
+                          participation.concentration.id
+                      ) || [];
+
                     // Gộp và sắp xếp các hoạt động theo startDate
                     const activities = [
-                      ...participation.concentration.trainings.map(
+                      ...(participation.concentration.trainings || []).map(
                         (training) => ({
                           ...training,
                           type: "TRAINING" as const,
                         })
                       ),
-                      ...participation.concentration.competitions.map(
-                        (competition) => ({
-                          ...competition,
-                          type: "COMPETITION" as const,
-                        })
-                      ),
+                      ...concentrationCompetitions.map((competition) => ({
+                        ...competition,
+                        type: "COMPETITION" as const,
+                      })),
                     ].sort(
                       (a, b) =>
                         new Date(a.startDate).getTime() -

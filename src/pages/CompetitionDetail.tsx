@@ -35,35 +35,69 @@ import { PermissionGate } from "@/components/PermissionGate";
 import { ConcentrationCard } from "@/components/cards/ConcentrationCard";
 
 interface CompetitionParticipant {
-  participation_id: number;
   competition_id: number;
+  person_id: number;
+  role_id: number;
+  concentration_id: number;
   note: string;
   startDate: string;
   endDate: string;
   created_by: number;
-  participation: {
+  createdAt: string;
+  updatedAt: string;
+  person: {
     id: number;
-    person_id: number;
-    concentration_id: number;
-    role_id: number;
-    organization_id: number;
-    person: {
+    name: string;
+    name_search: string;
+    identity_number: string | null;
+    identity_date: string | null;
+    identity_place: string;
+    social_insurance: string | null;
+    birthday: string;
+    phone: string | null;
+    email: string | null;
+    gender: string;
+    created_by: number;
+    createdAt: string;
+    updatedAt: string;
+  };
+  role: {
+    id: number;
+    name: string;
+    type: string;
+    createdAt: string;
+    updatedAt: string;
+  };
+  concentration: {
+    id: number;
+    teamId: number;
+    location: string;
+    startDate: string;
+    endDate: string;
+    note: string;
+    created_by: number;
+    createdAt: string;
+    updatedAt: string;
+    related_year: number;
+    sequence_number: number;
+    room: string;
+    team: {
       id: number;
-      name: string;
+      sport: string;
+      type: string;
       gender: string;
-      phone: string;
-      email: string;
+      createdAt: string;
+      updatedAt: string;
+      rawData: {
+        sportId: number;
+        type: string;
+        gender: string;
+      };
     };
-    role: {
-      id: number;
-      name: string;
-      type: string;
-    };
-    organization: {
-      id: number;
-      name: string;
-      type: string;
-    };
+  };
+  creator: {
+    id: number;
+    name: string;
   };
 }
 
@@ -144,12 +178,14 @@ export function CompetitionDetailPage() {
     }
   }, [id, fetchCompetition, fetchParticipants]);
 
-  const handleDeleteParticipant = async (participantId: number) => {
+  const handleDeleteParticipant = async (
+    participant: CompetitionParticipant
+  ) => {
     if (!confirm("Bạn có chắc chắn muốn xóa người tham gia này?")) return;
 
     try {
       const response = await fetch(
-        `${API_URL}/competitions/${id}/participants/${participantId}`,
+        `${API_URL}/competitions/${id}/participants/${participant.person_id}`,
         {
           method: "DELETE",
           credentials: "include",
@@ -466,7 +502,7 @@ export function CompetitionDetailPage() {
                     <TableRow>
                       <TableHead>Họ tên</TableHead>
                       <TableHead className="text-center">Vai trò</TableHead>
-                      <TableHead>Đơn vị</TableHead>
+                      <TableHead>Đội tuyển</TableHead>
                       <TableHead className="text-center">
                         Ngày tham gia
                       </TableHead>
@@ -480,31 +516,26 @@ export function CompetitionDetailPage() {
                   <TableBody>
                     {participants.map((participant) => (
                       <TableRow
-                        key={participant.participation_id}
-                        className={
-                          getRoleColors(participant.participation.role.type).row
-                        }
+                        key={`${participant.person_id}-${participant.role_id}-${participant.concentration_id}`}
+                        className={getRoleColors(participant.role.type).row}
                       >
                         <TableCell className="font-medium">
-                          {participant.participation.person.name}
+                          {participant.person.name}
                         </TableCell>
                         <TableCell className="text-center">
                           <div className="flex items-center justify-center gap-2">
                             <span
                               className={`px-2 py-1 text-xs font-medium rounded-full border ${
-                                getRoleColors(
-                                  participant.participation.role.type
-                                ).badge
+                                getRoleColors(participant.role.type).badge
                               }`}
                             >
-                              {getRoleLabel(
-                                participant.participation.role.type
-                              )}
+                              {getRoleLabel(participant.role.type)}
                             </span>
                           </div>
                         </TableCell>
                         <TableCell>
-                          {participant.participation.organization.name}
+                          {participant.concentration.team.sport} -{" "}
+                          {participant.concentration.team.type}
                         </TableCell>
                         <TableCell className="text-center">
                           {format(
@@ -548,9 +579,7 @@ export function CompetitionDetailPage() {
                               size="icon"
                               className="h-8 w-8 text-red-600 hover:text-red-700"
                               onClick={() =>
-                                handleDeleteParticipant(
-                                  participant.participation_id
-                                )
+                                handleDeleteParticipant(participant)
                               }
                             >
                               <Trash2 className="h-4 w-4" />

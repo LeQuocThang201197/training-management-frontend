@@ -12,14 +12,17 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import {
   MapPin,
   Trophy,
   Users,
   Plus,
   Trash2,
-  User,
-  UserCheck,
-  UserX,
   ChevronLeft,
   Pencil,
   Clock,
@@ -207,19 +210,6 @@ export function CompetitionDetailPage() {
 
   const status = getStatus();
 
-  const getRoleIcon = (role: string) => {
-    switch (role) {
-      case "ATHLETE":
-        return <User className="h-4 w-4" />;
-      case "COACH":
-        return <UserCheck className="h-4 w-4" />;
-      case "SPECIALIST":
-        return <UserCheck className="h-4 w-4" />;
-      default:
-        return <UserX className="h-4 w-4" />;
-    }
-  };
-
   const getRoleLabel = (role: string) => {
     switch (role) {
       case "ATHLETE":
@@ -230,6 +220,31 @@ export function CompetitionDetailPage() {
         return "Chuyên gia";
       default:
         return "Khác";
+    }
+  };
+
+  const getRoleColors = (role: string) => {
+    switch (role) {
+      case "ATHLETE":
+        return {
+          badge: "bg-blue-100 text-blue-800 border-blue-200",
+          row: "hover:bg-blue-50/50",
+        };
+      case "COACH":
+        return {
+          badge: "bg-green-100 text-green-800 border-green-200",
+          row: "hover:bg-green-50/50",
+        };
+      case "SPECIALIST":
+        return {
+          badge: "bg-purple-100 text-purple-800 border-purple-200",
+          row: "hover:bg-purple-50/50",
+        };
+      default:
+        return {
+          badge: "bg-orange-100 text-orange-800 border-orange-200",
+          row: "hover:bg-orange-50/50",
+        };
     }
   };
 
@@ -450,30 +465,48 @@ export function CompetitionDetailPage() {
                   <TableHeader>
                     <TableRow>
                       <TableHead>Họ tên</TableHead>
-                      <TableHead>Vai trò</TableHead>
+                      <TableHead className="text-center">Vai trò</TableHead>
                       <TableHead>Đơn vị</TableHead>
-                      <TableHead>Ngày tham gia</TableHead>
-                      <TableHead>Ngày kết thúc</TableHead>
-                      <TableHead>Ghi chú</TableHead>
-                      <TableHead className="text-right">Thao tác</TableHead>
+                      <TableHead className="text-center">
+                        Ngày tham gia
+                      </TableHead>
+                      <TableHead className="text-center">
+                        Ngày kết thúc
+                      </TableHead>
+                      <TableHead className="text-center">Ghi chú</TableHead>
+                      <TableHead className="text-center">Thao tác</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {participants.map((participant) => (
-                      <TableRow key={participant.participation_id}>
+                      <TableRow
+                        key={participant.participation_id}
+                        className={
+                          getRoleColors(participant.participation.role.type).row
+                        }
+                      >
                         <TableCell className="font-medium">
                           {participant.participation.person.name}
                         </TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-2">
-                            {getRoleIcon(participant.participation.role.type)}
-                            {getRoleLabel(participant.participation.role.type)}
+                        <TableCell className="text-center">
+                          <div className="flex items-center justify-center gap-2">
+                            <span
+                              className={`px-2 py-1 text-xs font-medium rounded-full border ${
+                                getRoleColors(
+                                  participant.participation.role.type
+                                ).badge
+                              }`}
+                            >
+                              {getRoleLabel(
+                                participant.participation.role.type
+                              )}
+                            </span>
                           </div>
                         </TableCell>
                         <TableCell>
                           {participant.participation.organization.name}
                         </TableCell>
-                        <TableCell>
+                        <TableCell className="text-center">
                           {format(
                             new Date(participant.startDate),
                             "dd/MM/yyyy",
@@ -482,15 +515,33 @@ export function CompetitionDetailPage() {
                             }
                           )}
                         </TableCell>
-                        <TableCell>
+                        <TableCell className="text-center">
                           {format(new Date(participant.endDate), "dd/MM/yyyy", {
                             locale: vi,
                           })}
                         </TableCell>
-                        <TableCell className="max-w-xs truncate">
-                          {participant.note || "-"}
+                        <TableCell className="text-center max-w-xs">
+                          {participant.note &&
+                          participant.note.trim() !== "" ? (
+                            <TooltipProvider>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <div className="line-clamp-2 cursor-help">
+                                    {participant.note}
+                                  </div>
+                                </TooltipTrigger>
+                                <TooltipContent className="max-w-sm">
+                                  <p>{participant.note}</p>
+                                </TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
+                          ) : (
+                            <span className="text-gray-400 text-center block">
+                              -
+                            </span>
+                          )}
                         </TableCell>
-                        <TableCell className="text-right">
+                        <TableCell className="text-center">
                           <PermissionGate permission="DELETE_COMPETITION_PARTICIPANT">
                             <Button
                               variant="ghost"

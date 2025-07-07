@@ -28,6 +28,7 @@ import {
   Filter,
   AlertCircle,
   CheckCircle,
+  ArrowUpDown,
 } from "lucide-react";
 import { API_URL } from "@/config/api";
 import { PersonFormData } from "@/types/personnel";
@@ -44,6 +45,11 @@ interface ConcentrationOption {
     gender: string;
     type: string;
   };
+}
+
+interface Sport {
+  id: number;
+  name: string;
 }
 
 interface AddParticipantMultiDialogProps {
@@ -107,11 +113,15 @@ export function AddParticipantMultiDialog({
   const [selectedParticipantIds, setSelectedParticipantIds] = useState<
     number[]
   >([]);
-  const [statusFilter, setStatusFilter] = useState("completed");
+
+  // Updated filter states
+  const [sports, setSports] = useState<Sport[]>([]);
+  const [selectedSportIds, setSelectedSportIds] = useState<number[]>([]);
+  const [statusFilter, setStatusFilter] = useState<string[]>(["completed"]);
+  const [teamTypeFilter, setTeamTypeFilter] = useState<string[]>([]);
   const [roleFilter, setRoleFilter] = useState("all-roles");
   const [loadingConcentrations, setLoadingConcentrations] = useState(false);
   const [loadingParticipants, setLoadingParticipants] = useState(false);
-  const [concentrationSearchTerm, setConcentrationSearchTerm] = useState("");
   const [concentrationPage, setConcentrationPage] = useState(1);
   const [concentrationPagination, setConcentrationPagination] = useState({
     total: 0,
@@ -120,7 +130,10 @@ export function AddParticipantMultiDialog({
   const [yearFilter, setYearFilter] = useState(
     new Date().getFullYear().toString()
   );
-  const [teamTypeFilter, setTeamTypeFilter] = useState("all-types");
+
+  // Sort states
+  const [sortBy, setSortBy] = useState<"startDate" | "teamName">("startDate");
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
 
   // State cho thông báo trùng lặp
   const [duplicateInfo, setDuplicateInfo] = useState<DuplicateInfo | null>(
@@ -128,14 +141,17 @@ export function AddParticipantMultiDialog({
   );
   const [isDuplicateDialogOpen, setIsDuplicateDialogOpen] = useState(false);
 
-  // Fetch roles và organizations
+  // Fetch roles, organizations và sports
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [rolesResponse, orgsResponse] = await Promise.all([
-          fetch(`${API_URL}/person-roles`, { credentials: "include" }),
-          fetch(`${API_URL}/organizations/all`, { credentials: "include" }),
-        ]);
+        const [rolesResponse, orgsResponse, sportsResponse] = await Promise.all(
+          [
+            fetch(`${API_URL}/person-roles`, { credentials: "include" }),
+            fetch(`${API_URL}/organizations/all`, { credentials: "include" }),
+            fetch(`${API_URL}/sports`, { credentials: "include" }),
+          ]
+        );
 
         if (rolesResponse.ok) {
           const rolesData = await rolesResponse.json();
@@ -145,6 +161,11 @@ export function AddParticipantMultiDialog({
         if (orgsResponse.ok) {
           const orgsData = await orgsResponse.json();
           if (orgsData.success) setOrganizations(orgsData.data);
+        }
+
+        if (sportsResponse.ok) {
+          const sportsData = await sportsResponse.json();
+          if (sportsData.success) setSports(sportsData.data);
         }
       } catch (err) {
         console.error("Fetch data error:", err);
@@ -186,12 +207,14 @@ export function AddParticipantMultiDialog({
       setSelectedConcentrationId("");
       setConcentrationParticipants([]);
       setSelectedParticipantIds([]);
-      setStatusFilter("completed");
+      setSelectedSportIds([]);
+      setStatusFilter(["completed"]);
+      setTeamTypeFilter([]);
       setRoleFilter("all-roles");
-      setConcentrationSearchTerm("");
       setYearFilter(new Date().getFullYear().toString());
-      setTeamTypeFilter("all-types");
       setConcentrationPage(1);
+      setSortBy("startDate");
+      setSortOrder("desc");
       setErrors({});
       setActiveTab("from-concentration");
       // Reset state trùng lặp
@@ -200,7 +223,7 @@ export function AddParticipantMultiDialog({
     }
   }, [isOpen]);
 
-  // Fetch concentrations với search API
+  // Fetch concentrations với API mới
   useEffect(() => {
     const fetchConcentrations = async () => {
       if (!isOpen) return;
@@ -210,27 +233,38 @@ export function AddParticipantMultiDialog({
 
         // Build query parameters
         const params = new URLSearchParams();
-        if (concentrationSearchTerm.trim()) {
-          params.append("q", concentrationSearchTerm.trim());
+
+        // Sport filter (multiple values)
+        if (selectedSportIds.length > 0) {
+          params.append("sportId", selectedSportIds.join(","));
         }
+
+        // Year filter
         if (yearFilter) {
           params.append("year", yearFilter);
         }
-        if (statusFilter !== "all-status") {
-          params.append("status", statusFilter);
+
+        // Status filter (multiple values)
+        if (statusFilter.length > 0) {
+          params.append("status", statusFilter.join(","));
         }
-        if (teamTypeFilter !== "all-types") {
-          params.append("teamType", teamTypeFilter);
+
+        // Team type filter (multiple values)
+        if (teamTypeFilter.length > 0) {
+          params.append("teamType", teamTypeFilter.join(","));
         }
+
+        // Sort options
+        params.append("sortBy", sortBy);
+        params.append("sortOrder", sortOrder);
+
+        // Pagination
         params.append("page", concentrationPage.toString());
         params.append("limit", "10");
 
-        const response = await fetch(
-          `${API_URL}/concentrations/search?${params}`,
-          {
-            credentials: "include",
-          }
-        );
+        const response = await fetch(`${API_URL}/concentrations?${params}`, {
+          credentials: "include",
+        });
 
         if (!response.ok)
           throw new Error("Không thể tải danh sách đợt tập trung");
@@ -255,17 +289,26 @@ export function AddParticipantMultiDialog({
     return () => clearTimeout(timeoutId);
   }, [
     isOpen,
-    concentrationSearchTerm,
+    selectedSportIds,
     yearFilter,
     statusFilter,
     teamTypeFilter,
+    sortBy,
+    sortOrder,
     concentrationPage,
   ]);
 
   // Reset page when filters change
   useEffect(() => {
     setConcentrationPage(1);
-  }, [concentrationSearchTerm, yearFilter, statusFilter, teamTypeFilter]);
+  }, [
+    selectedSportIds,
+    yearFilter,
+    statusFilter,
+    teamTypeFilter,
+    sortBy,
+    sortOrder,
+  ]);
 
   // Fetch participants khi chọn concentration
   useEffect(() => {
@@ -506,70 +549,274 @@ export function AddParticipantMultiDialog({
             className="space-y-4 flex-1 overflow-y-auto"
           >
             <div className="space-y-4">
-              {/* Tìm kiếm và filter đợt tập trung */}
+              {/* Filters và sort cho đợt tập trung */}
               <div className="space-y-4">
-                {/* Search box */}
-                <div className="space-y-2">
-                  <Label>Tìm kiếm đợt tập trung</Label>
-                  <div className="relative">
-                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                    <Input
-                      placeholder="Nhập tên môn thể thao hoặc địa điểm..."
-                      className="pl-10"
-                      value={concentrationSearchTerm}
-                      onChange={(e) =>
-                        setConcentrationSearchTerm(e.target.value)
-                      }
-                      clearable
-                    />
-                  </div>
-                </div>
-
                 {/* Filters */}
-                <div className="flex items-center gap-4 p-3 bg-gray-50 rounded-lg">
-                  <div className="flex items-center gap-2">
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2 mb-2">
                     <Filter className="h-4 w-4 text-gray-500" />
-                    <span className="text-sm font-medium">Lọc:</span>
+                    <span className="text-sm font-medium">Bộ lọc:</span>
                   </div>
 
-                  <Input
-                    type="number"
-                    placeholder="Năm (VD: 2025)"
-                    className="w-36"
-                    value={yearFilter}
-                    onChange={(e) => setYearFilter(e.target.value)}
-                  />
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                    {/* Sport Filter */}
+                    <div className="space-y-2">
+                      <Label className="text-sm">Môn thể thao</Label>
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setSelectedSportIds([])}
+                            className="text-xs"
+                          >
+                            Tất cả
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() =>
+                              setSelectedSportIds(sports.map((s) => s.id))
+                            }
+                            className="text-xs"
+                          >
+                            Chọn tất cả
+                          </Button>
+                        </div>
+                        <div className="border rounded-md p-2 max-h-32 overflow-y-auto">
+                          {sports.map((sport) => (
+                            <div
+                              key={sport.id}
+                              className="flex items-center space-x-2 py-1"
+                            >
+                              <Checkbox
+                                id={`sport-${sport.id}`}
+                                checked={selectedSportIds.includes(sport.id)}
+                                onCheckedChange={(checked) => {
+                                  if (checked) {
+                                    setSelectedSportIds([
+                                      ...selectedSportIds,
+                                      sport.id,
+                                    ]);
+                                  } else {
+                                    setSelectedSportIds(
+                                      selectedSportIds.filter(
+                                        (id) => id !== sport.id
+                                      )
+                                    );
+                                  }
+                                }}
+                              />
+                              <Label
+                                htmlFor={`sport-${sport.id}`}
+                                className="text-sm cursor-pointer"
+                              >
+                                {sport.name}
+                              </Label>
+                            </div>
+                          ))}
+                        </div>
+                        <div className="text-xs text-gray-500">
+                          {selectedSportIds.length === 0
+                            ? "Tất cả môn thể thao"
+                            : `${selectedSportIds.length} môn được chọn`}
+                        </div>
+                      </div>
+                    </div>
 
-                  <Select value={statusFilter} onValueChange={setStatusFilter}>
-                    <SelectTrigger className="w-36">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all-status">
-                        Tất cả tình trạng
-                      </SelectItem>
-                      <SelectItem value="upcoming">Chưa diễn ra</SelectItem>
-                      <SelectItem value="active">Đang diễn ra</SelectItem>
-                      <SelectItem value="completed">Đã kết thúc</SelectItem>
-                    </SelectContent>
-                  </Select>
+                    {/* Year Filter */}
+                    <div className="space-y-2">
+                      <Label className="text-sm">Năm</Label>
+                      <Input
+                        type="number"
+                        placeholder="Năm (VD: 2025)"
+                        className="w-full"
+                        value={yearFilter}
+                        onChange={(e) => setYearFilter(e.target.value)}
+                      />
+                    </div>
 
-                  <Select
-                    value={teamTypeFilter}
-                    onValueChange={setTeamTypeFilter}
-                  >
-                    <SelectTrigger className="w-32">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all-types">Tất cả loại</SelectItem>
-                      <SelectItem value="ADULT">Tuyển</SelectItem>
-                      <SelectItem value="JUNIOR">Trẻ</SelectItem>
-                      <SelectItem value="DISABILITY">
-                        Người khuyết tật
-                      </SelectItem>
-                    </SelectContent>
-                  </Select>
+                    {/* Status Filter */}
+                    <div className="space-y-2">
+                      <Label className="text-sm">Trạng thái</Label>
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setStatusFilter([])}
+                            className="text-xs"
+                          >
+                            Tất cả
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() =>
+                              setStatusFilter([
+                                "upcoming",
+                                "active",
+                                "completed",
+                              ])
+                            }
+                            className="text-xs"
+                          >
+                            Chọn tất cả
+                          </Button>
+                        </div>
+                        <div className="border rounded-md p-2">
+                          {[
+                            { value: "upcoming", label: "Chưa diễn ra" },
+                            { value: "active", label: "Đang diễn ra" },
+                            { value: "completed", label: "Đã kết thúc" },
+                          ].map((status) => (
+                            <div
+                              key={status.value}
+                              className="flex items-center space-x-2 py-1"
+                            >
+                              <Checkbox
+                                id={`status-${status.value}`}
+                                checked={statusFilter.includes(status.value)}
+                                onCheckedChange={(checked) => {
+                                  if (checked) {
+                                    setStatusFilter([
+                                      ...statusFilter,
+                                      status.value,
+                                    ]);
+                                  } else {
+                                    setStatusFilter(
+                                      statusFilter.filter(
+                                        (s) => s !== status.value
+                                      )
+                                    );
+                                  }
+                                }}
+                              />
+                              <Label
+                                htmlFor={`status-${status.value}`}
+                                className="text-sm cursor-pointer"
+                              >
+                                {status.label}
+                              </Label>
+                            </div>
+                          ))}
+                        </div>
+                        <div className="text-xs text-gray-500">
+                          {statusFilter.length === 0
+                            ? "Tất cả trạng thái"
+                            : `${statusFilter.length} trạng thái`}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Team Type Filter */}
+                    <div className="space-y-2">
+                      <Label className="text-sm">Loại đội</Label>
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setTeamTypeFilter([])}
+                            className="text-xs"
+                          >
+                            Tất cả
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() =>
+                              setTeamTypeFilter([
+                                "ADULT",
+                                "JUNIOR",
+                                "DISABILITY",
+                              ])
+                            }
+                            className="text-xs"
+                          >
+                            Chọn tất cả
+                          </Button>
+                        </div>
+                        <div className="border rounded-md p-2">
+                          {[
+                            { value: "ADULT", label: "Tuyển quốc gia" },
+                            { value: "JUNIOR", label: "Đội trẻ" },
+                            { value: "DISABILITY", label: "Paralympic" },
+                          ].map((teamType) => (
+                            <div
+                              key={teamType.value}
+                              className="flex items-center space-x-2 py-1"
+                            >
+                              <Checkbox
+                                id={`teamType-${teamType.value}`}
+                                checked={teamTypeFilter.includes(
+                                  teamType.value
+                                )}
+                                onCheckedChange={(checked) => {
+                                  if (checked) {
+                                    setTeamTypeFilter([
+                                      ...teamTypeFilter,
+                                      teamType.value,
+                                    ]);
+                                  } else {
+                                    setTeamTypeFilter(
+                                      teamTypeFilter.filter(
+                                        (t) => t !== teamType.value
+                                      )
+                                    );
+                                  }
+                                }}
+                              />
+                              <Label
+                                htmlFor={`teamType-${teamType.value}`}
+                                className="text-sm cursor-pointer"
+                              >
+                                {teamType.label}
+                              </Label>
+                            </div>
+                          ))}
+                        </div>
+                        <div className="text-xs text-gray-500">
+                          {teamTypeFilter.length === 0
+                            ? "Tất cả loại đội"
+                            : `${teamTypeFilter.length} loại đội`}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Sort Options */}
+                    <div className="space-y-2">
+                      <Label className="text-sm">Sắp xếp</Label>
+                      <div className="flex gap-2">
+                        <Select
+                          value={sortBy}
+                          onValueChange={(value: "startDate" | "teamName") =>
+                            setSortBy(value)
+                          }
+                        >
+                          <SelectTrigger className="flex-1">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="startDate">
+                              Ngày bắt đầu
+                            </SelectItem>
+                            <SelectItem value="teamName">Tên đội</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() =>
+                            setSortOrder(sortOrder === "asc" ? "desc" : "asc")
+                          }
+                          className="px-3"
+                        >
+                          <ArrowUpDown className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
                 </div>
 
                 {/* Danh sách đợt tập trung */}
@@ -666,10 +913,10 @@ export function AddParticipantMultiDialog({
                       })
                     ) : (
                       <div className="text-center py-8 text-gray-500">
-                        {concentrationSearchTerm ||
+                        {selectedSportIds.length > 0 ||
                         yearFilter !== new Date().getFullYear().toString() ||
-                        statusFilter !== "completed" ||
-                        teamTypeFilter !== "all-types"
+                        statusFilter.length > 0 ||
+                        teamTypeFilter.length > 0
                           ? "Không tìm thấy đợt tập trung nào phù hợp"
                           : "Không có đợt tập trung nào"}
                       </div>

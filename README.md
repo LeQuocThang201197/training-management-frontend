@@ -188,7 +188,11 @@ src/
 ### Search
 
 - `GET /persons?q={searchTerm}` - Tìm kiếm nhân sự
-- `GET /concentrations/search` - Tìm kiếm đợt tập trung với filter
+- `GET /concentrations` - Lấy danh sách đợt tập trung với filter & pagination
+  - **Filters:** `sportId`, `teamType`, `status`, `year` (support multiple values với comma)
+  - **Sort:** `sortBy` (startDate|teamName), `sortOrder` (asc|desc)
+  - **Pagination:** `page`, `limit`
+  - **Example:** `/concentrations?sportId=1,2&teamType=ADULT,JUNIOR&status=active&sortBy=startDate&sortOrder=desc&page=1&limit=20`
 
 ### Master Data
 

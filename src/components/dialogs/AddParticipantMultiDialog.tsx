@@ -29,6 +29,8 @@ import {
   AlertCircle,
   CheckCircle,
   ArrowUpDown,
+  Check,
+  ChevronDown,
 } from "lucide-react";
 import { API_URL } from "@/config/api";
 import { PersonFormData } from "@/types/personnel";
@@ -101,6 +103,8 @@ export function AddParticipantMultiDialog({
     organizationId: "",
     note: "",
   });
+  const [fromListOrgDropdownOpen, setFromListOrgDropdownOpen] = useState(false);
+  const [fromListOrgSearchTerm, setFromListOrgSearchTerm] = useState("");
 
   // State cho tab "Từ đợt tập trung khác"
   const [concentrations, setConcentrations] = useState<ConcentrationOption[]>(
@@ -204,6 +208,8 @@ export function AddParticipantMultiDialog({
         organizationId: "",
         note: "",
       });
+      setFromListOrgDropdownOpen(false);
+      setFromListOrgSearchTerm("");
       setSelectedConcentrationId("");
       setConcentrationParticipants([]);
       setSelectedParticipantIds([]);
@@ -378,6 +384,23 @@ export function AddParticipantMultiDialog({
     const timeoutId = setTimeout(searchPeople, 300);
     return () => clearTimeout(timeoutId);
   }, [searchTerm]);
+
+  // Đóng dropdown khi click ra ngoài
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as HTMLElement;
+      if (
+        fromListOrgDropdownOpen &&
+        !target.closest(".organization-dropdown")
+      ) {
+        setFromListOrgDropdownOpen(false);
+        setFromListOrgSearchTerm("");
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [fromListOrgDropdownOpen]);
 
   // Kiểm tra người đã tồn tại trong đợt tập trung
   const isPersonInConcentration = (personId: number) => {
@@ -1247,26 +1270,79 @@ export function AddParticipantMultiDialog({
                   </div>
                   <div className="space-y-2">
                     <Label>Đơn vị *</Label>
-                    <Select
-                      value={fromListFormData.organizationId}
-                      onValueChange={(value) =>
-                        setFromListFormData((prev) => ({
-                          ...prev,
-                          organizationId: value,
-                        }))
-                      }
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Chọn đơn vị" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {organizations.map((org) => (
-                          <SelectItem key={org.id} value={org.id.toString()}>
-                            {org.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <div className="relative organization-dropdown">
+                      <Button
+                        variant="outline"
+                        className="w-full justify-between"
+                        onClick={() =>
+                          setFromListOrgDropdownOpen(!fromListOrgDropdownOpen)
+                        }
+                      >
+                        {fromListFormData.organizationId
+                          ? organizations.find(
+                              (org) =>
+                                org.id.toString() ===
+                                fromListFormData.organizationId
+                            )?.name
+                          : "Chọn đơn vị"}
+                        <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                      </Button>
+                      {fromListOrgDropdownOpen && (
+                        <div className="absolute z-50 w-full mt-1 bg-white border rounded-md shadow-lg max-h-60 overflow-y-auto">
+                          <div className="p-2 border-b">
+                            <Input
+                              placeholder="Tìm kiếm đơn vị..."
+                              value={fromListOrgSearchTerm}
+                              onChange={(e) =>
+                                setFromListOrgSearchTerm(e.target.value)
+                              }
+                              className="w-full"
+                            />
+                          </div>
+                          <div className="max-h-48 overflow-y-auto">
+                            {organizations
+                              .filter((org) =>
+                                org.name
+                                  .toLowerCase()
+                                  .includes(fromListOrgSearchTerm.toLowerCase())
+                              )
+                              .map((org) => (
+                                <div
+                                  key={org.id}
+                                  className="flex items-center p-2 hover:bg-gray-100 cursor-pointer"
+                                  onClick={() => {
+                                    setFromListFormData((prev) => ({
+                                      ...prev,
+                                      organizationId: org.id.toString(),
+                                    }));
+                                    setFromListOrgDropdownOpen(false);
+                                    setFromListOrgSearchTerm("");
+                                  }}
+                                >
+                                  <Check
+                                    className={`mr-2 h-4 w-4 ${
+                                      fromListFormData.organizationId ===
+                                      org.id.toString()
+                                        ? "opacity-100"
+                                        : "opacity-0"
+                                    }`}
+                                  />
+                                  {org.name}
+                                </div>
+                              ))}
+                            {organizations.filter((org) =>
+                              org.name
+                                .toLowerCase()
+                                .includes(fromListOrgSearchTerm.toLowerCase())
+                            ).length === 0 && (
+                              <div className="p-2 text-gray-500 text-center">
+                                Không tìm thấy đơn vị nào
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      )}
+                    </div>
                     {errors.organizationId && (
                       <p className="text-sm text-red-500">
                         {errors.organizationId}

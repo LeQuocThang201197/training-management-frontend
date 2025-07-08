@@ -5,12 +5,12 @@ import { Search, Plus, ChevronLeft, ChevronRight } from "lucide-react";
 import { API_URL } from "@/config/api";
 
 import { ConcentrationCard } from "@/components/cards/ConcentrationCard";
-import { ConcentrationFilterDialog } from "@/components/dialogs/ConcentrationFilterDialog";
 import { Concentration } from "@/types/concentration";
 import { PermissionGate } from "@/components/PermissionGate";
 import { ConcentrationDialog } from "@/components/dialogs/ConcentrationDialog";
 import { useConcentrationFilter } from "@/hooks/useConcentrationFilter";
-import { Filter, X } from "lucide-react";
+import { ConcentrationFilter } from "@/components/ConcentrationFilter";
+import { Filter, X, ChevronDown, ChevronUp } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 
 export function ConcentrationPage() {
@@ -18,7 +18,7 @@ export function ConcentrationPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [isFilterDialogOpen, setIsFilterDialogOpen] = useState(false);
+  const [showFilters, setShowFilters] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [pagination, setPagination] = useState({
     total: 0,
@@ -60,7 +60,7 @@ export function ConcentrationPage() {
         params.append("sortBy", filters.sortBy);
         params.append("sortOrder", filters.sortOrder);
         params.append("page", page.toString());
-        params.append("limit", "20");
+        params.append("limit", "12");
 
         const response = await fetch(`${API_URL}/concentrations?${params}`, {
           credentials: "include",
@@ -128,11 +128,16 @@ export function ConcentrationPage() {
         <div className="flex gap-2">
           <Button
             variant="outline"
-            onClick={() => setIsFilterDialogOpen(true)}
+            onClick={() => setShowFilters(!showFilters)}
             className="flex items-center gap-2"
           >
             <Filter className="h-4 w-4" />
-            Bộ lọc
+            {showFilters ? "Ẩn bộ lọc" : "Hiện bộ lọc"}
+            {showFilters ? (
+              <ChevronUp className="h-4 w-4" />
+            ) : (
+              <ChevronDown className="h-4 w-4" />
+            )}
             {(filters.sportIds.length > 0 ||
               filters.teamTypes.length > 0 ||
               filters.statuses.length > 0 ||
@@ -157,6 +162,19 @@ export function ConcentrationPage() {
           </PermissionGate>
         </div>
       </div>
+
+      {/* Filter Section */}
+      {showFilters && (
+        <div className="mb-6">
+          <ConcentrationFilter
+            filters={filters}
+            onFiltersChange={setFilters}
+            sports={sports}
+            loadingSports={loadingSports}
+            compact
+          />
+        </div>
+      )}
 
       {/* Active Filters Display */}
       {(filters.sportIds.length > 0 ||
@@ -325,16 +343,6 @@ export function ConcentrationPage() {
           }
         }}
         mode="create"
-      />
-
-      <ConcentrationFilterDialog
-        isOpen={isFilterDialogOpen}
-        onOpenChange={setIsFilterDialogOpen}
-        filters={filters}
-        onFiltersChange={setFilters}
-        sports={sports}
-        loadingSports={loadingSports}
-        onResetFilters={resetFilters}
       />
     </div>
   );

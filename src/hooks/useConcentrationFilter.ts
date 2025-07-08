@@ -33,7 +33,7 @@ export function useConcentrationFilter(
 
   // Pagination
   const [page, setPage] = useState(1);
-  const [limit] = useState(20);
+  const [limit] = useState(12);
 
   // Fetch sports data
   useEffect(() => {

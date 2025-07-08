@@ -22,8 +22,9 @@ export function useConcentrationFilter(
     teamTypes: [],
     statuses: defaultStatuses,
     year: defaultYear,
-    sortBy: "startDate",
-    sortOrder: "desc",
+    sortBy: "teamName",
+    sortOrder: "asc",
+    combinedSort: "teamName_asc",
     ...initialFilters,
   });
 
@@ -128,7 +129,19 @@ export function useConcentrationFilter(
     sortBy: "startDate" | "teamName",
     sortOrder: "asc" | "desc"
   ) => {
-    setFilters((prev) => ({ ...prev, sortBy, sortOrder }));
+    const combinedSort =
+      `${sortBy}_${sortOrder}` as ConcentrationFilters["combinedSort"];
+    setFilters((prev) => ({ ...prev, sortBy, sortOrder, combinedSort }));
+  };
+
+  const updateCombinedSort = (
+    combinedSort: ConcentrationFilters["combinedSort"]
+  ) => {
+    const [sortBy, sortOrder] = combinedSort.split("_") as [
+      "startDate" | "teamName",
+      "asc" | "desc"
+    ];
+    setFilters((prev) => ({ ...prev, sortBy, sortOrder, combinedSort }));
   };
 
   const resetFilters = () => {
@@ -137,8 +150,9 @@ export function useConcentrationFilter(
       teamTypes: [],
       statuses: defaultStatuses,
       year: defaultYear,
-      sortBy: "startDate",
-      sortOrder: "desc",
+      sortBy: "teamName",
+      sortOrder: "asc",
+      combinedSort: "teamName_asc",
       ...initialFilters,
     });
     setPage(1);
@@ -166,6 +180,7 @@ export function useConcentrationFilter(
     updateStatuses,
     updateYear,
     updateSort,
+    updateCombinedSort,
     resetFilters,
   };
 }

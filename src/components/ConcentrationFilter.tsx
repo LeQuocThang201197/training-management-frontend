@@ -9,7 +9,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Filter, ArrowUpDown } from "lucide-react";
+import { Filter } from "lucide-react";
 import {
   ConcentrationFilterProps,
   Sport,
@@ -255,43 +255,33 @@ export function ConcentrationFilter({
         {showSort && (
           <div className="space-y-2">
             <Label className="text-sm">Sắp xếp</Label>
-            <div className="flex gap-2">
-              <Select
-                value={filters.sortBy}
-                onValueChange={(value: "startDate" | "teamName") =>
-                  updateFilters({ sortBy: value })
-                }
-              >
-                <SelectTrigger className="flex-1">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {SORT_OPTIONS.map((option) => (
-                    <SelectItem key={option.value} value={option.value}>
-                      {option.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() =>
-                  updateFilters({
-                    sortOrder: filters.sortOrder === "asc" ? "desc" : "asc",
-                  })
-                }
-                className="px-3"
-                title={`Sắp xếp ${
-                  filters.sortOrder === "asc" ? "tăng dần" : "giảm dần"
-                }`}
-              >
-                <ArrowUpDown className="h-4 w-4" />
-              </Button>
-            </div>
-            <div className="text-xs text-gray-500">
-              {filters.sortOrder === "asc" ? "Tăng dần" : "Giảm dần"}
-            </div>
+            <Select
+              value={filters.combinedSort}
+              onValueChange={(
+                value:
+                  | "startDate_desc"
+                  | "startDate_asc"
+                  | "teamName_asc"
+                  | "teamName_desc"
+              ) => {
+                const [sortBy, sortOrder] = value.split("_") as [
+                  "startDate" | "teamName",
+                  "asc" | "desc"
+                ];
+                updateFilters({ sortBy, sortOrder, combinedSort: value });
+              }}
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {SORT_OPTIONS.map((option) => (
+                  <SelectItem key={option.value} value={option.value}>
+                    {option.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
         )}
       </div>

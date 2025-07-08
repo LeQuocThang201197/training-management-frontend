@@ -5,6 +5,11 @@ export interface ConcentrationFilters {
   year: string;
   sortBy: "startDate" | "teamName";
   sortOrder: "asc" | "desc";
+  combinedSort:
+    | "startDate_desc"
+    | "startDate_asc"
+    | "teamName_asc"
+    | "teamName_desc";
 }
 
 export interface ConcentrationFilterState extends ConcentrationFilters {
@@ -33,9 +38,9 @@ export interface Sport {
 }
 
 export const TEAM_TYPES = [
-  { value: "ADULT", label: "Tuyển quốc gia" },
+  { value: "ADULT", label: "Đội tuyển" },
   { value: "JUNIOR", label: "Đội trẻ" },
-  { value: "DISABILITY", label: "Paralympic" },
+  { value: "DISABILITY", label: "Đội người khuyết tật" },
 ] as const;
 
 export const STATUS_OPTIONS = [
@@ -45,6 +50,8 @@ export const STATUS_OPTIONS = [
 ] as const;
 
 export const SORT_OPTIONS = [
-  { value: "startDate", label: "Ngày bắt đầu" },
-  { value: "teamName", label: "Tên đội" },
+  { value: "startDate_desc", label: "Ngày bắt đầu - Giảm dần" },
+  { value: "startDate_asc", label: "Ngày bắt đầu - Tăng dần" },
+  { value: "teamName_asc", label: "Tên đội - Tăng dần (A-Z)" },
+  { value: "teamName_desc", label: "Tên đội - Giảm dần (Z-A)" },
 ] as const;

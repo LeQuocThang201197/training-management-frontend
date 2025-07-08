@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Search, Plus, ChevronLeft, ChevronRight } from "lucide-react";
+import { Plus, ChevronLeft, ChevronRight } from "lucide-react";
 import { API_URL } from "@/config/api";
 
 import { ConcentrationCard } from "@/components/cards/ConcentrationCard";
@@ -19,7 +18,6 @@ export function ConcentrationPage() {
   const [error, setError] = useState<string | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
-  const [searchTerm, setSearchTerm] = useState("");
   const [pagination, setPagination] = useState({
     total: 0,
     totalPages: 1,
@@ -85,15 +83,6 @@ export function ConcentrationPage() {
     fetchConcentrations();
   }, [filters, page]); // Loại bỏ buildAPIParams khỏi dependency
 
-  // Debounce search
-  useEffect(() => {
-    const timeoutId = setTimeout(() => {
-      // Filter by search term on frontend since backend doesn't support text search
-      // This is a simple implementation - in reality you might want to add text search to backend
-    }, 300);
-    return () => clearTimeout(timeoutId);
-  }, [searchTerm]);
-
   if (loading) {
     return (
       <div className="flex justify-center items-center min-h-[400px]">
@@ -110,16 +99,7 @@ export function ConcentrationPage() {
     );
   }
 
-  // Client-side search filter (since backend doesn't support text search yet)
-  const displayedConcentrations = concentrations.filter((concentration) => {
-    if (!searchTerm.trim()) return true;
-
-    const searchLower = searchTerm.toLowerCase();
-    return (
-      concentration.team.sport?.toLowerCase().includes(searchLower) ||
-      concentration.location?.toLowerCase().includes(searchLower)
-    );
-  });
+  const displayedConcentrations = concentrations;
 
   return (
     <div className="container mx-auto p-6 bg-white rounded-lg shadow">
@@ -239,18 +219,6 @@ export function ConcentrationPage() {
           </Button>
         </div>
       )}
-
-      {/* Search Bar */}
-      <div className="relative mb-6">
-        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500" />
-        <Input
-          placeholder="Tìm kiếm đợt tập trung (tên môn thể thao, địa điểm, tên đội)..."
-          className="pl-10"
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          clearable
-        />
-      </div>
 
       {/* Results info */}
       <div className="mb-4 text-sm text-gray-600">

@@ -1,116 +1,98 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import {
-  Search,
-  Plus,
-  ChevronLeft,
-  ChevronRight,
-  Users,
-  Calendar,
-} from "lucide-react";
+import { Search, Plus, ChevronLeft, ChevronRight } from "lucide-react";
 import { API_URL } from "@/config/api";
-import {
-  DropdownMenu,
-  DropdownMenuTrigger,
-  DropdownMenuContent,
-  DropdownMenuItem,
-} from "@/components/ui/dropdown-menu";
-import { ArrowUpDown } from "lucide-react";
-import { Checkbox } from "@/components/ui/checkbox";
 
 import { ConcentrationCard } from "@/components/cards/ConcentrationCard";
+import { ConcentrationFilterDialog } from "@/components/dialogs/ConcentrationFilterDialog";
 import { Concentration } from "@/types/concentration";
 import { PermissionGate } from "@/components/PermissionGate";
 import { ConcentrationDialog } from "@/components/dialogs/ConcentrationDialog";
-
-const ITEMS_PER_PAGE = 21;
-
-type SortOption = {
-  field: "name" | "date";
-  direction: "asc" | "desc";
-  label: string;
-};
-
-const sortOptions: SortOption[] = [
-  { field: "name", direction: "asc", label: "Tên (A-Z)" },
-  { field: "name", direction: "desc", label: "Tên (Z-A)" },
-  { field: "date", direction: "desc", label: "Ngày bắt đầu (Mới nhất)" },
-  { field: "date", direction: "asc", label: "Ngày bắt đầu (Cũ nhất)" },
-];
+import { useConcentrationFilter } from "@/hooks/useConcentrationFilter";
+import { Filter, X } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 
 export function ConcentrationPage() {
   const [concentrations, setConcentrations] = useState<Concentration[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [currentSort, setCurrentSort] = useState<SortOption>(sortOptions[0]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isFilterDialogOpen, setIsFilterDialogOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
-  const [teamTypeFilters, setTeamTypeFilters] = useState<string[]>([]);
-  const [statusFilters, setStatusFilters] = useState<string[]>(["ongoing"]);
+  const [pagination, setPagination] = useState({
+    total: 0,
+    totalPages: 1,
+  });
 
-  const filterOptions = [
-    { value: "Tuyển", label: "Đội tuyển" },
-    { value: "Trẻ", label: "Đội trẻ" },
-    { value: "Người khuyết tật", label: "Đội người khuyết tật" },
-  ];
+  // Use concentration filter hook
+  const {
+    filters,
+    setFilters,
+    sports,
+    loadingSports,
+    page,
+    setPage,
+    resetFilters,
+  } = useConcentrationFilter({
+    defaultStatuses: ["active"], // Default to active instead of ongoing
+  });
 
-  const statusOptions = [
-    { value: "ongoing", label: "Đang diễn ra" },
-    { value: "upcoming", label: "Sắp diễn ra" },
-    { value: "completed", label: "Đã kết thúc" },
-  ];
+  useEffect(() => {
+    const fetchConcentrations = async () => {
+      try {
+        setLoading(true);
 
-  const fetchConcentrations = async () => {
-    try {
-      const response = await fetch(`${API_URL}/concentrations`, {
-        credentials: "include",
-      });
-      if (!response.ok) throw new Error("Không thể tải danh sách tập trung");
+        // Build API parameters directly
+        const params = new URLSearchParams();
+        if (filters.sportIds.length > 0) {
+          params.append("sportId", filters.sportIds.join(","));
+        }
+        if (filters.teamTypes.length > 0) {
+          params.append("teamType", filters.teamTypes.join(","));
+        }
+        if (filters.statuses.length > 0) {
+          params.append("status", filters.statuses.join(","));
+        }
+        if (filters.year) {
+          params.append("year", filters.year);
+        }
+        params.append("sortBy", filters.sortBy);
+        params.append("sortOrder", filters.sortOrder);
+        params.append("page", page.toString());
+        params.append("limit", "20");
 
-      const data = await response.json();
-      if (data.success) {
-        setConcentrations(data.data);
+        const response = await fetch(`${API_URL}/concentrations?${params}`, {
+          credentials: "include",
+        });
+        if (!response.ok) throw new Error("Không thể tải danh sách tập trung");
+
+        const data = await response.json();
+        if (data.success) {
+          setConcentrations(data.data);
+          setPagination({
+            total: data.pagination.total,
+            totalPages: data.pagination.totalPages,
+          });
+        }
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Lỗi tải dữ liệu");
+      } finally {
+        setLoading(false);
       }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Lỗi tải dữ liệu");
-    } finally {
-      setLoading(false);
-    }
-  };
+    };
 
-  useEffect(() => {
     fetchConcentrations();
-  }, []);
+  }, [filters, page]); // Loại bỏ buildAPIParams khỏi dependency
 
-  // Reset page when filters change
+  // Debounce search
   useEffect(() => {
-    setCurrentPage(1);
-  }, [searchTerm, teamTypeFilters, statusFilters]);
-
-  const handleFilterChange = {
-    team: (value: string) => {
-      setTeamTypeFilters((prev) =>
-        prev.includes(value)
-          ? prev.filter((type) => type !== value)
-          : [...prev, value]
-      );
-    },
-    status: (value: string) => {
-      setStatusFilters((prev) =>
-        prev.includes(value)
-          ? prev.filter((status) => status !== value)
-          : [...prev, value]
-      );
-    },
-    search: (value: string) => {
-      setSearchTerm(value);
-    },
-    sort: (option: SortOption) => {
-      setCurrentSort(option);
-    },
-  };
+    const timeoutId = setTimeout(() => {
+      // Filter by search term on frontend since backend doesn't support text search
+      // This is a simple implementation - in reality you might want to add text search to backend
+    }, 300);
+    return () => clearTimeout(timeoutId);
+  }, [searchTerm]);
 
   if (loading) {
     return (
@@ -128,161 +110,45 @@ export function ConcentrationPage() {
     );
   }
 
-  const filteredConcentrations = concentrations.filter((concentration) => {
-    const matchesSearch = concentration.team.sport
-      ? concentration.team.sport
-          .toLowerCase()
-          .includes(searchTerm.toLowerCase().trim())
-      : false;
+  // Client-side search filter (since backend doesn't support text search yet)
+  const displayedConcentrations = concentrations.filter((concentration) => {
+    if (!searchTerm.trim()) return true;
 
-    const matchesType =
-      teamTypeFilters.length === 0 ||
-      teamTypeFilters.includes(concentration.team.type);
-
-    const today = new Date();
-    const startDate = new Date(concentration.startDate);
-
-    const endDate = new Date(concentration.endDate);
-    endDate.setHours(23, 59, 59, 999);
-
-    const status =
-      today < startDate
-        ? "upcoming"
-        : today > endDate
-        ? "completed"
-        : "ongoing";
-
-    const matchesStatus =
-      statusFilters.length === 0 || statusFilters.includes(status);
-
-    return matchesSearch && matchesType && matchesStatus;
+    const searchLower = searchTerm.toLowerCase();
+    return (
+      concentration.team.sport?.toLowerCase().includes(searchLower) ||
+      concentration.location?.toLowerCase().includes(searchLower)
+    );
   });
-
-  const totalPages = Math.ceil(filteredConcentrations.length / ITEMS_PER_PAGE);
-
-  const sortedAndPaginatedConcentrations = [...filteredConcentrations]
-    .sort((a, b) => {
-      // Hàm xác định trạng thái
-      const getStatus = (date: { startDate: string; endDate: string }) => {
-        const today = new Date();
-        const startDate = new Date(date.startDate);
-
-        const endDate = new Date(date.endDate);
-        endDate.setHours(23, 59, 59, 999); // Set về cuối ngày
-
-        return today < startDate ? 2 : today <= endDate ? 1 : 3;
-      };
-
-      // Hàm xác định thứ tự ưu tiên của loại đội
-      const getTeamTypeOrder = (type: string) => {
-        switch (type) {
-          case "Tuyển":
-            return 1;
-          case "Trẻ":
-            return 2;
-          case "Người khuyết tật":
-            return 3;
-          default:
-            return 4;
-        }
-      };
-
-      // So sánh trạng thái trước
-      const statusA = getStatus(a);
-      const statusB = getStatus(b);
-      if (statusA !== statusB) return statusA - statusB;
-
-      // Nếu cùng trạng thái, so sánh loại đội
-      const teamOrderA = getTeamTypeOrder(a.team.type);
-      const teamOrderB = getTeamTypeOrder(b.team.type);
-      if (teamOrderA !== teamOrderB) return teamOrderA - teamOrderB;
-
-      // Nếu cùng loại đội, áp dụng sort option
-      const modifier = currentSort.direction === "asc" ? 1 : -1;
-      if (currentSort.field === "date") {
-        return (
-          (new Date(a.startDate).getTime() - new Date(b.startDate).getTime()) *
-          modifier
-        );
-      }
-      return a.team.sport.localeCompare(b.team.sport) * modifier;
-    })
-    .slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
 
   return (
     <div className="container mx-auto p-6 bg-white rounded-lg shadow">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold">Quản lý Tập trung</h1>
         <div className="flex gap-2">
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" className="flex items-center gap-2">
-                <Users className="h-4 w-4" />
-                {teamTypeFilters.length === 0
-                  ? "Tất cả các đội"
-                  : `${teamTypeFilters.length} loại đội`}
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent>
-              {filterOptions.map((option) => (
-                <DropdownMenuItem
-                  key={option.value}
-                  onClick={() => handleFilterChange.team(option.value)}
-                >
-                  <div className="flex items-center gap-2">
-                    <Checkbox
-                      checked={teamTypeFilters.includes(option.value)}
-                    />
-                    {option.label}
-                  </div>
-                </DropdownMenuItem>
-              ))}
-            </DropdownMenuContent>
-          </DropdownMenu>
-
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" className="flex items-center gap-2">
-                <Calendar className="h-4 w-4" />
-                {statusFilters.length === 0
-                  ? "Tất cả trạng thái"
-                  : `${statusFilters.length} trạng thái`}
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent>
-              {statusOptions.map((option) => (
-                <DropdownMenuItem
-                  key={option.value}
-                  onClick={() => handleFilterChange.status(option.value)}
-                >
-                  <div className="flex items-center gap-2">
-                    <Checkbox checked={statusFilters.includes(option.value)} />
-                    {option.label}
-                  </div>
-                </DropdownMenuItem>
-              ))}
-            </DropdownMenuContent>
-          </DropdownMenu>
-
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" className="flex items-center gap-2">
-                <ArrowUpDown className="h-4 w-4" />
-                {currentSort.label}
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent>
-              {sortOptions.map((option) => (
-                <DropdownMenuItem
-                  key={`${option.field}-${option.direction}`}
-                  onClick={() => handleFilterChange.sort(option)}
-                >
-                  {option.label}
-                </DropdownMenuItem>
-              ))}
-            </DropdownMenuContent>
-          </DropdownMenu>
-
+          <Button
+            variant="outline"
+            onClick={() => setIsFilterDialogOpen(true)}
+            className="flex items-center gap-2"
+          >
+            <Filter className="h-4 w-4" />
+            Bộ lọc
+            {(filters.sportIds.length > 0 ||
+              filters.teamTypes.length > 0 ||
+              filters.statuses.length > 0 ||
+              filters.year !== new Date().getFullYear().toString()) && (
+              <Badge variant="secondary" className="ml-1">
+                {[
+                  filters.sportIds.length > 0 && filters.sportIds.length,
+                  filters.teamTypes.length > 0 && filters.teamTypes.length,
+                  filters.statuses.length > 0 && filters.statuses.length,
+                  filters.year !== new Date().getFullYear().toString() && 1,
+                ]
+                  .filter(Boolean)
+                  .reduce((a, b) => Number(a) + Number(b), 0)}
+              </Badge>
+            )}
+          </Button>
           <PermissionGate permission="CREATE_CONCENTRATION">
             <Button onClick={() => setIsDialogOpen(true)}>
               <Plus className="mr-2 h-4 w-4" />
@@ -292,19 +158,91 @@ export function ConcentrationPage() {
         </div>
       </div>
 
+      {/* Active Filters Display */}
+      {(filters.sportIds.length > 0 ||
+        filters.teamTypes.length > 0 ||
+        filters.statuses.length > 0 ||
+        filters.year !== new Date().getFullYear().toString()) && (
+        <div className="mb-4 flex flex-wrap gap-2">
+          {filters.sportIds.length > 0 && (
+            <Badge variant="outline" className="flex items-center gap-1">
+              Môn thể thao: {filters.sportIds.length}
+              <X
+                className="h-3 w-3 cursor-pointer"
+                onClick={() =>
+                  setFilters((prev) => ({ ...prev, sportIds: [] }))
+                }
+              />
+            </Badge>
+          )}
+          {filters.teamTypes.length > 0 && (
+            <Badge variant="outline" className="flex items-center gap-1">
+              Loại đội: {filters.teamTypes.length}
+              <X
+                className="h-3 w-3 cursor-pointer"
+                onClick={() =>
+                  setFilters((prev) => ({ ...prev, teamTypes: [] }))
+                }
+              />
+            </Badge>
+          )}
+          {filters.statuses.length > 0 && (
+            <Badge variant="outline" className="flex items-center gap-1">
+              Trạng thái: {filters.statuses.length}
+              <X
+                className="h-3 w-3 cursor-pointer"
+                onClick={() =>
+                  setFilters((prev) => ({ ...prev, statuses: [] }))
+                }
+              />
+            </Badge>
+          )}
+          {filters.year !== new Date().getFullYear().toString() && (
+            <Badge variant="outline" className="flex items-center gap-1">
+              Năm: {filters.year}
+              <X
+                className="h-3 w-3 cursor-pointer"
+                onClick={() =>
+                  setFilters((prev) => ({
+                    ...prev,
+                    year: new Date().getFullYear().toString(),
+                  }))
+                }
+              />
+            </Badge>
+          )}
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={resetFilters}
+            className="text-xs"
+          >
+            Xóa tất cả
+          </Button>
+        </div>
+      )}
+
+      {/* Search Bar */}
       <div className="relative mb-6">
         <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500" />
         <Input
-          placeholder="Tìm kiếm đợt tập trung..."
+          placeholder="Tìm kiếm đợt tập trung (tên môn thể thao, địa điểm, tên đội)..."
           className="pl-10"
           value={searchTerm}
-          onChange={(e) => handleFilterChange.search(e.target.value)}
+          onChange={(e) => setSearchTerm(e.target.value)}
           clearable
         />
       </div>
 
+      {/* Results info */}
+      <div className="mb-4 text-sm text-gray-600">
+        Hiển thị {displayedConcentrations.length} / {pagination.total} đợt tập
+        trung
+      </div>
+
+      {/* Concentrations Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {sortedAndPaginatedConcentrations.map((concentration) => (
+        {displayedConcentrations.map((concentration) => (
           <ConcentrationCard
             key={concentration.id}
             concentration={concentration}
@@ -312,34 +250,47 @@ export function ConcentrationPage() {
         ))}
       </div>
 
-      {totalPages > 1 && (
+      {/* No results message */}
+      {displayedConcentrations.length === 0 && !loading && (
+        <div className="text-center py-12 text-gray-500">
+          <p className="text-lg">Không tìm thấy đợt tập trung nào</p>
+          <p className="text-sm mt-2">
+            Thử điều chỉnh bộ lọc hoặc từ khóa tìm kiếm
+          </p>
+        </div>
+      )}
+
+      {/* Pagination */}
+      {pagination.totalPages > 1 && (
         <div className="mt-6 flex items-center justify-center gap-2">
           <Button
             variant="outline"
             size="icon"
-            onClick={() => setCurrentPage(currentPage - 1)}
-            disabled={currentPage === 1}
+            onClick={() => setPage(page - 1)}
+            disabled={page === 1}
           >
             <ChevronLeft className="h-4 w-4" />
           </Button>
 
-          {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-            <Button
-              key={page}
-              variant={currentPage === page ? "default" : "outline"}
-              size="icon"
-              onClick={() => setCurrentPage(page)}
-              className="w-8 h-8"
-            >
-              {page}
-            </Button>
-          ))}
+          {Array.from({ length: pagination.totalPages }, (_, i) => i + 1).map(
+            (pageNum) => (
+              <Button
+                key={pageNum}
+                variant={page === pageNum ? "default" : "outline"}
+                size="icon"
+                onClick={() => setPage(pageNum)}
+                className="w-8 h-8"
+              >
+                {pageNum}
+              </Button>
+            )
+          )}
 
           <Button
             variant="outline"
             size="icon"
-            onClick={() => setCurrentPage(currentPage + 1)}
-            disabled={currentPage === totalPages}
+            onClick={() => setPage(page + 1)}
+            disabled={page === pagination.totalPages}
           >
             <ChevronRight className="h-4 w-4" />
           </Button>
@@ -362,7 +313,8 @@ export function ConcentrationPage() {
 
             const data = await response.json();
             if (data.success) {
-              fetchConcentrations();
+              // Trigger re-fetch by updating a dependency
+              setFilters((prev) => ({ ...prev }));
               setIsDialogOpen(false);
             }
           } catch (err) {
@@ -373,6 +325,16 @@ export function ConcentrationPage() {
           }
         }}
         mode="create"
+      />
+
+      <ConcentrationFilterDialog
+        isOpen={isFilterDialogOpen}
+        onOpenChange={setIsFilterDialogOpen}
+        filters={filters}
+        onFiltersChange={setFilters}
+        sports={sports}
+        loadingSports={loadingSports}
+        onResetFilters={resetFilters}
       />
     </div>
   );

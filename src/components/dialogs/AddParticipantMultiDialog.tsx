@@ -34,21 +34,10 @@ import {
 import { API_URL } from "@/config/api";
 import { PersonFormData } from "@/types/personnel";
 import { Role, Organization, Person, Participant } from "@/types/participant";
+import { Concentration } from "@/types/concentration";
 import { DuplicatePersonDialog, DuplicateInfo } from "./DuplicatePersonDialog";
 import { ConcentrationFilter } from "@/components/ConcentrationFilter";
 import { useConcentrationFilter } from "@/hooks/useConcentrationFilter";
-
-interface ConcentrationOption {
-  id: number;
-  startDate: string;
-  endDate: string;
-  location: string;
-  team: {
-    sport: string;
-    gender: string;
-    type: string;
-  };
-}
 
 interface AddParticipantMultiDialogProps {
   isOpen: boolean;
@@ -103,9 +92,7 @@ export function AddParticipantMultiDialog({
   const [fromListOrgSearchTerm, setFromListOrgSearchTerm] = useState("");
 
   // State cho tab "Từ đợt tập trung khác"
-  const [concentrations, setConcentrations] = useState<ConcentrationOption[]>(
-    []
-  );
+  const [concentrations, setConcentrations] = useState<Concentration[]>([]);
   const [selectedConcentrationId, setSelectedConcentrationId] = useState("");
   const [concentrationParticipants, setConcentrationParticipants] = useState<
     Participant[]
@@ -608,11 +595,14 @@ export function AddParticipantMultiDialog({
                               <div className="flex-1">
                                 <div className="flex items-center gap-2 mb-1">
                                   <span className="font-medium">
-                                    Đội tuyển {concentration.team.sport}{" "}
+                                    Đội {concentration.team.type.toLowerCase()}{" "}
+                                    {concentration.team.sport}{" "}
                                     {concentration.team.gender !==
                                     "Cả nam và nữ"
                                       ? concentration.team.gender.toLowerCase()
-                                      : ""}
+                                      : ""}{" "}
+                                    đợt {concentration.sequence_number}{" "}
+                                    {concentration.related_year}
                                   </span>
                                   <Badge
                                     variant={status.variant}

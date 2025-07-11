@@ -17,7 +17,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
+
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -28,8 +28,6 @@ import {
   Filter,
   AlertCircle,
   CheckCircle,
-  Check,
-  ChevronDown,
 } from "lucide-react";
 import { API_URL } from "@/config/api";
 import { PersonFormData } from "@/types/personnel";
@@ -38,6 +36,7 @@ import { Concentration } from "@/types/concentration";
 import { DuplicatePersonDialog, DuplicateInfo } from "./DuplicatePersonDialog";
 import { ConcentrationFilter } from "@/components/ConcentrationFilter";
 import { useConcentrationFilter } from "@/hooks/useConcentrationFilter";
+import { ParticipationForm } from "@/components/ParticipationForm";
 
 interface AddParticipantMultiDialogProps {
   isOpen: boolean;
@@ -89,7 +88,6 @@ export function AddParticipantMultiDialog({
     note: "",
   });
   const [fromListOrgDropdownOpen, setFromListOrgDropdownOpen] = useState(false);
-  const [fromListOrgSearchTerm, setFromListOrgSearchTerm] = useState("");
 
   // State cho tab "Từ đợt tập trung khác"
   const [concentrations, setConcentrations] = useState<Concentration[]>([]);
@@ -184,7 +182,6 @@ export function AddParticipantMultiDialog({
         note: "",
       });
       setFromListOrgDropdownOpen(false);
-      setFromListOrgSearchTerm("");
       setSelectedConcentrationId("");
       setConcentrationParticipants([]);
       setSelectedParticipantIds([]);
@@ -347,7 +344,6 @@ export function AddParticipantMultiDialog({
         !target.closest(".organization-dropdown")
       ) {
         setFromListOrgDropdownOpen(false);
-        setFromListOrgSearchTerm("");
       }
     };
 
@@ -935,133 +931,13 @@ export function AddParticipantMultiDialog({
               </div>
 
               {/* Form thông tin tham gia */}
-              <div className="space-y-4 p-4 border rounded-lg bg-gray-50">
-                <h4 className="font-medium">
-                  Thông tin tham gia đợt tập trung
-                </h4>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label>Vai trò *</Label>
-                    <Select
-                      value={fromListFormData.roleId}
-                      onValueChange={(value) =>
-                        setFromListFormData((prev) => ({
-                          ...prev,
-                          roleId: value,
-                        }))
-                      }
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Chọn vai trò" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {roles.map((role) => (
-                          <SelectItem key={role.id} value={role.id.toString()}>
-                            {role.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    {errors.roleId && (
-                      <p className="text-sm text-red-500">{errors.roleId}</p>
-                    )}
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Đơn vị *</Label>
-                    <div className="relative organization-dropdown">
-                      <Button
-                        variant="outline"
-                        className="w-full justify-between"
-                        onClick={() =>
-                          setFromListOrgDropdownOpen(!fromListOrgDropdownOpen)
-                        }
-                      >
-                        {fromListFormData.organizationId
-                          ? organizations.find(
-                              (org) =>
-                                org.id.toString() ===
-                                fromListFormData.organizationId
-                            )?.name
-                          : "Chọn đơn vị"}
-                        <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                      </Button>
-                      {fromListOrgDropdownOpen && (
-                        <div className="absolute z-50 w-full mt-1 bg-white border rounded-md shadow-lg max-h-60 overflow-y-auto">
-                          <div className="p-2 border-b">
-                            <Input
-                              placeholder="Tìm kiếm đơn vị..."
-                              value={fromListOrgSearchTerm}
-                              onChange={(e) =>
-                                setFromListOrgSearchTerm(e.target.value)
-                              }
-                              className="w-full"
-                            />
-                          </div>
-                          <div className="max-h-48 overflow-y-auto">
-                            {organizations
-                              .filter((org) =>
-                                org.name
-                                  .toLowerCase()
-                                  .includes(fromListOrgSearchTerm.toLowerCase())
-                              )
-                              .map((org) => (
-                                <div
-                                  key={org.id}
-                                  className="flex items-center p-2 hover:bg-gray-100 cursor-pointer"
-                                  onClick={() => {
-                                    setFromListFormData((prev) => ({
-                                      ...prev,
-                                      organizationId: org.id.toString(),
-                                    }));
-                                    setFromListOrgDropdownOpen(false);
-                                    setFromListOrgSearchTerm("");
-                                  }}
-                                >
-                                  <Check
-                                    className={`mr-2 h-4 w-4 ${
-                                      fromListFormData.organizationId ===
-                                      org.id.toString()
-                                        ? "opacity-100"
-                                        : "opacity-0"
-                                    }`}
-                                  />
-                                  {org.name}
-                                </div>
-                              ))}
-                            {organizations.filter((org) =>
-                              org.name
-                                .toLowerCase()
-                                .includes(fromListOrgSearchTerm.toLowerCase())
-                            ).length === 0 && (
-                              <div className="p-2 text-gray-500 text-center">
-                                Không tìm thấy đơn vị nào
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                    {errors.organizationId && (
-                      <p className="text-sm text-red-500">
-                        {errors.organizationId}
-                      </p>
-                    )}
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <Label>Ghi chú</Label>
-                  <Textarea
-                    placeholder="Nhập ghi chú (nếu có)..."
-                    value={fromListFormData.note}
-                    onChange={(e) =>
-                      setFromListFormData((prev) => ({
-                        ...prev,
-                        note: e.target.value,
-                      }))
-                    }
-                  />
-                </div>
-              </div>
+              <ParticipationForm
+                formData={fromListFormData}
+                onFormDataChange={setFromListFormData}
+                roles={roles}
+                organizations={organizations}
+                errors={errors}
+              />
             </div>
           </TabsContent>
 
@@ -1211,80 +1087,13 @@ export function AddParticipantMultiDialog({
               </div>
 
               {/* Form thông tin tham gia */}
-              <div className="space-y-4 p-4 border rounded-lg bg-gray-50">
-                <h4 className="font-medium">
-                  Thông tin tham gia đợt tập trung
-                </h4>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label>Vai trò *</Label>
-                    <Select
-                      value={participationFormData.roleId}
-                      onValueChange={(value) =>
-                        setParticipationFormData((prev) => ({
-                          ...prev,
-                          roleId: value,
-                        }))
-                      }
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Chọn vai trò" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {roles.map((role) => (
-                          <SelectItem key={role.id} value={role.id.toString()}>
-                            {role.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    {errors.roleId && (
-                      <p className="text-sm text-red-500">{errors.roleId}</p>
-                    )}
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Đơn vị *</Label>
-                    <Select
-                      value={participationFormData.organizationId}
-                      onValueChange={(value) =>
-                        setParticipationFormData((prev) => ({
-                          ...prev,
-                          organizationId: value,
-                        }))
-                      }
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Chọn đơn vị" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {organizations.map((org) => (
-                          <SelectItem key={org.id} value={org.id.toString()}>
-                            {org.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    {errors.organizationId && (
-                      <p className="text-sm text-red-500">
-                        {errors.organizationId}
-                      </p>
-                    )}
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <Label>Ghi chú</Label>
-                  <Textarea
-                    placeholder="Nhập ghi chú (nếu có)..."
-                    value={participationFormData.note}
-                    onChange={(e) =>
-                      setParticipationFormData((prev) => ({
-                        ...prev,
-                        note: e.target.value,
-                      }))
-                    }
-                  />
-                </div>
-              </div>
+              <ParticipationForm
+                formData={participationFormData}
+                onFormDataChange={setParticipationFormData}
+                roles={roles}
+                organizations={organizations}
+                errors={errors}
+              />
             </div>
           </TabsContent>
         </Tabs>

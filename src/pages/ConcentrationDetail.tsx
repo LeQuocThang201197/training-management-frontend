@@ -36,7 +36,7 @@ import {
 import { cn } from "@/lib/utils";
 import { ParticipantStats } from "@/types/index";
 import { ConcentrationDialog } from "@/components/dialogs/ConcentrationDialog";
-import { AddParticipantDialog } from "@/components/dialogs/AddParticipantDialog";
+import { EditParticipantDialog } from "@/components/dialogs/EditParticipantDialog";
 import {
   AlertDialog,
   AlertDialogContent,
@@ -131,7 +131,7 @@ export function ConcentrationDetailPage() {
   const [loadingLinkedPapers, setLoadingLinkedPapers] = useState(false);
   const [selectedPaperIds, setSelectedPaperIds] = useState<number[]>([]);
   const [availablePapers, setAvailablePapers] = useState<Paper[]>([]);
-  const [isAddParticipantDialogOpen, setIsAddParticipantDialogOpen] =
+  const [isEditParticipantDialogOpen, setIsEditParticipantDialogOpen] =
     useState(false);
   const [participants, setParticipants] = useState<Participant[]>([]);
   const [loadingParticipants, setLoadingParticipants] = useState(true);
@@ -460,31 +460,6 @@ export function ConcentrationDetailPage() {
     } catch (err) {
       console.error("Delete concentration error:", err);
       alert("Có lỗi xảy ra khi xóa đợt tập trung");
-    }
-  };
-
-  const handleAddParticipant = async (formData: ParticipantFormData) => {
-    try {
-      const response = await fetch(
-        `${API_URL}/concentrations/${id}/participants`,
-        {
-          method: "POST",
-          credentials: "include",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(formData),
-        }
-      );
-
-      if (!response.ok) throw new Error("Không thể thêm thành viên");
-
-      const data = await response.json();
-      if (data.success) {
-        setParticipants((prev) => [...prev, data.data]);
-        fetchParticipantStats(); // Fetch stats mới
-        setIsAddParticipantDialogOpen(false);
-      }
-    } catch (err) {
-      console.error("Add participant error:", err);
     }
   };
 
@@ -1718,17 +1693,15 @@ export function ConcentrationDetailPage() {
               )}
             </CardContent>
           </Card>
-          <AddParticipantDialog
-            isOpen={isAddParticipantDialogOpen || !!editingParticipant}
+          <EditParticipantDialog
+            isOpen={isEditParticipantDialogOpen || !!editingParticipant}
             onOpenChange={(open) => {
-              setIsAddParticipantDialogOpen(open);
+              setIsEditParticipantDialogOpen(open);
               if (!open) setEditingParticipant(null);
             }}
-            onSubmit={
-              editingParticipant ? handleEditParticipant : handleAddParticipant
-            }
-            editData={editingParticipant}
-            existingParticipants={participants}
+            onSubmit={handleEditParticipant}
+            participantId={editingParticipant?.id}
+            concentrationId={id}
           />
         </TabsContent>
 

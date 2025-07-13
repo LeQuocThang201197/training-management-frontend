@@ -62,6 +62,10 @@ import { CompetitionDialog } from "@/components/dialogs/CompetitionDialog";
 import { AddCompetitionParticipantDialog } from "@/components/dialogs/AddCompetitionParticipantDialog";
 import { ParticipantFormData } from "@/types/participant";
 import { AddParticipantMultiDialog } from "@/components/dialogs/AddParticipantMultiDialog";
+import {
+  DuplicatePersonDialog,
+  DuplicateInfo,
+} from "@/components/dialogs/DuplicatePersonDialog";
 
 interface Paper {
   id: number;
@@ -206,6 +210,10 @@ export function ConcentrationDetailPage() {
   // Thêm state cho dialog mới
   const [isAddParticipantMultiDialogOpen, setIsAddParticipantMultiDialogOpen] =
     useState(false);
+  const [isDuplicateDialogOpen, setIsDuplicateDialogOpen] = useState(false);
+  const [duplicateInfo, setDuplicateInfo] = useState<DuplicateInfo | null>(
+    null
+  );
 
   const fetchConcentration = useCallback(async () => {
     try {
@@ -1056,40 +1064,40 @@ export function ConcentrationDetailPage() {
         const responseData = data.data as CompetitionParticipantResponse;
 
         setCompetitionParticipantIds(
-          responseData.participants.map((p) => p.person_id)
+          responseData.participants.map((p) => p.participation.person_id)
         );
 
         // Lưu trữ thông tin chi tiết về người tham gia thi đấu
-        // Chuyển đổi từ CompetitionParticipantDetail sang Participant format
+        // Chuyển đổi từ response mới sang Participant format
         const participantDetails: Participant[] = responseData.participants.map(
           (p) => ({
-            id: p.person_id,
-            person_id: p.person_id,
-            concentration_id: p.concentration_id,
-            role_id: p.role_id,
-            organization_id: p.concentration.team.id,
-            assigned_by: p.created_by,
+            id: p.participation.id,
+            person_id: p.participation.person_id,
+            concentration_id: p.participation.concentration_id,
+            role_id: p.participation.role_id,
+            organization_id: p.participation.organization_id,
+            assigned_by: p.participation.assigned_by,
             person: {
-              id: p.person.id,
-              name: p.person.name,
-              gender: p.person.gender,
-              code: p.person.identity_number || "",
-              birthday: p.person.birthday,
+              id: p.participation.person.id,
+              name: p.participation.person.name,
+              gender: p.participation.person.gender,
+              code: p.participation.person.identity_number || "",
+              birthday: p.participation.person.birthday,
             },
             role: {
-              ...p.role,
+              ...p.participation.role,
               typeLabel:
-                p.role.type === "ATHLETE"
+                p.participation.role.type === "ATHLETE"
                   ? "Vận động viên"
-                  : p.role.type === "COACH"
+                  : p.participation.role.type === "COACH"
                   ? "Huấn luyện viên"
-                  : p.role.type === "SPECIALIST"
+                  : p.participation.role.type === "SPECIALIST"
                   ? "Chuyên gia"
                   : "Khác",
             },
             organization: {
-              id: p.concentration.team.id,
-              name: `${p.concentration.team.sport} (${p.concentration.sequence_number}/${p.concentration.related_year})`,
+              id: p.participation.organization.id,
+              name: p.participation.organization.name,
             },
             note: p.note,
             createdAt: p.createdAt,
@@ -1112,9 +1120,10 @@ export function ConcentrationDetailPage() {
           {};
 
         responseData.participants.forEach((p) => {
-          if (p.note) notes[p.person_id] = p.note;
+          const personId = p.participation.person_id;
+          if (p.note) notes[personId] = p.note;
           if (p.startDate || p.endDate) {
-            dates[p.person_id] = {
+            dates[personId] = {
               startDate: p.startDate,
               endDate: p.endDate,
             };
@@ -1370,6 +1379,19 @@ export function ConcentrationDetailPage() {
     }
   };
 
+  // Handler cho duplicate dialog
+  const handleDuplicateFound = (duplicateInfo: DuplicateInfo) => {
+    setDuplicateInfo(duplicateInfo);
+    setIsDuplicateDialogOpen(true);
+  };
+
+  // Đóng dialog khi chuyển route
+  useEffect(() => {
+    setIsAddParticipantMultiDialogOpen(false);
+    setIsDuplicateDialogOpen(false);
+    setDuplicateInfo(null);
+  }, []);
+
   if (loading) {
     return <div>Đang tải...</div>;
   }
@@ -1552,7 +1574,7 @@ export function ConcentrationDetailPage() {
                                   competition.endDate
                                 ) &&
                                 competitionParticipantIds.includes(
-                                  specialist.id
+                                  specialist.person.id
                                 )
                             );
 
@@ -1603,7 +1625,10 @@ export function ConcentrationDetailPage() {
                               isOngoing(
                                 competition.startDate,
                                 competition.endDate
-                              ) && competitionParticipantIds.includes(coach.id)
+                              ) &&
+                              competitionParticipantIds.includes(
+                                coach.person.id
+                              )
                           );
 
                           return (
@@ -1653,7 +1678,9 @@ export function ConcentrationDetailPage() {
                                   competition.startDate,
                                   competition.endDate
                                 ) &&
-                                competitionParticipantIds.includes(athlete.id)
+                                competitionParticipantIds.includes(
+                                  athlete.person.id
+                                )
                             );
 
                             return (
@@ -1703,7 +1730,9 @@ export function ConcentrationDetailPage() {
                                   competition.startDate,
                                   competition.endDate
                                 ) &&
-                                competitionParticipantIds.includes(other.id)
+                                competitionParticipantIds.includes(
+                                  other.person.id
+                                )
                             );
 
                             return (
@@ -2673,7 +2702,16 @@ export function ConcentrationDetailPage() {
         onOpenChange={setIsAddParticipantMultiDialogOpen}
         onSubmit={handleAddParticipantMulti}
         existingParticipants={participants}
+        onDuplicateFound={handleDuplicateFound}
       />
+
+      {duplicateInfo && (
+        <DuplicatePersonDialog
+          isOpen={isDuplicateDialogOpen}
+          onOpenChange={setIsDuplicateDialogOpen}
+          duplicateInfo={duplicateInfo}
+        />
+      )}
     </div>
   );
 }

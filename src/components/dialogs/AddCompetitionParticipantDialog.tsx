@@ -98,19 +98,17 @@ export function AddCompetitionParticipantDialog({
               >
                 <Checkbox
                   id={`participant-${participant.id}`}
-                  checked={competitionParticipantIds.includes(
-                    participant.person.id
-                  )}
+                  checked={competitionParticipantIds.includes(participant.id)}
                   onCheckedChange={(checked) => {
                     if (checked) {
                       onParticipantSelect([
                         ...competitionParticipantIds,
-                        participant.person.id,
+                        participant.id,
                       ]);
                     } else {
                       onParticipantSelect(
                         competitionParticipantIds.filter(
-                          (id) => id !== participant.person.id
+                          (id) => id !== participant.id
                         )
                       );
                     }
@@ -134,23 +132,22 @@ export function AddCompetitionParticipantDialog({
                     </div>
                   )}
                 </div>
-                {competitionParticipantIds.includes(participant.person.id) && (
+                {competitionParticipantIds.includes(participant.id) && (
                   <div className="flex flex-col gap-2">
                     <div className="flex gap-2">
                       <Input
                         type="date"
                         className="w-32"
                         value={
-                          participantDates[
-                            participant.person.id
-                          ]?.startDate.split("T")[0] ||
-                          competition.startDate.split("T")[0]
+                          participantDates[participant.id]?.startDate.split(
+                            "T"
+                          )[0] || competition.startDate.split("T")[0]
                         }
                         onChange={(e) =>
                           onDateChange(
-                            participant.person.id,
+                            participant.id,
                             e.target.value,
-                            participantDates[participant.person.id]?.endDate ||
+                            participantDates[participant.id]?.endDate ||
                               competition.endDate
                           )
                         }
@@ -159,16 +156,15 @@ export function AddCompetitionParticipantDialog({
                         type="date"
                         className="w-32"
                         value={
-                          participantDates[
-                            participant.person.id
-                          ]?.endDate.split("T")[0] ||
-                          competition.endDate.split("T")[0]
+                          participantDates[participant.id]?.endDate.split(
+                            "T"
+                          )[0] || competition.endDate.split("T")[0]
                         }
                         onChange={(e) =>
                           onDateChange(
-                            participant.person.id,
-                            participantDates[participant.person.id]
-                              ?.startDate || competition.startDate,
+                            participant.id,
+                            participantDates[participant.id]?.startDate ||
+                              competition.startDate,
                             e.target.value
                           )
                         }
@@ -176,9 +172,9 @@ export function AddCompetitionParticipantDialog({
                     </div>
                     <Input
                       placeholder="Ghi chú"
-                      value={participantNotes[participant.person.id] || ""}
+                      value={participantNotes[participant.id] || ""}
                       onChange={(e) =>
-                        onNoteChange(participant.person.id, e.target.value)
+                        onNoteChange(participant.id, e.target.value)
                       }
                     />
                   </div>

@@ -1003,7 +1003,7 @@ export function ConcentrationDetailPage() {
           return hasNote || hasDifferentDates;
         })
         .map((id) => ({
-          person_id: id,
+          participant_id: id,
           startDate:
             participantDates[id]?.startDate ||
             managingCompetition.startDate.split("T")[0],
@@ -1020,7 +1020,7 @@ export function ConcentrationDetailPage() {
           headers: { "Content-Type": "application/json" },
           credentials: "include",
           body: JSON.stringify({
-            participationIds: selectedIds,
+            participants: selectedIds.map((id) => ({ participant_id: id })),
             ...(participantDetails.length > 0 && { participantDetails }),
           }),
         }
@@ -1064,7 +1064,7 @@ export function ConcentrationDetailPage() {
         const responseData = data.data as CompetitionParticipantResponse;
 
         setCompetitionParticipantIds(
-          responseData.participants.map((p) => p.participation.person_id)
+          responseData.participants.map((p) => p.participation.id)
         );
 
         // Lưu trữ thông tin chi tiết về người tham gia thi đấu
@@ -1120,10 +1120,10 @@ export function ConcentrationDetailPage() {
           {};
 
         responseData.participants.forEach((p) => {
-          const personId = p.participation.person_id;
-          if (p.note) notes[personId] = p.note;
+          const participationId = p.participation.id;
+          if (p.note) notes[participationId] = p.note;
           if (p.startDate || p.endDate) {
-            dates[personId] = {
+            dates[participationId] = {
               startDate: p.startDate,
               endDate: p.endDate,
             };
@@ -1574,7 +1574,7 @@ export function ConcentrationDetailPage() {
                                   competition.endDate
                                 ) &&
                                 competitionParticipantIds.includes(
-                                  specialist.person.id
+                                  specialist.id
                                 )
                             );
 
@@ -1625,10 +1625,7 @@ export function ConcentrationDetailPage() {
                               isOngoing(
                                 competition.startDate,
                                 competition.endDate
-                              ) &&
-                              competitionParticipantIds.includes(
-                                coach.person.id
-                              )
+                              ) && competitionParticipantIds.includes(coach.id)
                           );
 
                           return (
@@ -1678,9 +1675,7 @@ export function ConcentrationDetailPage() {
                                   competition.startDate,
                                   competition.endDate
                                 ) &&
-                                competitionParticipantIds.includes(
-                                  athlete.person.id
-                                )
+                                competitionParticipantIds.includes(athlete.id)
                             );
 
                             return (
@@ -1730,9 +1725,7 @@ export function ConcentrationDetailPage() {
                                   competition.startDate,
                                   competition.endDate
                                 ) &&
-                                competitionParticipantIds.includes(
-                                  other.person.id
-                                )
+                                competitionParticipantIds.includes(other.id)
                             );
 
                             return (

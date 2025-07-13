@@ -36,63 +36,79 @@ import { ConcentrationCard } from "@/components/cards/ConcentrationCard";
 
 interface CompetitionParticipant {
   competition_id: number;
-  person_id: number;
-  role_id: number;
-  concentration_id: number;
+  participant_id: number;
   note: string;
-  startDate: string;
-  endDate: string;
-  created_by: number;
   createdAt: string;
   updatedAt: string;
-  person: {
+  endDate: string;
+  startDate: string;
+  created_by: number;
+  participation: {
     id: number;
-    name: string;
-    name_search: string;
-    identity_number: string | null;
-    identity_date: string | null;
-    identity_place: string;
-    social_insurance: string | null;
-    birthday: string;
-    phone: string | null;
-    email: string | null;
-    gender: string;
-    created_by: number;
-    createdAt: string;
-    updatedAt: string;
-  };
-  role: {
-    id: number;
-    name: string;
-    type: string;
-    createdAt: string;
-    updatedAt: string;
-  };
-  concentration: {
-    id: number;
-    teamId: number;
-    location: string;
-    startDate: string;
-    endDate: string;
+    person_id: number;
+    concentration_id: number;
+    role_id: number;
     note: string;
-    created_by: number;
     createdAt: string;
     updatedAt: string;
-    related_year: number;
-    sequence_number: number;
-    room: string;
-    team: {
+    organization_id: number;
+    assigned_by: number;
+    person: {
       id: number;
-      sport: string;
-      type: string;
+      name: string;
+      name_search: string;
+      identity_number: string | null;
+      identity_date: string | null;
+      identity_place: string;
+      social_insurance: string | null;
+      birthday: string;
+      phone: string | null;
+      email: string | null;
       gender: string;
+      created_by: number;
       createdAt: string;
       updatedAt: string;
-      rawData: {
-        sportId: number;
+    };
+    role: {
+      id: number;
+      name: string;
+      type: string;
+      createdAt: string;
+      updatedAt: string;
+    };
+    concentration: {
+      id: number;
+      teamId: number;
+      location: string;
+      startDate: string;
+      endDate: string;
+      note: string;
+      created_by: number;
+      createdAt: string;
+      updatedAt: string;
+      related_year: number;
+      sequence_number: number;
+      room: string;
+      team: {
+        id: number;
+        sport: string;
         type: string;
         gender: string;
+        createdAt: string;
+        updatedAt: string;
+        rawData: {
+          sportId: number;
+          type: string;
+          gender: string;
+        };
       };
+    };
+    organization: {
+      id: number;
+      name: string;
+      type: string;
+      createdAt: string;
+      updatedAt: string;
     };
   };
   creator: {
@@ -150,13 +166,22 @@ export function CompetitionDetailPage() {
 
       const data = await response.json();
       if (data.success) {
-        setParticipants(data.data.participants || []);
+        const responseData = data.data as {
+          participants: CompetitionParticipant[];
+          stats: {
+            ATHLETE: number;
+            COACH: number;
+            SPECIALIST: number;
+            OTHER: number;
+          };
+        };
+        setParticipants(responseData.participants || []);
         // Cập nhật stats trong state riêng hoặc cập nhật competition
         setCompetition((prev) =>
           prev
             ? {
                 ...prev,
-                participantStats: data.data.stats || {
+                participantStats: responseData.stats || {
                   ATHLETE: 0,
                   COACH: 0,
                   SPECIALIST: 0,
@@ -185,7 +210,7 @@ export function CompetitionDetailPage() {
 
     try {
       const response = await fetch(
-        `${API_URL}/competitions/${id}/participants/${participant.person_id}`,
+        `${API_URL}/competitions/${id}/participants/${participant.participation.id}`,
         {
           method: "DELETE",
           credentials: "include",
@@ -516,26 +541,32 @@ export function CompetitionDetailPage() {
                   <TableBody>
                     {participants.map((participant) => (
                       <TableRow
-                        key={`${participant.person_id}-${participant.role_id}-${participant.concentration_id}`}
-                        className={getRoleColors(participant.role.type).row}
+                        key={`${participant.participation.person_id}-${participant.participation.role_id}-${participant.participation.concentration_id}`}
+                        className={
+                          getRoleColors(participant.participation.role.type).row
+                        }
                       >
                         <TableCell className="font-medium">
-                          {participant.person.name}
+                          {participant.participation.person.name}
                         </TableCell>
                         <TableCell className="text-center">
                           <div className="flex items-center justify-center gap-2">
                             <span
                               className={`px-2 py-1 text-xs font-medium rounded-full border ${
-                                getRoleColors(participant.role.type).badge
+                                getRoleColors(
+                                  participant.participation.role.type
+                                ).badge
                               }`}
                             >
-                              {getRoleLabel(participant.role.type)}
+                              {getRoleLabel(
+                                participant.participation.role.type
+                              )}
                             </span>
                           </div>
                         </TableCell>
                         <TableCell>
-                          {participant.concentration.team.sport} -{" "}
-                          {participant.concentration.team.type}
+                          {participant.participation.concentration.team.sport} -{" "}
+                          {participant.participation.concentration.team.type}
                         </TableCell>
                         <TableCell className="text-center">
                           {format(

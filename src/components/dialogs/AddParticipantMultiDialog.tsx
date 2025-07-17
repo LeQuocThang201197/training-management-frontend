@@ -33,16 +33,17 @@ import { API_URL } from "@/config/api";
 import { PersonFormData } from "@/types/personnel";
 import { Role, Organization, Person, Participant } from "@/types/participant";
 import { Concentration } from "@/types/concentration";
-import { DuplicatePersonDialog, DuplicateInfo } from "./DuplicatePersonDialog";
 import { ConcentrationFilter } from "@/components/ConcentrationFilter";
 import { useConcentrationFilter } from "@/hooks/useConcentrationFilter";
 import { ParticipationForm } from "@/components/ParticipationForm";
+import { DuplicateInfo } from "./DuplicatePersonDialog";
 
 interface AddParticipantMultiDialogProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
   onSubmit?: (data: unknown) => void;
   existingParticipants?: { person: { id: number } }[];
+  onDuplicateFound?: (duplicateInfo: DuplicateInfo) => void;
 }
 
 export function AddParticipantMultiDialog({
@@ -50,6 +51,7 @@ export function AddParticipantMultiDialog({
   onOpenChange,
   onSubmit,
   existingParticipants = [],
+  onDuplicateFound,
 }: AddParticipantMultiDialogProps) {
   const [activeTab, setActiveTab] = useState("from-concentration");
 
@@ -120,12 +122,6 @@ export function AddParticipantMultiDialog({
     totalPages: 1,
   });
 
-  // State cho thông báo trùng lặp
-  const [duplicateInfo, setDuplicateInfo] = useState<DuplicateInfo | null>(
-    null
-  );
-  const [isDuplicateDialogOpen, setIsDuplicateDialogOpen] = useState(false);
-
   // Fetch roles và organizations
   useEffect(() => {
     const fetchData = async () => {
@@ -189,9 +185,6 @@ export function AddParticipantMultiDialog({
       setRoleFilter("all-roles");
       setErrors({});
       setActiveTab("from-concentration");
-      // Reset state trùng lặp
-      setDuplicateInfo(null);
-      setIsDuplicateDialogOpen(false);
     }
   }, [isOpen, resetConcentrationFilters]);
 
@@ -259,12 +252,32 @@ export function AddParticipantMultiDialog({
     // Debounce API call
     const timeoutId = setTimeout(fetchConcentrations, 300);
     return () => clearTimeout(timeoutId);
-  }, [isOpen, concentrationFilters, concentrationPage]);
+  }, [
+    isOpen,
+    concentrationFilters.sportIds,
+    concentrationFilters.teamTypes,
+    concentrationFilters.statuses,
+    concentrationFilters.year,
+    concentrationFilters.sortBy,
+    concentrationFilters.sortOrder,
+    concentrationPage,
+  ]);
 
   // Reset page when filters change (handled by hook)
   useEffect(() => {
-    setConcentrationPage(1);
-  }, [concentrationFilters, setConcentrationPage]);
+    if (isOpen) {
+      setConcentrationPage(1);
+    }
+  }, [
+    isOpen,
+    concentrationFilters.sportIds,
+    concentrationFilters.teamTypes,
+    concentrationFilters.statuses,
+    concentrationFilters.year,
+    concentrationFilters.sortBy,
+    concentrationFilters.sortOrder,
+    setConcentrationPage,
+  ]);
 
   // Fetch participants khi chọn concentration
   useEffect(() => {
@@ -426,8 +439,7 @@ export function AddParticipantMultiDialog({
       } else {
         // Xử lý trường hợp trùng lặp
         if (personData.duplicate_info) {
-          setDuplicateInfo(personData.duplicate_info);
-          setIsDuplicateDialogOpen(true);
+          onDuplicateFound?.(personData.duplicate_info);
         } else {
           // Lỗi khác
           alert(personData.message || "Có lỗi xảy ra khi tạo nhân sự mới");
@@ -1116,13 +1128,6 @@ export function AddParticipantMultiDialog({
           </Button>
         </div>
       </DialogContent>
-
-      {/* Dialog thông báo trùng lặp */}
-      <DuplicatePersonDialog
-        isOpen={isDuplicateDialogOpen}
-        onOpenChange={setIsDuplicateDialogOpen}
-        duplicateInfo={duplicateInfo}
-      />
     </Dialog>
   );
 }

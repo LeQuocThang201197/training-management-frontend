@@ -168,7 +168,7 @@ export function CompetitionCard({
                         <div className="flex justify-between items-start">
                           <div className="flex-1">
                             <div className="font-semibold text-gray-800 mb-1">
-                              {concentrationItem.concentration.team.sport.name}
+                              {concentrationItem.concentration.team.sport}
                             </div>
                             <div className="text-gray-600 mb-1">
                               {concentrationItem.concentration.team.type} -{" "}

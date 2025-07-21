@@ -11,6 +11,7 @@ import { useConcentrationFilter } from "@/hooks/useConcentrationFilter";
 import { ConcentrationFilter } from "@/components/ConcentrationFilter";
 import { Filter, X, ChevronDown, ChevronUp } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { CONCENTRATION_FILTER_DEFAULTS } from "@/types/concentrationFilter";
 
 export function ConcentrationPage() {
   const [concentrations, setConcentrations] = useState<Concentration[]>([]);
@@ -33,7 +34,7 @@ export function ConcentrationPage() {
     setPage,
     resetFilters,
   } = useConcentrationFilter({
-    defaultStatuses: [], // Default to all statuses (no pre-selection)
+    defaultStatuses: CONCENTRATION_FILTER_DEFAULTS.statuses,
   });
 
   useEffect(() => {

@@ -55,3 +55,13 @@ export const SORT_OPTIONS = [
   { value: "teamName_asc", label: "Tên đội (A-Z)" },
   { value: "teamName_desc", label: "Tên đội (Z-A)" },
 ] as const;
+
+export const CONCENTRATION_FILTER_DEFAULTS = {
+  sportIds: [] as number[],
+  teamTypes: [] as string[],
+  statuses: [] as string[],
+  year: new Date().getFullYear().toString(),
+  sortBy: "startDate" as const,
+  sortOrder: "desc" as const,
+  combinedSort: "startDate_desc" as const,
+} as const;

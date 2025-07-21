@@ -37,6 +37,7 @@ import { ConcentrationFilter } from "@/components/ConcentrationFilter";
 import { useConcentrationFilter } from "@/hooks/useConcentrationFilter";
 import { ParticipationForm } from "@/components/ParticipationForm";
 import { DuplicateInfo } from "./DuplicatePersonDialog";
+import { CONCENTRATION_FILTER_DEFAULTS } from "@/types/concentrationFilter";
 
 interface AddParticipantMultiDialogProps {
   isOpen: boolean;
@@ -111,7 +112,7 @@ export function AddParticipantMultiDialog({
     setPage: setConcentrationPage,
     resetFilters: resetConcentrationFilters,
   } = useConcentrationFilter({
-    defaultStatuses: [], // Default to all statuses (no pre-selection)
+    defaultStatuses: CONCENTRATION_FILTER_DEFAULTS.statuses,
   });
 
   const [roleFilter, setRoleFilter] = useState("all-roles");

@@ -5,6 +5,7 @@ import {
   ConcentrationFilterState,
   UseConcentrationFilterOptions,
   Sport,
+  CONCENTRATION_FILTER_DEFAULTS,
 } from "@/types/concentrationFilter";
 
 export function useConcentrationFilter(
@@ -12,19 +13,19 @@ export function useConcentrationFilter(
 ) {
   const {
     initialFilters = {},
-    defaultStatuses = [], // Default to all statuses (no pre-selection)
-    defaultYear = new Date().getFullYear().toString(),
+    defaultStatuses = CONCENTRATION_FILTER_DEFAULTS.statuses,
+    defaultYear = CONCENTRATION_FILTER_DEFAULTS.year,
   } = options;
 
   // Filter states
   const [filters, setFilters] = useState<ConcentrationFilters>({
-    sportIds: [],
-    teamTypes: [],
+    sportIds: CONCENTRATION_FILTER_DEFAULTS.sportIds,
+    teamTypes: CONCENTRATION_FILTER_DEFAULTS.teamTypes,
     statuses: defaultStatuses,
     year: defaultYear,
-    sortBy: "startDate",
-    sortOrder: "desc",
-    combinedSort: "startDate_desc",
+    sortBy: CONCENTRATION_FILTER_DEFAULTS.sortBy,
+    sortOrder: CONCENTRATION_FILTER_DEFAULTS.sortOrder,
+    combinedSort: CONCENTRATION_FILTER_DEFAULTS.combinedSort,
     ...initialFilters,
   });
 
@@ -146,13 +147,13 @@ export function useConcentrationFilter(
 
   const resetFilters = () => {
     setFilters({
-      sportIds: [],
-      teamTypes: [],
+      sportIds: CONCENTRATION_FILTER_DEFAULTS.sportIds,
+      teamTypes: CONCENTRATION_FILTER_DEFAULTS.teamTypes,
       statuses: defaultStatuses,
       year: defaultYear,
-      sortBy: "startDate",
-      sortOrder: "desc",
-      combinedSort: "startDate_desc",
+      sortBy: CONCENTRATION_FILTER_DEFAULTS.sortBy,
+      sortOrder: CONCENTRATION_FILTER_DEFAULTS.sortOrder,
+      combinedSort: CONCENTRATION_FILTER_DEFAULTS.combinedSort,
       ...initialFilters,
     });
     setPage(1);

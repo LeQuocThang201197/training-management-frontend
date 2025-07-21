@@ -22,9 +22,9 @@ export function useConcentrationFilter(
     teamTypes: [],
     statuses: defaultStatuses,
     year: defaultYear,
-    sortBy: "teamName",
-    sortOrder: "asc",
-    combinedSort: "teamName_asc",
+    sortBy: "startDate",
+    sortOrder: "desc",
+    combinedSort: "startDate_desc",
     ...initialFilters,
   });
 
@@ -150,9 +150,9 @@ export function useConcentrationFilter(
       teamTypes: [],
       statuses: defaultStatuses,
       year: defaultYear,
-      sortBy: "teamName",
-      sortOrder: "asc",
-      combinedSort: "teamName_asc",
+      sortBy: "startDate",
+      sortOrder: "desc",
+      combinedSort: "startDate_desc",
       ...initialFilters,
     });
     setPage(1);

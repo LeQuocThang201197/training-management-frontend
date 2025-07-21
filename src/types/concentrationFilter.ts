@@ -50,8 +50,8 @@ export const STATUS_OPTIONS = [
 ] as const;
 
 export const SORT_OPTIONS = [
-  { value: "startDate_desc", label: "Ngày bắt đầu - Giảm dần" },
-  { value: "startDate_asc", label: "Ngày bắt đầu - Tăng dần" },
-  { value: "teamName_asc", label: "Tên đội - Tăng dần (A-Z)" },
-  { value: "teamName_desc", label: "Tên đội - Giảm dần (Z-A)" },
+  { value: "startDate_desc", label: "Ngày bắt đầu (Mới nhất)" },
+  { value: "startDate_asc", label: "Ngày bắt đầu (Cũ nhất)" },
+  { value: "teamName_asc", label: "Tên đội (A-Z)" },
+  { value: "teamName_desc", label: "Tên đội (Z-A)" },
 ] as const;

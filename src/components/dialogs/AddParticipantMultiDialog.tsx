@@ -110,7 +110,6 @@ export function AddParticipantMultiDialog({
     loadingSports,
     page: concentrationPage,
     setPage: setConcentrationPage,
-    resetFilters: resetConcentrationFilters,
   } = useConcentrationFilter({
     defaultStatuses: CONCENTRATION_FILTER_DEFAULTS.statuses,
   });
@@ -182,12 +181,11 @@ export function AddParticipantMultiDialog({
       setSelectedConcentrationId("");
       setConcentrationParticipants([]);
       setSelectedParticipantIds([]);
-      resetConcentrationFilters();
       setRoleFilter("all-roles");
       setErrors({});
       setActiveTab("from-concentration");
     }
-  }, [isOpen, resetConcentrationFilters]);
+  }, [isOpen]);
 
   // Fetch concentrations với API mới
   useEffect(() => {

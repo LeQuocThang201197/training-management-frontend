@@ -12,7 +12,7 @@ export function useConcentrationFilter(
 ) {
   const {
     initialFilters = {},
-    defaultStatuses = ["active"],
+    defaultStatuses = [], // Default to all statuses (no pre-selection)
     defaultYear = new Date().getFullYear().toString(),
   } = options;
 

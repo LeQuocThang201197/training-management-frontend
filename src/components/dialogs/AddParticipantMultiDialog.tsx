@@ -111,7 +111,7 @@ export function AddParticipantMultiDialog({
     setPage: setConcentrationPage,
     resetFilters: resetConcentrationFilters,
   } = useConcentrationFilter({
-    defaultStatuses: ["completed"],
+    defaultStatuses: [], // Default to all statuses (no pre-selection)
   });
 
   const [roleFilter, setRoleFilter] = useState("all-roles");

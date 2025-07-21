@@ -33,7 +33,7 @@ export function ConcentrationPage() {
     setPage,
     resetFilters,
   } = useConcentrationFilter({
-    defaultStatuses: ["active"], // Default to active instead of ongoing
+    defaultStatuses: [], // Default to all statuses (no pre-selection)
   });
 
   useEffect(() => {

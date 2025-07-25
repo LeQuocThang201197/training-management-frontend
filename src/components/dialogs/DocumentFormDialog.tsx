@@ -28,7 +28,8 @@ interface Props {
   document?: Document | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSuccess: () => void;
+  onSuccess: (document?: Document) => void;
+  infoMessage?: string;
 }
 
 // Thêm hàm khởi tạo formData
@@ -48,6 +49,7 @@ export function DocumentFormDialog({
   open,
   onOpenChange,
   onSuccess,
+  infoMessage,
 }: Props) {
   const [formData, setFormData] = useState(getInitialFormData(document));
   const [loading, setLoading] = useState(false);
@@ -102,6 +104,9 @@ export function DocumentFormDialog({
         if (!response.ok) {
           throw new Error(data.message || "Lưu văn bản thất bại");
         }
+        onSuccess(data.data); // Trả về document vừa tạo
+        onOpenChange(false);
+        return;
       }
       // Nếu là cập nhật (không có file) thì dùng JSON
       else {
@@ -150,6 +155,11 @@ export function DocumentFormDialog({
           </DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
+          {infoMessage && (
+            <div className="p-3 bg-blue-50 border border-blue-200 rounded mb-2 text-blue-700 text-sm">
+              {infoMessage}
+            </div>
+          )}
           <div className="flex gap-4">
             <div className="space-y-2 w-24">
               <Label htmlFor="number">Số</Label>

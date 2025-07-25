@@ -66,6 +66,7 @@ import {
   DuplicatePersonDialog,
   DuplicateInfo,
 } from "@/components/dialogs/DuplicatePersonDialog";
+import { DocumentFormDialog } from "@/components/dialogs/DocumentFormDialog";
 
 interface Paper {
   id: number;
@@ -214,6 +215,7 @@ export function ConcentrationDetailPage() {
   const [duplicateInfo, setDuplicateInfo] = useState<DuplicateInfo | null>(
     null
   );
+  const [isAddDocumentDialogOpen, setIsAddDocumentDialogOpen] = useState(false);
 
   const fetchConcentration = useCallback(async () => {
     try {
@@ -1997,6 +1999,42 @@ export function ConcentrationDetailPage() {
                       </Button>
                     </div>
                   </DialogContent>
+                </Dialog>
+                {/* Nút thêm văn bản mới */}
+                <Dialog
+                  open={isAddDocumentDialogOpen}
+                  onOpenChange={setIsAddDocumentDialogOpen}
+                >
+                  <DialogTrigger asChild>
+                    <Button variant="outline" size="sm" className="gap-2">
+                      <PlusCircle className="h-4 w-4" />
+                      <span>Thêm văn bản mới</span>
+                    </Button>
+                  </DialogTrigger>
+                  <DocumentFormDialog
+                    open={isAddDocumentDialogOpen}
+                    onOpenChange={setIsAddDocumentDialogOpen}
+                    onSuccess={async (doc) => {
+                      if (!doc) return;
+                      try {
+                        await fetch(`${API_URL}/concentrations/${id}/papers`, {
+                          method: "POST",
+                          credentials: "include",
+                          headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify({ paperIds: [doc.id] }),
+                        });
+                        await fetchLinkedPapers();
+                        setIsAddDocumentDialogOpen(false);
+                        alert(
+                          "Đã thêm và gán văn bản vào đợt tập trung thành công!"
+                        );
+                      } catch {
+                        alert("Có lỗi khi gán văn bản vào đợt tập trung");
+                      }
+                    }}
+                    document={null}
+                    infoMessage="Văn bản này sẽ được tự động gán vào đợt tập trung hiện tại sau khi thêm mới thành công."
+                  />
                 </Dialog>
               </div>
             </CardHeader>

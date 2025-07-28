@@ -66,9 +66,6 @@ export function DocumentDetailPage() {
   >([]);
   const [loadingConcentrations, setLoadingConcentrations] = useState(false);
 
-  const [selectedConcentrationIds, setSelectedConcentrationIds] = useState<
-    number[]
-  >([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isFileDialogOpen, setIsFileDialogOpen] = useState(false);
@@ -226,7 +223,8 @@ export function DocumentDetailPage() {
     }
   };
 
-  const handleLinkConcentrations = async () => {
+  const handleLinkConcentrations = async (selectedIds: number[]) => {
+    console.log("handleLinkConcentrations called with:", selectedIds);
     try {
       const response = await fetch(`${API_URL}/papers/${id}/concentrations`, {
         method: "POST",
@@ -234,7 +232,7 @@ export function DocumentDetailPage() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ concentrationIds: selectedConcentrationIds }),
+        body: JSON.stringify({ concentrationIds: selectedIds }),
       });
 
       if (!response.ok) throw new Error("Không thể liên kết đợt tập trung");
@@ -242,7 +240,6 @@ export function DocumentDetailPage() {
       const data = await response.json();
       if (data.success) {
         await fetchLinkedConcentrations();
-        setSelectedConcentrationIds([]);
         setIsDialogOpen(false);
       }
     } catch (err) {

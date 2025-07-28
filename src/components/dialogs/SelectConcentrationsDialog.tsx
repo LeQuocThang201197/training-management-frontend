@@ -84,14 +84,20 @@ export function SelectConcentrationsDialog({
   const [concentrations, setConcentrations] = useState<Concentration[]>([]);
   const [loading, setLoading] = useState(false);
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
-  const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalItems, setTotalItems] = useState(0);
 
-  const { filters, setFilters, sports, loadingSports, buildAPIParams } =
-    useConcentrationFilter({
-      defaultStatuses: [], // Hiển thị tất cả trạng thái
-    });
+  const {
+    filters,
+    setFilters,
+    sports,
+    loadingSports,
+    page,
+    setPage,
+    buildAPIParams,
+  } = useConcentrationFilter({
+    defaultStatuses: [], // Hiển thị tất cả trạng thái
+  });
 
   const fetchConcentrations = useCallback(async () => {
     try {
@@ -149,6 +155,8 @@ export function SelectConcentrationsDialog({
 
   const handleConfirm = () => {
     onConfirm(selectedIds);
+    // Reset selections sau khi submit
+    setSelectedIds([]);
     onOpenChange(false);
   };
 

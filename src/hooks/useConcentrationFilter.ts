@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { API_URL } from "@/config/api";
 import {
   ConcentrationFilters,
@@ -75,7 +75,7 @@ export function useConcentrationFilter(
   ]);
 
   // Build API parameters
-  const buildAPIParams = () => {
+  const buildAPIParams = useCallback(() => {
     const params = new URLSearchParams();
 
     // Sport filter (multiple values)
@@ -107,7 +107,7 @@ export function useConcentrationFilter(
     params.append("limit", limit.toString());
 
     return params;
-  };
+  }, [filters, page, limit]);
 
   // Helper functions for updating specific filters
   const updateSportIds = (sportIds: number[]) => {

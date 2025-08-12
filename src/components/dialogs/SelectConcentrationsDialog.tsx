@@ -1,6 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
 import { API_URL } from "@/config/api";
-import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -14,7 +13,8 @@ import { ConcentrationFilter } from "@/components/ConcentrationFilter";
 import { useConcentrationFilter } from "@/hooks/useConcentrationFilter";
 import { ConcentrationFilters } from "@/types/concentrationFilter";
 import { Concentration } from "@/types/concentration";
-import { Check, X, ChevronLeft, ChevronRight } from "lucide-react";
+import { X, ChevronLeft, ChevronRight } from "lucide-react";
+import { SelectConcentrationCard } from "@/components/cards/ConcentrationCardWrapper";
 
 interface SelectConcentrationsDialogProps {
   open: boolean;
@@ -167,16 +167,6 @@ export function SelectConcentrationsDialog({
   // Sử dụng concentrations trực tiếp (không cần filter search)
   const filteredConcentrations = concentrations;
 
-  const getConcentrationDisplayName = (concentration: Concentration) => {
-    const teamType = concentration.team.type === "Trẻ" ? "trẻ " : "";
-    const gender =
-      concentration.team.gender === "Cả nam và nữ"
-        ? ""
-        : concentration.team.gender.toLowerCase();
-
-    return `Đội tuyển ${teamType}${concentration.team.sport} ${gender} đợt ${concentration.sequence_number} năm ${concentration.related_year}`;
-  };
-
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       {trigger && <DialogTrigger asChild>{trigger}</DialogTrigger>}
@@ -228,7 +218,7 @@ export function SelectConcentrationsDialog({
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900" />
               </div>
             ) : filteredConcentrations.length > 0 ? (
-              <div className="space-y-2">
+              <div className="grid grid-cols-1 gap-3">
                 {filteredConcentrations.map((concentration) => {
                   const isSelected = selectedIds.includes(concentration.id);
                   const isDisabled =
@@ -237,54 +227,19 @@ export function SelectConcentrationsDialog({
                     !isSelected;
 
                   return (
-                    <Card
+                    <div
                       key={concentration.id}
-                      className={cn(
-                        "hover:bg-gray-50 cursor-pointer transition-colors",
-                        isSelected && "border-primary bg-primary/5",
-                        isDisabled && "opacity-50 cursor-not-allowed"
-                      )}
-                      onClick={() =>
-                        !isDisabled &&
-                        handleConcentrationClick(concentration.id)
-                      }
+                      className={cn("rounded-md transition-all")}
                     >
-                      <CardContent className="p-4">
-                        <div className="flex items-start justify-between">
-                          <div className="flex-1">
-                            <div className="flex items-center gap-2">
-                              <div
-                                className={cn(
-                                  "w-4 h-4 rounded border-2 flex items-center justify-center",
-                                  isSelected
-                                    ? "bg-primary border-primary"
-                                    : "border-gray-300"
-                                )}
-                              >
-                                {isSelected && (
-                                  <Check className="h-3 w-3 text-white" />
-                                )}
-                              </div>
-                              <p className="font-medium">
-                                {getConcentrationDisplayName(concentration)}
-                              </p>
-                            </div>
-                            <p className="text-sm text-gray-500 mt-1 ml-6">
-                              {new Date(
-                                concentration.startDate
-                              ).toLocaleDateString("vi-VN")}{" "}
-                              -{" "}
-                              {new Date(
-                                concentration.endDate
-                              ).toLocaleDateString("vi-VN")}
-                            </p>
-                            <p className="text-sm text-gray-600 mt-1 ml-6">
-                              {concentration.location}
-                            </p>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
+                      <SelectConcentrationCard
+                        concentration={concentration}
+                        selected={isSelected}
+                        disabled={!!isDisabled}
+                        onSelect={() =>
+                          handleConcentrationClick(concentration.id)
+                        }
+                      />
+                    </div>
                   );
                 })}
               </div>

@@ -26,13 +26,15 @@ import {
   ChevronLeft,
   Pencil,
   Clock,
+  UserPlus,
 } from "lucide-react";
 import { format } from "date-fns";
 import { vi } from "date-fns/locale";
 import { API_URL } from "@/config/api";
 import { Competition, CompetitionConcentration } from "@/types/competition";
 import { PermissionGate } from "@/components/PermissionGate";
-import { ConcentrationCard } from "@/components/cards/ConcentrationCard";
+import { CompetitionConcentrationCard } from "@/components/cards/ConcentrationCardWrapper";
+import { SelectConcentrationsDialog } from "@/components/dialogs/SelectConcentrationsDialog";
 
 interface CompetitionParticipant {
   competition_id: number;
@@ -126,6 +128,7 @@ export function CompetitionDetailPage() {
   );
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
 
   const fetchCompetition = useCallback(async () => {
     try {
@@ -226,6 +229,56 @@ export function CompetitionDetailPage() {
     } catch (err) {
       console.error("Delete participant error:", err);
       alert(err instanceof Error ? err.message : "Lỗi khi xóa người tham gia");
+    }
+  };
+
+  const handleRemoveConcentration = async (concentrationId: number) => {
+    try {
+      const response = await fetch(
+        `${API_URL}/competitions/${id}/concentrations/${concentrationId}`,
+        {
+          method: "DELETE",
+          credentials: "include",
+        }
+      );
+
+      if (!response.ok)
+        throw new Error("Không thể rút đội tuyển khỏi giải đấu");
+
+      const data = await response.json();
+      if (data.success) {
+        fetchCompetition();
+      }
+    } catch (err) {
+      console.error("Remove concentration error:", err);
+    }
+  };
+
+  const handleAddConcentrations = async (selectedIds: number[]) => {
+    console.log("handleAddConcentrations called with:", selectedIds);
+    try {
+      const response = await fetch(
+        `${API_URL}/competitions/${id}/concentrations`,
+        {
+          method: "POST",
+          credentials: "include",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ concentrationIds: selectedIds }),
+        }
+      );
+
+      if (!response.ok)
+        throw new Error("Không thể thêm đội tuyển vào giải đấu");
+
+      const data = await response.json();
+      if (data.success) {
+        await fetchCompetition();
+        setIsDialogOpen(false);
+      }
+    } catch (err) {
+      console.error("Add concentrations error:", err);
     }
   };
 
@@ -420,10 +473,29 @@ export function CompetitionDetailPage() {
       {/* Đội tham gia */}
       <Card className="mb-6">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Trophy className="h-5 w-5" />
-            Đội tham gia thi đấu
-          </CardTitle>
+          <div className="flex items-center justify-between">
+            <CardTitle className="flex items-center gap-2">
+              <Trophy className="h-5 w-5" />
+              Đội tham gia thi đấu
+            </CardTitle>
+            <SelectConcentrationsDialog
+              open={isDialogOpen}
+              onOpenChange={setIsDialogOpen}
+              onConfirm={handleAddConcentrations}
+              title="Thêm đội tuyển vào giải đấu"
+              description="Chọn các đội tuyển bạn muốn tham gia vào giải đấu này"
+              confirmText="Thêm vào giải đấu"
+              excludeIds={
+                competition.concentrations?.map((c) => c.concentration_id) || []
+              }
+              trigger={
+                <Button variant="outline" size="sm">
+                  <UserPlus className="h-4 w-4 mr-2" />
+                  Thêm đội tuyển
+                </Button>
+              }
+            />
+          </div>
         </CardHeader>
         <CardContent>
           {competition.concentrations &&
@@ -431,7 +503,7 @@ export function CompetitionDetailPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {competition.concentrations.map(
                 (item: CompetitionConcentration) => (
-                  <ConcentrationCard
+                  <CompetitionConcentrationCard
                     key={item.concentration_id}
                     concentration={{
                       ...item.concentration,
@@ -441,6 +513,7 @@ export function CompetitionDetailPage() {
                       updatedAt: item.createdAt,
                       creator: { ...competition.creator, email: "" },
                     }}
+                    onRemove={handleRemoveConcentration}
                   />
                 )
               )}
